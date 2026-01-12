@@ -1,0 +1,109 @@
+/* --- Header Layout --- */
+.header-container {
+    background-color: #0072CE;
+    display: flex;
+    align-items: center;
+    height: 100px;
+}
+
+#title {
+    font-family: InterBlack;
+    font-size: 1.2rem;
+    color: #FFFFFF;
+    text-decoration: none;
+    margin-left: 0.5em;
+}
+
+.logo {
+    width: 4.5em;
+    margin-left: 1.5em;
+    cursor: pointer;
+}
+
+/* --- Date & Time --- */
+.date-time-container {
+    margin-left: auto;
+    margin-right: 1.5em;
+    color: #FFFFFF;
+    text-align: right;
+    line-height: 1.2;
+    cursor: context-menu;
+}
+
+.date {
+    font-family: InterMedium;
+    margin: 0;
+    letter-spacing: 3px;
+}
+
+.time {
+    font-family: InterBlack;
+    margin: 0;
+    font-size: 1.2em;
+    letter-spacing: 1.2px;
+}
+
+/* --- Navigation & Dropdown --- */
+.navigation-container {
+    background-color: #0072CE;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 1.5em;
+    transition: background-color 0.2s;
+}
+
+.dropdown {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.menu-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bar {
+    width: 35px;
+    height: 4px;
+    background-color: #ffffff;
+    border-radius: 2px;
+}
+
+/* --- Dropdown Menu --- */
+.dropdown .contents {
+    display: none;
+    position: absolute;
+    top: 100%; 
+    right: -1.5em; 
+    background-color: #004278;
+    width: 200px;
+    z-index: 1000;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.3);
+}
+
+.dropdown a {
+    display: block;
+    color: #ffffff;
+    text-decoration: none;
+    font-family: InterRegular;
+    padding: 1em;
+    text-align: center;
+    font-size: 1.1em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* --- Interactive States --- */
+.navigation-container:hover { 
+    background-color: #004278;
+    cursor: pointer;
+}
+.navigation-container.active { background-color: #004278; }
+.navigation-container.active .contents { display: block; }
+.dropdown a:hover { background-color: #01345f; }

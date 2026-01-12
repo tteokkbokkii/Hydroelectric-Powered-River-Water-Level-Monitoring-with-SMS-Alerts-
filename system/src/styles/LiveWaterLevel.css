@@ -1,0 +1,104 @@
+/* --- Your Original Base Styles --- */
+.card {
+    background-color: #F4F4F4;
+    border-radius: 0.5em;
+    box-shadow: 1px 1px 7px #0000004b;
+    width: 35.5em;
+    height: 30.5em;
+    margin: 2em;
+}
+
+.innercard {
+    background-color: #ffffff;
+    border-radius: 0.5em;
+    box-shadow: 1px 1px 7px #00000010;
+}
+
+.cardtitle {
+    font-family: 'Inter', sans-serif; /* Adjusted to standard font stack */
+    font-weight: 900;
+    color: #0072CE;
+    text-align: center;
+    padding: 0.5em;
+}
+
+/* --- Positioning the Gauge in the Middle --- */
+#livewaterlevel-inner {
+    margin: 1em auto;
+    width: 31.5em;
+    height: 23.5em;
+    display: flex;             /* Align columns horizontally */
+    align-items: center;       /* Center items vertically */
+    justify-content: space-between; 
+    padding: 0 1em;
+    position: relative;
+    overflow: hidden;          /* Keeps water inside the card */
+}
+
+.gauge {
+    position: relative;
+    height: 90%;
+    width: 4px;
+    background-color: #333;    /* The vertical ruler line */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* --- The Live Water Effect --- */
+.water-fill {
+    position: absolute;
+    bottom: 0;
+    left: -15em;               /* Spread across the card width */
+    width: 31.5em;
+    background-color: #0072CE;
+    transition: height 1s ease-in-out; /* Smooth rising/falling effect */
+    z-index: 1;
+    opacity: 0.9;
+}
+
+.ruler-step {
+    display: flex;
+    align-items: center;
+    z-index: 2;                /* Keep numbers above water */
+}
+
+.line {
+    width: 20px;
+    height: 2px;
+    background: #333;
+}
+
+.number {
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+/* --- Label Styling --- */
+.data-readout {
+    z-index: 3;
+    color: #0072CE;
+    font-weight: bold;
+}
+
+.current-box {
+    background: #0072CE;
+    color: white;
+    padding: 0.5em;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.label { display: block; font-size: 0.7rem; }
+.value { font-size: 1.4rem; }
+
+.status-labels {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #888;
+    text-align: left;
+    z-index: 3;
+}
+
+.status-labels .active { color: #333; }

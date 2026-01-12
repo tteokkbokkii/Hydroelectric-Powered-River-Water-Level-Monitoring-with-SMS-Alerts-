@@ -1,0 +1,46 @@
+/* --- Fonts & Body --- */
+@font-face {
+    font-family: InterRegular;
+    src: url('../assets/fonts/Inter_24pt-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: InterMedium;
+    src: url('../assets/fonts/Inter_24pt-Medium.ttf') format('truetype');
+}
+@font-face {
+    font-family: InterBlack;
+    src: url('../assets/fonts/Inter_28pt-Black.ttf') format('truetype');
+}
+@font-face {
+    font-family: InterExtraBold;
+    src: url('../assets/fonts/Inter_28pt-ExtraBold.ttf') format('truetype');
+}
+
+body { 
+    margin: 0;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+/* --- Responsiveness --- */
+@media (max-width: 768px) {
+    #title { font-size: 1.1rem; }
+    .logo {
+        width: 3.5em;
+        margin-left: 0.8em;
+    }
+    .date-time-container {
+        font-size: 0.9em;
+        margin-right: 0.8em;
+    }
+    .navigation-container { padding: 0 0.8em; }
+    .bar {
+        width: 28px;
+        height: 3px;
+    }
+}
+
+@media (max-width: 480px) {
+    #title { font-size: 0.9rem; }
+    .date-time-container { display: none; }
+}

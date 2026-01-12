@@ -1,0 +1,8 @@
+/* --- Announcement Bar --- */
+.announcement-bar p {
+    margin: 0;
+    background-color: #ABD9FF;
+    padding: 5.5px 0;
+    text-align: center; /* Center for now*/
+    font-family: InterMedium;
+}
