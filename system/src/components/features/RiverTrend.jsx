@@ -1,27 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 
-const data = [
-  { time: '07:00', current: 6.8, predicted: 7.0 },
-  { time: '08:00', current: 6.7, predicted: 6.7 },
-  { time: '09:00', current: 6.8, predicted: 7.0 },
-  { time: '10:00', current: 7.2, predicted: 7.5 },
-  { time: '11:00', current: 6.7, predicted: 6.9 },
-  { time: '12:00', current: 6.5, predicted: 6.5 },
-  { time: '13:00', current: 6.3, predicted: 6.3 },
-  { time: '14:00', current: null, predicted: 7.0 }, 
-];
-
 function RiverTrend() {
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-GB', { hour12: false });
+  };
+
+  const generateInitialData = () => {
+    const dataPoints = [];
+    const now = new Date();
+    for (let i = 19; i >= 0; i--) {
+      const d = new Date(now.getTime() - (i - 1) * 1000); 
+      const timeStr = formatTime(d);
+      
+      dataPoints.push({
+        time: timeStr,
+        current: i === 0 ? null : Number((6.5 + Math.random() * 0.5).toFixed(2)),
+        predicted: Number((6.8 + Math.random() * 0.3).toFixed(2))
+      });
+    }
+    return dataPoints;
+  };
+
+  const [data, setData] = useState(generateInitialData());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const futureTime = new Date(now.getTime() + 1000); 
+      
+      const timeNowStr = formatTime(now);
+      const timeFutureStr = formatTime(futureTime);
+      
+      setData(prevData => {
+        const updatedData = [...prevData];
+        const lastIndex = updatedData.length - 1;
+        
+        updatedData[lastIndex] = {
+          ...updatedData[lastIndex],
+          current: Number((6.5 + Math.random() * 0.5).toFixed(2))
+        };
+
+        const newFuturePoint = {
+          time: timeFutureStr,
+          current: null, 
+          predicted: Number((6.8 + Math.random() * 0.3).toFixed(2))
+        };
+
+        return [...updatedData.slice(1), newFuturePoint];
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+  
   return (
     <div className="card-container" id="rivertrend">
       <h2 className="card-title">RIVER TREND</h2>
@@ -64,14 +98,14 @@ function RiverTrend() {
             
             <Tooltip 
               labelFormatter={(label) => `time: ${label}`} 
-                formatter={(value, name) => [`${value} ft.`, name]}
-                contentStyle={{ 
-                    borderRadius: '10px', 
-                    border: '1px solid #ddd',
-                    padding: '10px',
-                    fontSize:'12px' 
-                }}
-                itemStyle={{padding: '2px 0' }}
+              formatter={(value, name) => [`${value} ft.`, name]}
+              contentStyle={{ 
+                  borderRadius: '10px', 
+                  border: '1px solid #ddd',
+                  padding: '10px',
+                  fontSize:'12px' 
+              }}
+              itemStyle={{padding: '2px 0' }}
             />
             
             <Legend
@@ -98,7 +132,7 @@ function RiverTrend() {
               stroke="#FFB800" 
               strokeWidth={2} 
               connectNulls={false} 
-              dot={{ r: 4, fill: '#fff', stroke: '#FFB800', strokeWidth: 2 }}
+              dot={{ r: 4, fill: '#fff', stroke: '#FFB800', strokeWidth: 2 }} 
               activeDot={{ r: 6 }}
             />
           </LineChart>
