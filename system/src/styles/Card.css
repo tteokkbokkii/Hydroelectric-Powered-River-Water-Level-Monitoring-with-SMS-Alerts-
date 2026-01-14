@@ -1,6 +1,6 @@
 .card-container {
     background-color: #F4F4F4;
-    padding: 1.5rem;
+    padding: 1rem;
     border-radius: 1em;
     box-shadow: 0px 0px 7px #0000004b;
     display: flex;
@@ -12,8 +12,8 @@
 .card-title {
     font-family: InterBlack;
     color: #0072CE;
-    font-size: 1.8rem;
-    margin: 0 0 1rem 0; 
+    font-size: 1.48rem;
+    margin: 0 0 0.5rem 0; 
     text-align: left; 
     letter-spacing: 0.02em;
 }

@@ -44,11 +44,12 @@ body {
 .dashboard-grid {
     display: grid;
     grid-template-columns: 2.3fr 3fr; 
-    grid-template-rows: 2fr 1fr;
-    gap: 20px;
-    padding: 20px;
+    grid-template-rows: 2fr 1fr; 
+    gap: 15px; /* Reduced gap */
+    padding: 15px;
     height: calc(100vh - 180px); 
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* --- Responsiveness --- */
