@@ -22,6 +22,35 @@ body {
     width: 100%;
 }
 
+/* --- Card Formatting --- */
+.card {
+    background-color: #F4F4F4;
+    border-radius: 0.5em;
+    box-shadow: 1px 1px 7px #0000004b;
+    width: 35.5em;
+    height: 31.5em;
+    font-family: Arial, sans-serif;
+}
+
+.cardtitle {
+    font-family: 'InterBlack', sans-serif;
+    font-size: 2em;
+    letter-spacing: 2px; 
+    color: #0072CE;
+    text-align: center;
+    padding-top: 0.3em;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2.3fr 3fr; 
+    grid-template-rows: 2fr 1fr;
+    gap: 20px;
+    padding: 20px;
+    height: calc(100vh - 180px); 
+    box-sizing: border-box;
+}
+
 /* --- Responsiveness --- */
 @media (max-width: 768px) {
     #title { font-size: 1.1rem; }
