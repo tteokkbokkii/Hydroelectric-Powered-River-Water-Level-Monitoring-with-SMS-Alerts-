@@ -1,0 +1,85 @@
+/* The Main Card Container */
+.card-wrapper {
+  background-color: #ffffff;
+  /* Remove fixed margin and max-width to let it span */
+  margin: 10px; 
+  width: calc(100% - 20px); /* Span full width minus small margin */
+  
+  /* Make the card grow vertically to fill the screen */
+  flex: 1; 
+  display: flex;
+  flex-direction: column;
+
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+}
+
+/* Ensure the title stays at the top */
+.card-heading {
+  color: #0072bc;
+  font-size: clamp(20px, 2.5vw, 26px);
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+/* Tabs Navigation */
+.tab-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-item {
+  padding: 12px 40px;
+  border: none;
+  cursor: pointer;
+  background-color: #d9d9d9;
+  color: #6b7280;
+  font-weight: 700;
+  border-radius: 12px 12px 0 0;
+  transition: 0.2s;
+}
+
+.nav-item.is-active {
+  background-color: #ffffff;
+  color: #0072bc;
+  border-top: 5px solid #0072bc;
+  margin-top: -5px;
+  z-index: 1;
+}
+
+/* THE CONTENT PANEL - This now spans the rest of the height */
+.tab-panel {
+  flex: 1; /* This makes the white box grow to the bottom of the screen */
+  background-color: #ffffff;
+  padding: 30px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0 12px 12px 12px;
+  margin-top: -1px;
+  
+  display: flex;
+  flex-direction: column;
+}
+
+/* Add this to allow the table/text to scroll if the window is too small */
+.panel-content-area {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* In your main App.css or index.css */
+#root, .app-container {
+  height: 100vh; /* Full viewport height */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent double scrollbars */
+}
+
+.main-content {
+  flex: 1; /* This area holds the TabContainer and makes it grow */
+  display: flex;
+  flex-direction: column;
+  background-color: #f0f2f5; /* Light background behind the card */
+}

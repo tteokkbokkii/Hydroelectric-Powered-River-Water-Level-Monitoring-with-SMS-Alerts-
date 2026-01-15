@@ -23,22 +23,32 @@ body {
 }
 
 /* --- Card Formatting --- */
-.card {
+.card-container {
     background-color: #F4F4F4;
-    border-radius: 0.5em;
-    box-shadow: 1px 1px 7px #0000004b;
-    width: 35.5em;
-    height: 31.5em;
-    font-family: Arial, sans-serif;
+    padding: 1rem;
+    border-radius: 1em;
+    box-shadow: 0px 0px 7px #0000004b;
+    display: flex;
+    flex-direction: column; 
+    overflow: hidden;
+    font-family: InterMedium;
 }
 
-.cardtitle {
-    font-family: 'InterBlack', sans-serif;
-    font-size: 2em;
-    letter-spacing: 2px; 
+.card-title {
+    font-family: InterBlack;
     color: #0072CE;
-    text-align: center;
-    padding-top: 0.3em;
+    font-size: 1.48rem;
+    margin: 0 0 0.5rem 0; 
+    text-align: left; 
+    letter-spacing: 0.02em;
+}
+
+.innercard-container {
+    background-color: #ffffff;
+    flex-grow: 1; 
+    border-radius: 0.8em;
+    box-shadow: 0px 0px 7px #00000016;
+    overflow: hidden;
 }
 
 .dashboard-grid {
