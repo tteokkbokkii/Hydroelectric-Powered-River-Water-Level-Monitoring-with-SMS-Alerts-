@@ -34,13 +34,28 @@
 #riverlevel-contents{
     min-width: 500px;
     height: 100%;
-    position: 100%;
+    position: relative;
+}
+
+#riverlevel-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  width: 100%;
+  padding-left: 0.3em;
+  padding-right: 0.3em;
+}
+
+#riverlevel-title {
+  text-align: left;
+  margin: 0;
 }
 
 .live-expected{
     position: absolute;
     left: 5%;
-    top: 60%;
+    top: 53%;
     z-index: 10;
     color: #ffffffd4;
     pointer-events: none;
@@ -81,6 +96,39 @@
     margin: 0;
     font-size: 2.5rem;
     text-shadow: 1px 1px 4px #231c734d;
+}
+
+.thresholds {
+    position: absolute;
+    right: 5%; 
+    top: 0;
+    height: 100%;
+    width: 35%; 
+    pointer-events: none;
+    z-index: 20;
+}
+
+.thresholds p {
+    position: absolute;
+    margin: 0;
+    font-family: InterMedium;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #333;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: translateY(-50%); 
+}
+
+.status-indicator{
+    padding: 6px 14px;
+    border-radius: 20px;
+    color: white;
+    font-weight: bold;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 4px  rgba(0,0,0,0.1) ;
+    white-space: nowrap;
+    margin-right: 1em;
 }
 
 /* -- River Trend -- */
