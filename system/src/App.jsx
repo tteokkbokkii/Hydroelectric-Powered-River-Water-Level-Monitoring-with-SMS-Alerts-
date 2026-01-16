@@ -5,13 +5,14 @@ import RiverLevel from "./components/features/RiverLevel.jsx";
 import RiverTrend from './components/features/RIverTrend.jsx'
 import RecentLogs from './components/features/RecentLogs.jsx'
 import TabContainer from './components/TabContainer.jsx';
+import HistoryTab from './components/features/HistoryTab.jsx';
 
 function App() {
     return(
       <>
         <Header/>
         <Announcement/>
-        <TabContainer/>
+        <HistoryTab/>
       </>
     )
 }
