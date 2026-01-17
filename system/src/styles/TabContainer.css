@@ -69,6 +69,10 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  font-family: InterRegular;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 #root, .app-container {
@@ -89,11 +93,18 @@
   display: flex;
   gap: 10px;
   width: 100%;
+  flex-direction: row;
+  overflow-x: hidden;
+  flex-direction: row;
+  flex: 1;
 }
 
 .content-column {
   flex: 1;
-  padding: 15px;
+  min-width: 0;
+  padding: 5px;
   border: 1px solid #ddd;
   border-radius: 5px;
+  display: flex;
+  flex-direction: column;
 }

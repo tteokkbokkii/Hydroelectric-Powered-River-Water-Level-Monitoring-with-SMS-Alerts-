@@ -1,5 +1,9 @@
-.date{
-    margin: 0px 5px 5px 5px;
-    font-family: InterMedium;
-    letter-spacing: normal;
+#history-actual{
+    min-height: 300px;
+}
+
+#table{
+    margin: 0;
+    padding: 2px;
+    text-align: justify;
 }
