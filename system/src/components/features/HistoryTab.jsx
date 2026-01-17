@@ -1,24 +1,38 @@
-import TabContainer from "../TabContainer.jsx";
+import React, { useState } from 'react';
 
 const HistoryTab = () => {
-  // Define the tabs for history
-  const historyTabs = [
-    { 
-      label: 'DAILY LOGS', 
-      content: <p>Displaying water level logs for the last 24 hours...</p> 
-    },
-    { 
-      label: 'SMS ALERTS', 
-      content: <p>List of all emergency alerts sent to authorities.</p> 
-    }
-  ];
+  const [activeTab, setActiveTab] = useState('ACTUAL READING');
 
   return (
-    <div className="history-page">
-      <TabContainer 
-        cardTitle="SYSTEM HISTORY" 
-        tabs={historyTabs} 
-      />
+    <div className="card-wrapper" id="main-profile-card">
+      <h1 className="card-heading">HISTORICAL WATER LEVEL DATA OF HULO FERRY STATION</h1>      
+        <div className="tab-nav">
+          <button 
+            className={`nav-item ${activeTab === 'ACTUAL READING' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('ACTUAL READING')}
+          >
+            ACTUAL READING
+          </button>
+          <button 
+            className={`nav-item ${activeTab === 'PREDICTION' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('PREDICTION')}
+          >
+            PREDICTION
+          </button>
+        </div>
+
+        <div className="tab-panel">
+          {activeTab === 'ACTUAL READING' && (
+            <div className="panel-content-area" id="ACTUAL READING-section">
+              <p className='date'>DATE:</p>
+            </div>
+          )}
+
+          {activeTab === 'PREDICTION' && (
+            <div className="panel-content-area" id="PREDICTION-section">
+            </div>
+          )}
+        </div>
     </div>
   );
 };
