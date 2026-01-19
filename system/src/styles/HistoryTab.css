@@ -7,3 +7,21 @@
     padding: 2px;
     text-align: justify;
 }
+
+/* 1. Center Headings and allow wrapping */
+.p-datatable .p-column-header-content {
+  display: flex;
+  justify-content: center; 
+  text-align: center;
+}
+
+.p-column-title {
+  white-space: normal;   
+  word-break: break-word;
+}
+
+/* Center-align the actual data cells */
+.p-datatable .p-datatable-tbody > tr > td {
+  text-align: center !important;
+  justify-content: center;
+}

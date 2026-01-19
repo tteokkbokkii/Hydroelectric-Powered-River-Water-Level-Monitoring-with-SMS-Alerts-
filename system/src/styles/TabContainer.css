@@ -1,8 +1,23 @@
+#root, .app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #f0f2f5;
+  min-height: 0; /* Prevents magnification issues */
+}
+
 .card-wrapper {
   background-color: #F4F4F4;
-  min-height: calc(100vh - 200px); 
+  flex: 1; /* Fills available height */
   width: calc(100vw - 3rem);
-  margin: 1.5rem; 
+  margin: 1.5rem;
   display: flex;
   flex-direction: column;
   border-radius: 1em;
@@ -19,11 +34,13 @@
   letter-spacing: 0.05em;
   margin-bottom: 20px;
   margin-top: 0;
+  flex-shrink: 0; /* Prevents heading from being squished */
 }
 
 .tab-nav {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .nav-item {
@@ -44,59 +61,40 @@
   color: #0072bc;
   border-top: 5px solid #0072bc;
   margin-top: -5px;
-  margin-bottom: -1px; 
-  border-bottom: 1px solid #ffffff; 
+  margin-bottom: -1px;
+  border-bottom: 1px solid #ffffff;
   box-shadow: 0px -4px 7px -4px rgba(0, 0, 0, 0.16);
 }
 
 .tab-panel {
   background-color: #ffffff;
-  flex-grow: 1;
-  padding: 10px;
   border: 1px solid #e5e7eb;
   border-radius: 0 12px 12px 12px;
-  margin-top: -1px; 
+  margin-top: -1px;
   box-shadow: 0px 0px 7px #00000016;
-  display: flex; 
-  flex-direction: column;
-  overflow-y: auto;
-  max-height: 100%;
-}
-
-.panel-content-area {
-  padding: 10px;
-  width: 100%;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  font-family: InterRegular;
   display: flex;
   flex-direction: column;
   flex: 1;
-}
-
-#root, .app-container {
-  height: 100vh; 
-  display: flex;
-  flex-direction: column;
+  min-height: 0; /* Crucial for child scaling */
   overflow: hidden;
+  padding: 20px;
 }
 
-.main-content {
-  flex: 1; 
+.panel-content-area {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #f0f2f5;
+  flex: 1;
+  min-height: 0;
 }
 
 .columns-container {
   display: flex;
-  gap: 10px;
   width: 100%;
-  flex-direction: row;
-  overflow-x: hidden;
-  flex-direction: row;
+  gap: 20px;
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .content-column {
@@ -107,4 +105,5 @@
   border-radius: 5px;
   display: flex;
   flex-direction: column;
+  background: white;
 }
