@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -6,222 +6,111 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  Legend
+  ResponsiveContainer
 } from 'recharts';
 
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Calendar } from 'primereact/calendar';
+import { Button } from 'primereact/button';
+
+import "primereact/resources/themes/lara-light-indigo/theme.css";
+import "primereact/resources/primereact.min.css";
+import "primeicons/primeicons.css";
+
 const data = [
-  { time: '00:00', current: 6.2 },
-  { time: '01:00', current: 6.5 },
-  { time: '02:00', current: 6.7 },
-  { time: '03:00', current: 7.0 },
-  { time: '04:00', current: 7.1 },
-  { time: '05:00', current: 7.3 },
-  { time: '06:00', current: 7.5 },
-  { time: '07:00', current: 8.8 },
-  { time: '08:00', current: 9.0 },
-  { time: '09:00', current: 8.8 },
-  { time: '10:00', current: 10.0 },
-  { time: '11:00', current: 10.1 },
-  { time: '12:00', current: 10.2 },
-  { time: '13:00', current: 9.8 },
-  { time: '14:00', current: 9.5 },
-  { time: '15:00', current: 9.5 },
-  { time: '16:00', current: 9.2 },
-  { time: '17:00', current: 9.0 },
-  { time: '18:00', current: 9.1 },
-  { time: '19:00', current: 7.8 },
-  { time: '20:00', current: 6.5 },
-  { time: '21:00', current: 10.5 },
-  { time: '22:00', current: 11.0 },
-  { time: '23:00', current: 12.0 },
-  { time: '24:00', current: 10.1 },
+  { date: '2026-01-19', time: '00:00', current: 6.2, status: 'NORMAL' },
+  { date: '2026-01-19', time: '08:00', current: 9.0, status: 'WARNING' },
+  { date: '2026-01-19', time: '23:00', current: 12.0, status: 'CRITICAL' },
+  { date: '2026-01-20', time: '00:00', current: 10.1, status: 'WARNING' },
+  { date: '2026-01-20', time: '12:00', current: 6.5, status: 'NORMAL' }
 ];
 
 const HistoryTab = () => {
   const [activeTab, setActiveTab] = useState('ACTUAL READING');
+  const [selectedDate, setSelectedDate] = useState(new Date('2026-01-19'));
+
+  // Logic: Filters data for BOTH Table and Graph
+  const filteredData = useMemo(() => {
+    return data.filter(item => {
+      const itemDate = new Date(item.date).toDateString();
+      const searchDate = selectedDate ? selectedDate.toDateString() : '';
+      return itemDate === searchDate;
+    });
+  }, [selectedDate]);
+
+  // Helper to render the shared layout (Table + Graph) with dynamic color
+  const renderContent = (lineColor) => (
+    <div className="panel-content-area">
+      {/* Date Picker Row inside the panel */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontWeight: 'bold' }}>DATE:</span>
+          <Calendar 
+            value={selectedDate} 
+            onChange={(e) => setSelectedDate(e.value)} 
+            dateFormat="mm/dd/yy" 
+            showIcon 
+          />
+        </div>
+        <Button label="EXPORT TO PDF" icon="pi pi-file-pdf" style={{ background: '#0072CE', border: 'none' }} />
+      </div>
+
+      <div className="columns-container" style={{ display: 'flex', gap: '20px' }}>
+        {/* PANEL 1: Table */}
+        <div className="content-column column-1" style={{ flex: 1 }}>
+          <DataTable value={filteredData} showGridlines size="small" emptyMessage="No data found.">
+            <Column field="time" header="TIMESTAMP" />
+            <Column field="current" header="ELEVATION" body={(r) => `${r.current.toFixed(2)} ft.`} />
+            <Column field="status" header="STATUS" />
+          </DataTable>
+        </div>
+
+        {/* PANEL 2: Chart with Dynamic Color */}
+        <div className="content-column column-2" style={{ flex: 1, height: '350px' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={filteredData}>
+              <CartesianGrid vertical={false} stroke="#f0f0f0" />
+              <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+              <YAxis domain={[5, 13]} tickFormatter={(v) => `${v} ft.`} tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Line 
+                type="monotone" 
+                dataKey="current" 
+                stroke={lineColor} 
+                strokeWidth={3} 
+                dot={{ r: 4, fill: lineColor }} 
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="card-wrapper" id="main-profile-card">
+    <div className="card-wrapper" id="main-profile-card" style={{ padding: '20px' }}>
       <h1 className="card-heading">HISTORICAL WATER LEVEL DATA OF HULO FERRY STATION</h1>      
-        <div className="tab-nav">
-          <button 
-            className={`nav-item ${activeTab === 'ACTUAL READING' ? 'is-active' : ''}`}
-            onClick={() => setActiveTab('ACTUAL READING')}
-          >
-            ACTUAL READING
-          </button>
-          <button 
-            className={`nav-item ${activeTab === 'PREDICTION' ? 'is-active' : ''}`}
-            onClick={() => setActiveTab('PREDICTION')}
-          >
-            PREDICTED READING
-          </button>
-        </div>
+      
+      <div className="tab-nav">
+        <button 
+          className={`nav-item ${activeTab === 'ACTUAL READING' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('ACTUAL READING')}
+        >
+          ACTUAL READING
+        </button>
+        <button 
+          className={`nav-item ${activeTab === 'PREDICTION' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('PREDICTION')}
+        >
+          PREDICTED READING
+        </button>
+      </div>
 
-        <div className="tab-panel">
-          {activeTab === 'ACTUAL READING' && (
-            <div className="panel-content-area" id="ACTUAL READING-section">
-              
-              <div className="columns-container">
-                
-                {/* PANEL 1 */}
-                <div className="content-column column-1">
-                  <p id='table'>Lorem ipsum dolor sit amet consectetur adipisicing elit. Expedita, laboriosam soluta! Voluptatibus dicta est accusamus fugit architecto qui aliquam cum. Voluptate possimus aut vel pariatur optio minus soluta velit ex.</p>
-                </div>
-
-                {/* PANEL 2 */}
-                <div className="content-column column-2" id='history-actual'>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart 
-                      data={data}
-                      margin={{ top: 30, right: 35, left: 30, bottom: 40 }}
-                    >
-                      <CartesianGrid vertical={false} stroke="#f0f0f0" />
-                      
-                      <XAxis
-                        dataKey="time"
-                        tick={{ fontSize: 10, fontFamily: 'InterRegular' }}
-                        tickMargin={6} 
-                        label={{
-                          value: 'time (t)',
-                          position: 'insideBottom', 
-                          offset: -20, 
-                          style: { 
-                            fontStyle: 'italic', 
-                            fontSize: '12px', 
-                            fontFamily: 'InterRegular',
-                            textAnchor: 'middle' 
-                          }
-                        }}
-                      />
-                      
-                      <YAxis
-                        domain={[5, 12]} 
-                        ticks={[6, 7, 8, 9, 10, 11, 12]}
-                        tick={{ fontSize: 10, fontFamily: 'InterRegular' }}
-                        tickMargin={7}   
-                        tickFormatter={(value) => `${value} ft.`}
-                        label={{ 
-                          value: 'water level (ft.)', 
-                          angle: -90, 
-                          position: 'insideLeft',
-                          offset: 0,
-                          style: { fontStyle: 'italic', textAnchor: 'middle', fontSize: '12px', fontFamily: 'InterRegular' }
-                        }}
-                      />
-                      
-                      <Tooltip 
-                        labelFormatter={(label) => `time: ${label}`}
-                    
-                        formatter={(value) => [`${value} ft.`, 'reading']}
-                        
-                        contentStyle={{ 
-                          borderRadius: '4px', 
-                          fontFamily: 'InterRegular', 
-                          fontSize: '12px',
-                          border: '1px solid #ccc' 
-                        }}
-                        itemStyle={{ padding: '0px' }}
-                      />
-                      
-                      <Line 
-                        name="current"
-                        type="monotone" 
-                        dataKey="current" 
-                        stroke="#FFB800" 
-                        strokeWidth={2} 
-                        dot={{ r: 4, fill: '#FFB800', stroke: '#fff', strokeWidth: 1 }} 
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'PREDICTION' && (
-            <div className="panel-content-area" id="PREDICTION-section">
-             <div className="columns-container">
-                
-                {/* PANEL 1 */}
-                <div className="content-column column-1">
-                  <p id='table'>Lorem ipsum dolor sit amet consectetur adipisicing elit. Expedita, laboriosam soluta! Voluptatibus dicta est accusamus fugit architecto qui aliquam cum. Voluptate possimus aut vel pariatur optio minus soluta velit ex.</p>
-                </div>
-
-                {/* PANEL 2 */}
-                <div className="content-column column-2" id='history-actual'>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart 
-                      data={data}
-                      margin={{ top: 30, right: 35, left: 30, bottom: 40 }}
-                    >
-                      <CartesianGrid vertical={false} stroke="#f0f0f0" />
-                      
-                      <XAxis
-                        dataKey="time"
-                        tick={{ fontSize: 10, fontFamily: 'InterRegular' }}
-                        tickMargin={6} 
-                        label={{
-                          value: 'time (t)',
-                          position: 'insideBottom', 
-                          offset: -20, 
-                          style: { 
-                            fontStyle: 'italic', 
-                            fontSize: '12px', 
-                            fontFamily: 'InterRegular',
-                            textAnchor: 'middle' 
-                          }
-                        }}
-                      />
-                      
-                      <YAxis
-                        domain={[5, 12]} 
-                        ticks={[6, 7, 8, 9, 10, 11, 12]}
-                        tick={{ fontSize: 10, fontFamily: 'InterRegular' }}
-                        tickMargin={7}   
-                        tickFormatter={(value) => `${value} ft.`}
-                        label={{ 
-                          value: 'water level (ft.)', 
-                          angle: -90, 
-                          position: 'insideLeft',
-                          offset: 0,
-                          style: { fontStyle: 'italic', textAnchor: 'middle', fontSize: '12px', fontFamily: 'InterRegular' }
-                        }}
-                      />
-                      
-                      <Tooltip 
-                        labelFormatter={(label) => `time: ${label}`}
-                    
-                        formatter={(value) => [`${value} ft.`, 'reading']}
-                        
-                        contentStyle={{ 
-                          borderRadius: '4px', 
-                          fontFamily: 'InterRegular', 
-                          fontSize: '12px',
-                          border: '1px solid #ccc' 
-                        }}
-                        itemStyle={{ padding: '0px' }}
-                      />
-                      
-                      <Line 
-                        name="current"
-                        type="monotone" 
-                        dataKey="current" 
-                        stroke="#0072CE" 
-                        strokeWidth={2} 
-                        dot={{ r: 4, fill: '#0072CE', stroke: '#fff', strokeWidth: 1 }} 
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+      <div className="tab-panel">
+        {activeTab === 'ACTUAL READING' && renderContent("#FFB800")}
+        {activeTab === 'PREDICTION' && renderContent("#0072CE")}
+      </div>
     </div>
   );
 };
