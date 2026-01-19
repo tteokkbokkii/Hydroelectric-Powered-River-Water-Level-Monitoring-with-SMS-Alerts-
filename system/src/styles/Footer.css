@@ -1,8 +1,6 @@
-/* --- Footer --- */
-.footer-container{
+.footer-container {
     background-color: #f3f4f7;
     display: flex;
-    font-family: InterMedium;
     height: 50px;
     box-shadow: 1px 0px 1px rgba(0, 0, 0, 0.404);
     position: fixed;
@@ -10,22 +8,25 @@
     left: 0;
     width: 100%;
     z-index: 1000;
+    font-family: InterMedium;
 }
 
-.system-status{
+.system-status {
     background-color: #f3f4f7;
     height: 100%;
     flex-grow: 1;
     padding-left: 1.5em;
+    display: flex;
+    align-items: center;
 }
 
-.gsm-signal{
+.gsm-signal {
     background-color: #0072CE;
     height: 100%;
     width: 3.0em;
 }
 
-.battery{
+.battery {
     background-color: #01345f;
     height: 100%;
     width: 3.0em;

@@ -1,109 +1,31 @@
 #root, .app-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background-color: #f0f2f5;
-  min-height: 0; /* Prevents magnification issues */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #f0f2f5;
+    min-height: 0;
+    padding-bottom: 50px; 
+    box-sizing: border-box;
 }
 
 .card-wrapper {
-  background-color: #F4F4F4;
-  flex: 1; /* Fills available height */
-  width: calc(100vw - 3rem);
-  margin: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  border-radius: 1em;
-  padding: 1.5rem;
-  box-shadow: 0px 0px 7px #0000004b;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.card-heading {
-  color: #0072bc;
-  font-family: InterBlack;
-  font-size: 1.6rem;
-  letter-spacing: 0.05em;
-  margin-bottom: 20px;
-  margin-top: 0;
-  flex-shrink: 0; /* Prevents heading from being squished */
-}
-
-.tab-nav {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.nav-item {
-  padding: 12px 40px;
-  border: none;
-  cursor: pointer;
-  background-color: #d9d9d9;
-  color: #6b7280;
-  font-weight: 700;
-  border-radius: 12px 12px 0 0;
-  transition: 0.2s;
-}
-
-.nav-item.is-active {
-  background-color: #ffffff;
-  position: relative;
-  z-index: 2;
-  color: #0072bc;
-  border-top: 5px solid #0072bc;
-  margin-top: -5px;
-  margin-bottom: -1px;
-  border-bottom: 1px solid #ffffff;
-  box-shadow: 0px -4px 7px -4px rgba(0, 0, 0, 0.16);
-}
-
-.tab-panel {
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0 12px 12px 12px;
-  margin-top: -1px;
-  box-shadow: 0px 0px 7px #00000016;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0; /* Crucial for child scaling */
-  overflow: hidden;
-  padding: 20px;
-}
-
-.panel-content-area {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-.columns-container {
-  display: flex;
-  width: 100%;
-  gap: 20px;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.content-column {
-  flex: 1;
-  min-width: 0;
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  display: flex;
-  flex-direction: column;
-  background: white;
+    background-color: #F4F4F4;
+    flex: 1;
+    width: calc(100vw - 3rem);
+    margin: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    border-radius: 1em;
+    padding: 1.5rem;
+    box-shadow: 0px 0px 7px #0000004b;
+    box-sizing: border-box;
+    overflow: hidden;
+    min-height: 0;
 }
