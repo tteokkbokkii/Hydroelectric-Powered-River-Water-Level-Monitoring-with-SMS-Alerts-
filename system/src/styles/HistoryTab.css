@@ -8,7 +8,6 @@
     text-align: justify;
 }
 
-/* 1. Center Headings and allow wrapping */
 .p-datatable .p-column-header-content {
   display: flex;
   justify-content: center; 
@@ -20,8 +19,59 @@
   word-break: break-word;
 }
 
-/* Center-align the actual data cells */
 .p-datatable .p-datatable-tbody > tr > td {
   text-align: center !important;
   justify-content: center;
+}
+
+.calendar-history{
+  display: 'flex';
+  align-Items: 'center';
+  gap: '10px'; 
+}
+
+.calendar-span{
+  font-Weight: 'bold';
+  font-Size: '14px';
+}
+
+.export-bttn{
+  background: #0072CE;
+  border: none;
+}
+
+#history-panel{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-shrink: 0;
+}
+
+#history-column1{
+  flex: 1;
+  display: flex;
+  flex-Direction: column;
+  min-Height: 0;
+}
+
+#history-column2{
+  flex: 1.5;
+  display: flex;
+  flex-Direction: column;
+  min-Height: 0;
+}
+
+.graph-footer{
+  text-Align: center;
+  margin-Top: 5px;
+  font-Size: 13px;
+  color: #666;
+  font-Style: italic;
+  flex-Shrink: 0;
+}
+
+.chart-wrapper{
+  flex: 1;
+  min-Height: 0;
 }

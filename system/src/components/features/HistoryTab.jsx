@@ -1,6 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
 } from 'recharts';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -49,17 +55,18 @@ const HistoryTab = () => {
 
   const renderContent = (lineColor) => (
     <div className="panel-content-area">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontWeight: 'bold', fontSize: '14px' }}>DATE:</span>
+      <div id='history-panel'>
+
+        <div className='calendar-history'>
+          <span className='calendar-span'>DATE:</span>
           <Calendar value={selectedDate} onChange={(e) => setSelectedDate(e.value)} dateFormat="mm/dd/yy" showIcon />
         </div>
-        <Button label="EXPORT TO PDF" icon="pi pi-file-pdf" style={{ background: '#0072CE', border: 'none' }} />
+
+        <Button className='export-bttn' label="EXPORT TO PDF" icon="pi pi-file-pdf"/>
       </div>
 
       <div className="columns-container">
-        {/* Left Column: Table fills available height automatically */}
-        <div className="content-column column-1" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div className="content-column column-1" id='history-column1'>
           <DataTable 
             value={filteredData} 
             showGridlines 
@@ -74,20 +81,53 @@ const HistoryTab = () => {
           </DataTable>
         </div>
 
-        {/* Right Column: Graph fits available height */}
-        <div className="content-column column-2" style={{ flex: 1.5, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ flex: 1, minHeight: 0 }}>
+        <div className="content-column column-2" id='history-column2'>
+          <div className='chart-wrapper'>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={filteredData} margin={{ top: 20, right: 35, left: 30, bottom: 40 }}>
+              <LineChart
+                data={filteredData}
+                margin={{ top: 20, right: 35, left: 30, bottom: 40 }}
+              >
+                
                 <CartesianGrid stroke="#f0f0f0" />
-                <XAxis dataKey="time" tick={{ fontSize: 10 }} interval={11} label={{ value: 'time (t)', position: 'insideBottom', offset: -20, style: { fontStyle: 'italic', fontSize: '12px' } }} />
-                <YAxis domain={[5, 12]} ticks={[6, 7, 8, 9, 10, 11, 12]} tick={{ fontSize: 10 }} tickFormatter={(v) => `${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft', style: { fontStyle: 'italic', fontSize: '12px' } }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="current" stroke={lineColor} strokeWidth={2} dot={false} />
+                <XAxis
+                  dataKey="time"
+                  tick={{ fontSize: 10 }}
+                  interval={11}
+                  label={{
+                    value: 'time (t)',
+                    position: 'insideBottom',
+                    offset: -20,
+                    style: { fontStyle: 'italic', fontSize: '12px' }
+                  }}
+                />
+
+                <YAxis
+                  domain={[5, 12]}
+                  ticks={[6, 7, 8, 9, 10, 11, 12]}
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(v) => `${v} ft.`}
+                  label={{
+                    value: 'water level (ft.)',
+                    angle: -90,
+                    position: 'insideLeft',
+                    style: { fontStyle: 'italic', fontSize: '12px' }
+                  }}
+                />
+
+                <Tooltip/>
+
+                <Line
+                  type="monotone"
+                  dataKey="current"
+                  stroke={lineColor}
+                  strokeWidth={2}
+                  dot={false}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div style={{ textAlign: 'center', marginTop: '5px', fontSize: '13px', color: '#666', fontStyle: 'italic', flexShrink: 0 }}>
+          <div className='graph-footer'>
             {activeTab === 'ACTUAL READING' ? 'Actual Reading' : 'Predicted Reading'} for {selectedDate.toLocaleDateString()}
           </div>
         </div>
