@@ -1,10 +1,48 @@
 import React, { useState } from 'react';
 
-const TabContainer = () => {
-  const [activeTab, setActiveTab] = useState('ABOUT');
+const SystemTab = () => {
+  const [activeTab, setActiveTab] = useState('SETTINGS'); // Defaulted to Settings for view
 
   return (
     <div className="main-content">
+      {/* Internal CSS to handle the spin button layout and units */}
+      <style>{`
+        .input-with-unit {
+          display: flex;
+          align-items: center;
+          background: #e9ecef;
+          border-radius: 4px;
+          padding: 0 8px;
+          min-width: 100px;
+        }
+        .settings-input {
+          border: none !important;
+          background: transparent !important;
+          width: 60px;
+          padding: 8px 4px !important;
+          text-align: right;
+          outline: none;
+        }
+        /* Ensures spin buttons (arrows) are always visible */
+        .settings-input::-webkit-inner-spin-button,
+        .settings-input::-webkit-outer-spin-button {
+          opacity: 1 !important;
+          cursor: pointer;
+        }
+        .unit-label {
+          font-size: 14px;
+          color: #555;
+          margin-left: 4px;
+          padding-bottom: 2px;
+        }
+        .settings-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        }
+      `}</style>
+
       <div className="card-wrapper" id="main-profile-card">
         <h1 className="card-heading">SYSTEM</h1>
 
@@ -122,8 +160,110 @@ const TabContainer = () => {
           )}
 
           {activeTab === 'SETTINGS' && (
-            <div className="single-content-area">
-              <p>Settings configuration would go here.</p>
+            <div className="settings-grid">
+              {/* Left Column: Thresholds and Intervals */}
+              <div className="settings-column border-right">
+                <div className="content-group">
+                  <h3 className="SysTab-title">SENSOR THRESHOLDS</h3>
+                  
+                  <div className="settings-row">
+                    <span>Normal Thresholds :</span>
+                    <div className="input-with-unit">
+                        <input type="number" step="0.1" className="settings-input" defaultValue="6.5" />
+                        <span className="unit-label">ft.</span>
+                    </div>
+                  </div>
+
+                  <div className="settings-row">
+                    <span>Needs Attention :</span>
+                    <div className="input-with-unit">
+                        <input type="number" step="0.1" className="settings-input" defaultValue="8.0" />
+                        <span className="unit-label">ft.</span>
+                    </div>
+                  </div>
+
+                  <div className="settings-row">
+                    <span>Highly Critical :</span>
+                    <div className="input-with-unit">
+                        <input type="number" step="0.1" className="settings-input" defaultValue="9.5" />
+                        <span className="unit-label">ft.</span>
+                    </div>
+                  </div>
+
+                  <div className="settings-row">
+                    <span>Extremely Critical :</span>
+                    <div className="input-with-unit">
+                        <input type="number" step="0.1" className="settings-input" defaultValue="11.5" />
+                        <span className="unit-label">ft.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="content-group mt-20">
+                  <h3 className="SysTab-title">INTERVALS</h3>
+                  <div className="settings-row">
+                    <span>Reading Intervals :</span>
+                    <div className="input-with-unit">
+                        <input type="number" className="settings-input" defaultValue="5" />
+                        <span className="unit-label">mins.</span>
+                    </div>
+                  </div>
+                  <div className="settings-row">
+                    <span>Predicting Intervals :</span>
+                    <div className="input-with-unit">
+                        <input type="number" className="settings-input" defaultValue="60" />
+                        <span className="unit-label">mins.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Push Notifications */}
+              <div className="settings-column">
+                <div className="content-group">
+                  <h3 className="SysTab-title">PUSH NOTIFICATION</h3>
+                  <div className="notification-section">
+                    <span className="section-label">Threshold Alerts</span>
+                    <div className="toggle-group">
+                      <div className="toggle-row">
+                        <span>Normal Thresholds</span>
+                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
+                      </div>
+                      <div className="toggle-row">
+                        <span>Needs Attention</span>
+                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
+                      </div>
+                      <div className="toggle-row">
+                        <span>Highly Critical</span>
+                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
+                      </div>
+                      <div className="toggle-row">
+                        <span>Extremely Critical</span>
+                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="notification-section mt-20">
+                    <span className="section-label">System Alerts</span>
+                    <div className="toggle-group">
+                      <div className="toggle-row">
+                        <span>Power/Turbine Loss</span>
+                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
+                      </div>
+                      <div className="toggle-row">
+                        <span>Sensor Disconnect</span>
+                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="settings-actions">
+                  <button className="action-button save-btn">SAVE CHANGES</button>
+                  <button className="action-button reset-btn">RESET TO DEFAULT</button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -132,4 +272,4 @@ const TabContainer = () => {
   );
 };
 
-export default TabContainer;
+export default SystemTab;

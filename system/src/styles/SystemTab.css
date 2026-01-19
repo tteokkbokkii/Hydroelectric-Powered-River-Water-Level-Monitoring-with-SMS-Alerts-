@@ -124,3 +124,118 @@
     text-transform: uppercase;
     letter-spacing: 0.02em;
 }
+
+/* Settings Layout */
+.settings-grid {
+    display: flex;
+    justify-content: space-between;
+    flex: 1;
+    padding: 10px 0;
+}
+
+.settings-column {
+    flex: 1;
+    padding: 0 25px;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    font-family: InterMedium;
+}
+
+.settings-input {
+    background-color: #e5e7eb;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    width: 100px;
+    text-align: left;
+    font-family: inherit;
+    color: #333;
+}
+
+/* Push Notification Styles */
+.notification-section {
+    display: flex;
+    gap: 20px;
+}
+
+.section-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.toggle-group {
+    flex: 1;
+}
+
+.toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+}
+
+/* Action Buttons */
+.settings-actions {
+    margin-top: 40px;
+    display: flex;
+    gap: 15px;
+    padding-top: 10px;
+}
+
+.action-button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    background-color: #0072bc;
+}
+
+.reset-btn {
+    background-color: #0072bc; /* Based on image, both are blue */
+}
+
+/* Custom Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px; width: 14px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider { background-color: #0072bc; }
+input:checked + .slider:before { transform: translateX(14px); }
+
