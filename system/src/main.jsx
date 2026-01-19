@@ -5,7 +5,7 @@ import './styles/Header.css'
 import './styles/Footer.css'
 import './styles/Announcement-Bar.css'
 import './styles/Card.css'
-import './styles/TabContainer.css'
+import './styles/SystemTab.css'
 import './styles/HistoryTab.css'
 import App from './App.jsx'
 
