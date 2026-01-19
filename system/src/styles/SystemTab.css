@@ -29,3 +29,98 @@
     overflow: hidden;
     min-height: 0;
 }
+
+.system-grid {
+    display: flex;
+    justify-content: space-between;
+    flex: 1;
+    padding: 10px 0;
+    align-items: center;
+}
+
+.system-column {
+    flex: 1;
+    padding: 0 25px;
+    display: flex;
+    flex-direction: column;
+}
+
+.border-right {
+    border-right: 1.5px solid #ccc;
+}
+
+.content-group h3 {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #333;
+    margin-bottom: 15px;
+    font-family: Arial, sans-serif;
+}
+
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: #444;
+    font-family: InterMedium;
+}
+
+.mt-20 {
+    margin-top: 25px;
+}
+
+.value-box {
+    font-family: monospace;
+    font-weight: bold;
+    color: #333;
+}
+
+.status-pill {
+    background-color: #e5e7eb;
+    color: #333;
+    padding: 4px 12px;
+    border-radius: 4px;
+    min-width: 80px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.75rem;
+}
+
+.reboot-container {
+    margin-top: 40px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.reboot-button {
+    background-color: #0072bc;
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: InterMedium;
+}
+
+.reboot-button:hover {
+    background-color: #005a96;
+}
+
+.SysTab-title{
+    font-family: InterMedium;
+}
+
+.content-group h3.SysTab-title {
+    font-family: InterMedium !important;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #333;
+    margin-bottom: 15px;
+    margin-top: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
