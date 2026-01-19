@@ -12,7 +12,7 @@ function App() {
       <>
         <Header/>
         <Announcement/>
-        <SystemTab/>
+        <HistoryTab/>
         <Footer/>
       </>
     )
