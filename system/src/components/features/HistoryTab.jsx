@@ -18,34 +18,55 @@ import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 
-const data = [
-  { date: '2026-01-19', time: '00:00', current: 6.2, status: 'NORMAL' },
-  { date: '2026-01-19', time: '08:00', current: 9.0, status: 'WARNING' },
-  { date: '2026-01-19', time: '23:00', current: 12.0, status: 'CRITICAL' },
-  { date: '2026-01-20', time: '00:00', current: 10.1, status: 'WARNING' },
-  { date: '2026-01-20', time: '12:00', current: 6.5, status: 'NORMAL' }
-];
+// --- Data Generation Logic ---
+const generateStaticConstantData = () => {
+  const result = [];
+  const dates = ['2026-01-19', '2026-01-20'];
+  
+  dates.forEach((dateString, dayIndex) => {
+    for (let i = 0; i < 288; i++) {
+      const h = Math.floor((i * 5) / 60).toString().padStart(2, '0');
+      const m = ((i * 5) % 60).toString().padStart(2, '0');
+      
+      let val;
+      if (dayIndex === 0) {
+        val = 6 + (i / 288) * 5 + Math.sin(i / 10) * 0.15; 
+      } else {
+        val = 11 - (i / 288) * 4 + Math.cos(i / 10) * 0.15; 
+      }
+
+      result.push({ 
+        date: dateString, 
+        time: `${h}:${m}`, 
+        current: parseFloat(val.toFixed(2)), 
+        status: 'NORMAL' 
+      });
+    }
+    // Optional: Add a 24:00 point for a full 00-24 display
+    result.push({ date: dateString, time: '24:00', current: result[result.length-1].current, status: 'NORMAL' });
+  });
+  return result;
+};
+
+const STATIC_DATA = generateStaticConstantData();
 
 const HistoryTab = () => {
   const [activeTab, setActiveTab] = useState('ACTUAL READING');
   const [selectedDate, setSelectedDate] = useState(new Date('2026-01-19'));
 
-  // Logic: Filters data for BOTH Table and Graph
   const filteredData = useMemo(() => {
-    return data.filter(item => {
-      const itemDate = new Date(item.date).toDateString();
-      const searchDate = selectedDate ? selectedDate.toDateString() : '';
-      return itemDate === searchDate;
+    return STATIC_DATA.filter(item => {
+      const itemDateStr = new Date(item.date).toDateString();
+      const searchDateStr = selectedDate ? selectedDate.toDateString() : '';
+      return itemDateStr === searchDateStr;
     });
   }, [selectedDate]);
 
-  // Helper to render the shared layout (Table + Graph) with dynamic color
   const renderContent = (lineColor) => (
     <div className="panel-content-area">
-      {/* Date Picker Row inside the panel */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontWeight: 'bold' }}>DATE:</span>
+          <span style={{ fontWeight: 'bold', fontSize: '14px' }}>DATE:</span>
           <Calendar 
             value={selectedDate} 
             onChange={(e) => setSelectedDate(e.value)} 
@@ -57,32 +78,79 @@ const HistoryTab = () => {
       </div>
 
       <div className="columns-container" style={{ display: 'flex', gap: '20px' }}>
-        {/* PANEL 1: Table */}
         <div className="content-column column-1" style={{ flex: 1 }}>
-          <DataTable value={filteredData} showGridlines size="small" emptyMessage="No data found.">
-            <Column field="time" header="TIMESTAMP" />
-            <Column field="current" header="ELEVATION" body={(r) => `${r.current.toFixed(2)} ft.`} />
+          <DataTable value={filteredData} showGridlines size="small" scrollable scrollHeight="450px">
+            <Column field="time" header="TIMESTAMP" sortable />
+            <Column 
+              field="current" 
+              header="ELEVATION" 
+              body={(rowData) => `${rowData.current.toFixed(2)} ft.`} 
+              sortable
+            />
             <Column field="status" header="STATUS" />
           </DataTable>
         </div>
 
-        {/* PANEL 2: Chart with Dynamic Color */}
-        <div className="content-column column-2" style={{ flex: 1, height: '350px' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={filteredData}>
-              <CartesianGrid vertical={false} stroke="#f0f0f0" />
-              <XAxis dataKey="time" tick={{ fontSize: 10 }} />
-              <YAxis domain={[5, 13]} tickFormatter={(v) => `${v} ft.`} tick={{ fontSize: 10 }} />
-              <Tooltip />
+        <div className="content-column column-2" style={{ flex: 1.5, height: '480px', display: 'flex', flexDirection: 'column' }}>
+          <ResponsiveContainer width="100%" height="90%">
+            <LineChart data={filteredData} margin={{ top: 30, right: 35, left: 30, bottom: 40 }}>
+              <CartesianGrid stroke="#f0f0f0" />
+              
+              <XAxis
+                dataKey="time"
+                tick={{ fontSize: 10, fontFamily: 'InterRegular' }}
+                tickMargin={10} 
+                interval={11} 
+                label={{
+                  value: 'time (t)',
+                  position: 'insideBottom', 
+                  offset: -20, 
+                  style: { fontStyle: 'italic', fontSize: '12px', fontFamily: 'InterRegular', textAnchor: 'middle' }
+                }}
+              />
+              
+              <YAxis
+                domain={[5, 12]} 
+                ticks={[6, 7, 8, 9, 10, 11, 12]}
+                tick={{ fontSize: 10, fontFamily: 'InterRegular' }}
+                tickMargin={7}   
+                tickFormatter={(v) => `${v} ft.`}
+                label={{ 
+                  value: 'water level (ft.)', 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  style: { fontStyle: 'italic', textAnchor: 'middle', fontSize: '12px', fontFamily: 'InterRegular' }
+                }}
+              />
+              
+              <Tooltip 
+                labelFormatter={(label) => `time: ${label}`}
+                formatter={(value) => [`${value} ft.`, 'reading']}
+                contentStyle={{ borderRadius: '4px', fontFamily: 'InterRegular', fontSize: '12px', border: '1px solid #ccc' }}
+              />
+              
               <Line 
+                name="current"
                 type="monotone" 
                 dataKey="current" 
-                stroke={lineColor} 
-                strokeWidth={3} 
-                dot={{ r: 4, fill: lineColor }} 
+                stroke={lineColor}
+                strokeWidth={2} 
+                dot={false} 
+                activeDot={{ r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>
+
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: '10px', 
+            fontFamily: 'InterRegular', 
+            fontSize: '13px', 
+            color: '#666',
+            fontStyle: 'italic'
+          }}>
+            {activeTab === 'ACTUAL READING' ? 'Actual Reading' : 'Predicted Reading'} for {selectedDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+          </div>
         </div>
       </div>
     </div>
@@ -90,23 +158,13 @@ const HistoryTab = () => {
 
   return (
     <div className="card-wrapper" id="main-profile-card" style={{ padding: '20px' }}>
-      <h1 className="card-heading">HISTORICAL WATER LEVEL DATA OF HULO FERRY STATION</h1>      
-      
+      <h1 className="card-heading" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0056b3' }}>
+        HISTORICAL WATER LEVEL DATA OF HULO FERRY STATION
+      </h1>      
       <div className="tab-nav">
-        <button 
-          className={`nav-item ${activeTab === 'ACTUAL READING' ? 'is-active' : ''}`}
-          onClick={() => setActiveTab('ACTUAL READING')}
-        >
-          ACTUAL READING
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'PREDICTION' ? 'is-active' : ''}`}
-          onClick={() => setActiveTab('PREDICTION')}
-        >
-          PREDICTED READING
-        </button>
+        <button className={`nav-item ${activeTab === 'ACTUAL READING' ? 'is-active' : ''}`} onClick={() => setActiveTab('ACTUAL READING')}>ACTUAL READING</button>
+        <button className={`nav-item ${activeTab === 'PREDICTION' ? 'is-active' : ''}`} onClick={() => setActiveTab('PREDICTION')}>PREDICTED READING</button>
       </div>
-
       <div className="tab-panel">
         {activeTab === 'ACTUAL READING' && renderContent("#FFB800")}
         {activeTab === 'PREDICTION' && renderContent("#0072CE")}
