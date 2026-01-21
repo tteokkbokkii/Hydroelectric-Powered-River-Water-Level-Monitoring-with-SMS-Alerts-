@@ -8,7 +8,7 @@ function Contacts(){
       <>
         <Header/>
         <Announcement/>
-        <HistoryTab/>
+        <ContactsTab/>
         <Footer/>
       </>
     )

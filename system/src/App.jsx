@@ -6,14 +6,23 @@ import RiverTrend from './components/features/RiverTrend.jsx'
 import RecentLogs from './components/features/RecentLogs.jsx'
 import SystemTab from './components/features/SystemTab.jsx';
 import HistoryTab from './components/features/HistoryTab.jsx';
+import {HashRouter as Router, Routes, Route} from 'react-router-dom'
+import Contacts from './pages/Contacts'
+import Dashboard from './pages/Dashboard'
+import History from './pages/History'
+import System from './pages/System'
 
 function App() {
     return(
       <>
-        <Header/>
-        <Announcement/>
-        <SystemTab/>
-        <Footer/>
+            <Router>
+      <Routes>
+        <Route path='/Dashboard' element={<Dashboard/>}/>
+        <Route path='/Contacts' element={<Contacts/>}/>
+        <Route path='/History' element={<History/>}/>
+        <Route path='/System' element={<System/>}/>
+      </Routes>
+    </Router>
       </>
     )
 }

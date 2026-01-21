@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef} from 'react';
+import { Link } from 'react-router-dom';
 import logo from "../assets/logo.png";
 function Header(){
     const [isOpen, setIsOpen] = useState(false);
@@ -64,12 +65,12 @@ return(
                         <div className='bar'></div>
                     </button>
                    
-                    <div className='contents'>
-                        <a href="#">DASHBOARD</a>
-                        <a href="#">HISTORY</a>
-                        <a href="#">CONTACTS</a>
-                        <a href="#">SYSTEM</a>
-                    </div>
+                <div className='contents'>
+                    <Link to="/Dashboard">DASHBOARD</Link>
+                    <Link to="/History">HISTORY</Link>
+                    <Link to="/Contacts">CONTACTS</Link>
+                    <Link to="/System">SYSTEM</Link>
+                </div>
                 </div>
             </nav>
         </header>

@@ -8,7 +8,7 @@ function System(){
       <>
         <Header/>
         <Announcement/>
-        <HistoryTab/>
+        <SystemTab/>
         <Footer/>
       </>
     )

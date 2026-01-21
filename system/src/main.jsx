@@ -7,6 +7,7 @@ import './styles/Announcement-Bar.css'
 import './styles/Card.css'
 import './styles/SystemTab.css'
 import './styles/HistoryTab.css'
+import './styles/ContactsTab.css'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
