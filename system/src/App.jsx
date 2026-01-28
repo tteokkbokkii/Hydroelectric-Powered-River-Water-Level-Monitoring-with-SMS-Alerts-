@@ -15,13 +15,14 @@ import System from './pages/System'
 function App() {
     return(
       <>
-            <Router>
-      <Routes>
-        <Route path='/Dashboard' element={<Dashboard/>}/>
-        <Route path='/Contacts' element={<Contacts/>}/>
-        <Route path='/History' element={<History/>}/>
-        <Route path='/System' element={<System/>}/>
-      </Routes>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path='/Dashboard' element={<Dashboard/>}/>
+          <Route path='/Contacts' element={<Contacts/>}/>
+          <Route path='/History' element={<History/>}/>
+          <Route path='/System' element={<System/>}/>
+        </Routes>
     </Router>
       </>
     )
