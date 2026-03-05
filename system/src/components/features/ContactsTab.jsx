@@ -38,88 +38,96 @@ const ContactsTab = () => {
 
   return (
     <div className="card-wrapper" style={{ flexDirection: 'row', padding: 0, background: 'transparent', boxShadow: 'none' }}>
-      <div className="two-column-layout">
+      {/* Add bottom padding to the two-column layout to account for the fixed footer */}
+      <div className="two-column-layout" style={{ display: 'flex', gap: '1rem', paddingBottom: '40px'}}>
         
-        {/* --- LEFT CARD --- */}
-        <div className="content-card left-card">
-          <h2 className="section-heading">CONTACTS</h2>
-          
-          <table className="custom-contacts-table">
-            <thead>
-              <tr>
-                <th>RECIPIENT NAME</th>
-                <th>PHONE NUMBER</th>
-                <th>ALERT LEVEL</th>
-                <th>ACTION</th>
-              </tr>
-            </thead>
-            <tbody>
-              {contacts.map((contact, index) => (
-                <tr key={index}>
-                  <td>{contact.name}</td>
-                  <td>{contact.phone}</td>
-                  <td>{contact.alertLevel}</td>
-                  <td>
-                    {/* Added onClick handler here */}
-                    <button 
-                      className="table-action-btn" 
-                      onClick={() => handleEdit(contact.name)}
-                    >
-                      EDIT
-                    </button>
-                  </td>
-                </tr>
+        <div className="card-container" id="contacts-card" style={{ flex: '2', minWidth: 0 }}>
+          <h2 className="card-title">CONTACTS</h2>
+          <div className="innercard-container" id="contacts-contents">
+            {/* Scrollable table area */}
+            <div className="contacts-scrollable">
+              <table className="custom-contacts-table">
+                <thead>
+                  <tr>
+                    <th>RECIPIENT NAME</th>
+                    <th>PHONE NUMBER</th>
+                    <th>ALERT LEVEL</th>
+                    <th>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contacts.map((contact, index) => (
+                    <tr key={index}>
+                      <td>{contact.name}</td>
+                      <td>{contact.phone}</td>
+                      <td>{contact.alertLevel}</td>
+                      <td>
+                        <button 
+                          className="table-action-btn" 
+                          onClick={() => handleEdit(contact.name)}
+                        >
+                          EDIT
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Fixed button bar – right‑aligned */}
+            <div className="bottom-controls">
+              <button className="control-btn" onClick={handleAdd}>ADD</button>
+              <button className="control-btn" onClick={handleSave}>SAVE</button>
+            </div>
+
+            {/* SMS section – fixed at bottom */}
+            <div className="sms-section">
+              <h3 className="subsection-heading">SMS TESTING</h3>
+              <div className="sms-form-wrapper">
+                <div className="form-row">
+                  <div className="form-label">TYPE MESSAGE:</div>
+                  <div className="form-input-container">
+                    <textarea 
+                      className="custom-textarea"
+                      defaultValue="Test ID: 001 Status: GSM Link Verification Characters: ABCabc123!@# Time: 2025-12-29 11:20"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row" style={{ marginBottom: 0, alignItems: 'center' }}>
+                  <div className="form-label">SEND TO:</div>
+                  <div className="form-input-container">
+                    <Dropdown 
+                      value={selectedRecipient} 
+                      onChange={(e) => setSelectedRecipient(e.value)} 
+                      options={recipientOptions} 
+                      placeholder="Select Recipient" 
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div> {/* end innercard-container */}
+        </div>
+
+        {/* --- RIGHT CARD (SMS LOGS) --- */}
+        <div className="card-container" id="smslogs-card" style={{ flex: '1', minWidth: 0 }}>    {/* right card - 1/3 */}
+          <h2 className="card-title">SMS LOGS</h2>
+          <div className="innercard-container" id="smslogs-contents">
+            <div className="logs-list">
+              {logs.map((log, index) => (
+                <div key={index} className="log-item">
+                  <span className="log-time">{log.time}</span>
+                  <span className={`log-tag-${log.type}`}>{log.tag}</span>
+                  <span className="log-sender"> {log.sender}: </span>
+                  <span className="log-content">{log.msg}</span>
+                </div>
               ))}
-            </tbody>
-          </table>
-          
-          <div className="bottom-controls">
-            {/* Added onClick handlers here */}
-            <button className="control-btn" onClick={handleAdd}>ADD</button>
-            <button className="control-btn" onClick={handleSave}>SAVE</button>
-          </div>
-
-          <h2 className="section-heading">SMS TESTING</h2>
-          <div className="sms-form-wrapper">
-            <div className="form-row">
-              <div className="form-label">TYPE MESSAGE:</div>
-              <div className="form-input-container">
-                <textarea 
-                  className="custom-textarea"
-                  defaultValue="Test ID: 001 Status: GSM Link Verification Characters: ABCabc123!@# Time: 2025-12-29 11:20"
-                />
-              </div>
             </div>
-
-            <div className="form-row" style={{ marginBottom: 0, alignItems: 'center' }}>
-              <div className="form-label">SEND TO:</div>
-              <div className="form-input-container">
-                <Dropdown 
-                  value={selectedRecipient} 
-                  onChange={(e) => setSelectedRecipient(e.value)} 
-                  options={recipientOptions} 
-                  placeholder="Select Recipient" 
-                  style={{ width: '100%' }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* --- RIGHT CARD --- */}
-        <div className="content-card right-card">
-          <h2 className="section-heading">SMS LOGS</h2>
-          <div className="logs-list">
-            {logs.map((log, index) => (
-              <div key={index} style={{ marginBottom: '8px' }}>
-                <span className="log-time">{log.time}</span>
-                <span className={`log-tag-${log.type}`}>{log.tag}</span>
-                <span className="log-sender"> {log.sender}: </span>
-                <span className="log-content">{log.msg}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+          </div> {/* end innercard-container */}
+        </div> {/* end card-container */}
 
       </div>
     </div>

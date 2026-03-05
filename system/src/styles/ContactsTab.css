@@ -42,6 +42,11 @@
 }
 
 /* --- The Contacts Table (Explicit Styling) --- */
+.custom-contacts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
 table.custom-contacts-table {
   width: 100%;
   border-collapse: collapse;
@@ -78,10 +83,11 @@ table.custom-contacts-table th {
 }
 
 .bottom-controls {
+  flex-shrink: 0;    /* prevent shrinking */
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-bottom: 30px;
+  justify-content: flex-end; /* push buttons to the right */
+  gap: 0.5rem;
+  margin: 1rem 0 0 0; /* adjust spacing as needed */
 }
 
 .control-btn {
@@ -135,6 +141,67 @@ table.custom-contacts-table th {
   height: 80px;
 }
 
+/* Make the card a flex column so the inner container fills remaining space */
+#contacts-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* relies on parent having a height */
+}
+
+/* The inner container takes all space below the title */
+#contacts-card .innercard-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* prevent overflow, we'll handle scrolling inside */
+  min-height: 0;    /* important for flex children to shrink */
+}
+
+/* Scrollable area for table + buttons */
+.contacts-scrollable {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 0.5rem; /* optional, avoid scrollbar overlap */
+}
+
+/* SMS section – stays at bottom, does not scroll */
+.sms-section {
+  flex-shrink: 0;
+  margin-top: 1rem;   /* space above the section */
+  padding-top: 0.5rem; /* optional */
+  border-top: 1px solid #eee; /* visual separation */
+}
+
+/* Example: make the contacts table scrollable if it overflows */
+#contacts-contents {
+  overflow-y: auto;
+  padding: 1.5rem;  /* match #recentlogs-contents padding */
+}
+
+/* Apply padding, flex column, gap, and scrolling to the inner container */
+#smslogs-contents {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;          /* spacing between log items */
+  overflow-y: auto;      /* enable scrolling when content overflows */
+}
+
+/* Style each log item like the <p> in RecentLogs */
+#smslogs-contents .log-item {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.5rem;
+}
+
+/* Optional: remove border from the last item if you don't want a line at the very bottom */
+#smslogs-contents .log-item:last-child {
+  border-bottom: none;
+}
+
 /* --- Logs Coloring --- */
 .logs-list {
   flex: 1;
@@ -142,6 +209,14 @@ table.custom-contacts-table th {
   font-family: monospace; /* Monospace for alignment */
   font-size: 13px;
   line-height: 1.8;
+}
+
+.logs-list p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0; 
+  padding-bottom: 0.5rem;
 }
 
 .log-time { color: #888; margin-right: 8px; }

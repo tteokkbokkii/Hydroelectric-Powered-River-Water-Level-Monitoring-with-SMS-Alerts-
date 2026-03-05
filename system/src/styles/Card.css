@@ -131,3 +131,26 @@
     font-weight: bold;
     color: #0072CE;
 }
+
+/* Style the sub-heading to differentiate from card-title */
+.subsection-heading {
+  margin: 1.5rem 0 0.5rem 0;
+  font-size: 1.2rem;
+  color: #555;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.25rem;
+}
+
+/* Ensure buttons and form elements fit the card's aesthetic */
+.control-btn, .table-action-btn {
+  background: #0072CE;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+.control-btn:hover, .table-action-btn:hover {
+  background: #005bb5;
+}
