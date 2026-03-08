@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 
 const SystemTab = () => {
-  const [activeTab, setActiveTab] = useState('SETTINGS'); // Defaulted to Settings for view
+  const [activeTab, setActiveTab] = useState('SETTINGS');
 
   return (
     <div className="main-content">
-      {/* Internal CSS to handle the spin button layout and units */}
+      {/* Internal CSS – added scroll handling */}
       <style>{`
         .input-with-unit {
           display: flex;
@@ -23,7 +23,6 @@ const SystemTab = () => {
           text-align: right;
           outline: none;
         }
-        /* Ensures spin buttons (arrows) are always visible */
         .settings-input::-webkit-inner-spin-button,
         .settings-input::-webkit-outer-spin-button {
           opacity: 1 !important;
@@ -41,6 +40,32 @@ const SystemTab = () => {
           align-items: center;
           margin-bottom: 10px;
         }
+
+        /* ---------- SCROLL FIX ---------- */
+        /* Ensure the card takes full available height and uses flex column */
+        .card-wrapper {
+          display: flex;
+          flex-direction: column;
+          height: 100%;           /* Adjust based on your layout – may need 100vh or calc */
+          max-height: 100%;        /* Prevents overflow beyond parent */
+        }
+
+        /* Make the tab panel scrollable when content is tall */
+        .tab-panel {
+          flex: 1;                 /* Takes remaining space */
+          overflow-y: auto;        /* Enables vertical scrolling */
+          padding-right: 4px;      /* Small padding to avoid scrollbar overlap */
+        }
+
+        /* Optional: style scrollbar for better appearance */
+        .tab-panel::-webkit-scrollbar {
+          width: 6px;
+        }
+        .tab-panel::-webkit-scrollbar-thumb {
+          background-color: rgba(0,0,0,0.2);
+          border-radius: 3px;
+        }
+        /* --------------------------------- */
       `}</style>
 
       <div className="card-wrapper" id="main-profile-card">
@@ -64,7 +89,7 @@ const SystemTab = () => {
         <div className="tab-panel">
           {activeTab === 'ABOUT' && (
             <div className="system-grid">
-              {/* Column 1: Network & Power */}
+              {/* Left Column: Network & System */}
               <div className="system-column border-right">
                 <div className="content-group">
                   <h3 className="SysTab-title">NETWORK</h3>
@@ -79,28 +104,28 @@ const SystemTab = () => {
                 </div>
 
                 <div className="content-group mt-20">
-                  <h3 className="SysTab-title">POWER AND TURBINE</h3>
+                  <h3 className="SysTab-title">SYSTEM</h3>
                   <div className="data-row">
-                    <span>Turbine Speed :</span>
-                    <span className="value-box">[ 450 ] RPM</span>
+                    <span>System Up:</span>
+                    <span className="status-pill">14d 05h 22m</span>
                   </div>
                   <div className="data-row">
-                    <span>Current Load :</span>
-                    <span className="value-box">[ 12.23 ] W</span>
+                    <span>Signal:</span>
+                    <span className="status-pill">Excellent</span>
                   </div>
                   <div className="data-row">
-                    <span>Turbine Load :</span>
-                    <span className="value-box">[ 15.44 ] W</span>
+                    <span>Network:</span>
+                    <span className="status-pill">4G / LTE</span>
                   </div>
                   <div className="data-row">
-                    <span>In Use:</span>
-                    <span className="status-pill">Turbine</span>
+                    <span>Battery Health:</span>
+                    <span className="status-pill">100%</span>
                   </div>
                 </div>
               </div>
 
-              {/* Column 2: Connectivity Status */}
-              <div className="system-column border-right">
+              {/* Right Column: Uptime and Connectivity */}
+              <div className="system-column">
                 <div className="content-group">
                   <h3 className="SysTab-title">UPTIME AND CONNECTIVITY</h3>
                   <div className="data-row">
@@ -126,29 +151,6 @@ const SystemTab = () => {
                   <div className="data-row">
                     <span>GSM Module:</span>
                     <span className="status-pill">STABLE</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Column 3: System Health */}
-              <div className="system-column">
-                <div className="content-group">
-                  <h3 className="SysTab-title">SYSTEM</h3>
-                  <div className="data-row">
-                    <span>System Up:</span>
-                    <span className="status-pill">14d 05h 22m</span>
-                  </div>
-                  <div className="data-row">
-                    <span>Signal:</span>
-                    <span className="status-pill">Excellent</span>
-                  </div>
-                  <div className="data-row">
-                    <span>Network:</span>
-                    <span className="status-pill">4G / LTE</span>
-                  </div>
-                  <div className="data-row">
-                    <span>Battery Health:</span>
-                    <span className="status-pill">100%</span>
                   </div>
                 </div>
 
