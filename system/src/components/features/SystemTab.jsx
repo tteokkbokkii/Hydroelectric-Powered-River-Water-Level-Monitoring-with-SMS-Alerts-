@@ -1,71 +1,127 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const SystemTab = () => {
   const [activeTab, setActiveTab] = useState('SETTINGS');
 
+  // ---------- State for Settings ----------
+  // Load from localStorage if available, otherwise use defaults
+  const [thresholds, setThresholds] = useState(() => {
+    const saved = localStorage.getItem('sensorThresholds');
+    return saved ? JSON.parse(saved) : {
+      normal: 6.5,
+      attention: 8.0,
+      critical: 9.5
+    };
+  });
+
+  const [intervals, setIntervals] = useState(() => {
+    const saved = localStorage.getItem('readingIntervals');
+    return saved ? JSON.parse(saved) : {
+      reading: 5,
+      predicting: 60
+    };
+  });
+
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('notificationSettings');
+    return saved ? JSON.parse(saved) : {
+      normal: true,
+      attention: true,
+      critical: true,
+      powerLoss: true,
+      sensorDisconnect: true
+    };
+  });
+
+  // Handlers for input changes
+  const handleThresholdChange = (key, value) => {
+    setThresholds(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
+  };
+
+  const handleIntervalChange = (key, value) => {
+    setIntervals(prev => ({ ...prev, [key]: parseInt(value, 10) || 0 }));
+  };
+
+  const handleNotificationChange = (key) => {
+    setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // Save to localStorage and optionally send to ESP32
+  const saveChanges = () => {
+    // Persist to localStorage
+    localStorage.setItem('sensorThresholds', JSON.stringify(thresholds));
+    localStorage.setItem('readingIntervals', JSON.stringify(intervals));
+    localStorage.setItem('notificationSettings', JSON.stringify(notifications));
+
+    // Send to ESP32 (example using fetch - adjust URL to your ESP32 endpoint)
+    const config = {
+      thresholds,
+      intervals,
+      notifications
+    };
+
+    // Replace with your ESP32 IP and endpoint
+    const ESP32_URL = 'http://192.168.1.100/api/settings';
+
+    fetch(ESP32_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config)
+    })
+      .then(response => {
+        if (response.ok) {
+          alert('Settings saved and sent to ESP32 successfully!');
+        } else {
+          alert('Saved locally, but failed to send to ESP32.');
+        }
+      })
+      .catch(error => {
+        console.error('Error sending to ESP32:', error);
+        alert('Saved locally, but ESP32 unreachable.');
+      });
+  };
+
+  // Reset to default values
+  const resetToDefault = () => {
+    const defaultThresholds = { normal: 6.5, attention: 8.0, critical: 9.5 };
+    const defaultIntervals = { reading: 5, predicting: 60 };
+    const defaultNotifications = {
+      normal: true,
+      attention: true,
+      critical: true,
+      powerLoss: true,
+      sensorDisconnect: true
+    };
+
+    setThresholds(defaultThresholds);
+    setIntervals(defaultIntervals);
+    setNotifications(defaultNotifications);
+
+    // Optionally save defaults to localStorage and send to ESP32
+    localStorage.setItem('sensorThresholds', JSON.stringify(defaultThresholds));
+    localStorage.setItem('readingIntervals', JSON.stringify(defaultIntervals));
+    localStorage.setItem('notificationSettings', JSON.stringify(defaultNotifications));
+
+    // Also send to ESP32 if desired (similar to saveChanges)
+    // ... (code same as above)
+  };
+
+  // ---------- Render ----------
   return (
     <div className="main-content">
-      {/* Internal CSS – added scroll handling */}
       <style>{`
-        .input-with-unit {
-          display: flex;
-          align-items: center;
-          background: #e9ecef;
-          border-radius: 4px;
-          padding: 0 8px;
-          min-width: 100px;
-        }
-        .settings-input {
-          border: none !important;
-          background: transparent !important;
-          width: 60px;
-          padding: 8px 4px !important;
-          text-align: right;
-          outline: none;
-        }
-        .settings-input::-webkit-inner-spin-button,
-        .settings-input::-webkit-outer-spin-button {
-          opacity: 1 !important;
-          cursor: pointer;
-        }
-        .unit-label {
-          font-size: 14px;
-          color: #555;
-          margin-left: 4px;
-          padding-bottom: 2px;
-        }
-        .settings-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-        }
+        /* (keep all your existing styles) */
+        .input-with-unit { display: flex; align-items: center; background: #e9ecef; border-radius: 4px; padding: 0 8px; min-width: 100px; }
+        .settings-input { border: none !important; background: transparent !important; width: 60px; padding: 8px 4px !important; text-align: right; outline: none; }
+        .settings-input::-webkit-inner-spin-button, .settings-input::-webkit-outer-spin-button { opacity: 1 !important; cursor: pointer; }
+        .unit-label { font-size: 14px; color: #555; margin-left: 4px; padding-bottom: 2px; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 
-        /* ---------- SCROLL FIX ---------- */
-        /* Ensure the card takes full available height and uses flex column */
-        .card-wrapper {
-          display: flex;
-          flex-direction: column;
-          height: 100%;           /* Adjust based on your layout – may need 100vh or calc */
-          max-height: 100%;        /* Prevents overflow beyond parent */
-        }
-
-        /* Make the tab panel scrollable when content is tall */
-        .tab-panel {
-          flex: 1;                 /* Takes remaining space */
-          overflow-y: auto;        /* Enables vertical scrolling */
-          padding-right: 4px;      /* Small padding to avoid scrollbar overlap */
-        }
-
-        /* Optional: style scrollbar for better appearance */
-        .tab-panel::-webkit-scrollbar {
-          width: 6px;
-        }
-        .tab-panel::-webkit-scrollbar-thumb {
-          background-color: rgba(0,0,0,0.2);
-          border-radius: 3px;
-        }
-        /* --------------------------------- */
+        /* Scroll fix */
+        .card-wrapper { display: flex; flex-direction: column; height: 100%; max-height: 100%; }
+        .tab-panel { flex: 1; overflow-y: auto; padding-right: 4px; }
+        .tab-panel::-webkit-scrollbar { width: 6px; }
+        .tab-panel::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.2); border-radius: 3px; }
       `}</style>
 
       <div className="card-wrapper" id="main-profile-card">
@@ -75,15 +131,11 @@ const SystemTab = () => {
           <button
             className={`nav-item ${activeTab === 'ABOUT' ? 'is-active' : ''}`}
             onClick={() => setActiveTab('ABOUT')}
-          >
-            ABOUT
-          </button>
+          >ABOUT</button>
           <button
             className={`nav-item ${activeTab === 'SETTINGS' ? 'is-active' : ''}`}
             onClick={() => setActiveTab('SETTINGS')}
-          >
-            SETTINGS
-          </button>
+          >SETTINGS</button>
         </div>
 
         <div className="tab-panel">
@@ -163,42 +215,53 @@ const SystemTab = () => {
 
           {activeTab === 'SETTINGS' && (
             <div className="settings-grid">
-              {/* Left Column: Thresholds and Intervals */}
+              {/* Left Column: Thresholds (now 3) and Intervals */}
               <div className="settings-column border-right">
                 <div className="content-group">
                   <h3 className="SysTab-title">SENSOR THRESHOLDS</h3>
-                  
+
                   <div className="settings-row">
                     <span>Normal Thresholds :</span>
                     <div className="input-with-unit">
-                        <input type="number" step="0.1" className="settings-input" defaultValue="6.5" />
-                        <span className="unit-label">ft.</span>
+                      <input
+                        type="number"
+                        step="0.1"
+                        className="settings-input"
+                        value={thresholds.normal}
+                        onChange={(e) => handleThresholdChange('normal', e.target.value)}
+                      />
+                      <span className="unit-label">ft.</span>
                     </div>
                   </div>
 
                   <div className="settings-row">
                     <span>Needs Attention :</span>
                     <div className="input-with-unit">
-                        <input type="number" step="0.1" className="settings-input" defaultValue="8.0" />
-                        <span className="unit-label">ft.</span>
+                      <input
+                        type="number"
+                        step="0.1"
+                        className="settings-input"
+                        value={thresholds.attention}
+                        onChange={(e) => handleThresholdChange('attention', e.target.value)}
+                      />
+                      <span className="unit-label">ft.</span>
                     </div>
                   </div>
 
                   <div className="settings-row">
                     <span>Highly Critical :</span>
                     <div className="input-with-unit">
-                        <input type="number" step="0.1" className="settings-input" defaultValue="9.5" />
-                        <span className="unit-label">ft.</span>
+                      <input
+                        type="number"
+                        step="0.1"
+                        className="settings-input"
+                        value={thresholds.critical}
+                        onChange={(e) => handleThresholdChange('critical', e.target.value)}
+                      />
+                      <span className="unit-label">ft.</span>
                     </div>
                   </div>
-
-                  <div className="settings-row">
-                    <span>Extremely Critical :</span>
-                    <div className="input-with-unit">
-                        <input type="number" step="0.1" className="settings-input" defaultValue="11.5" />
-                        <span className="unit-label">ft.</span>
-                    </div>
-                  </div>
+                  {/* Removed Extremely Critical row */}
                 </div>
 
                 <div className="content-group mt-20">
@@ -206,15 +269,25 @@ const SystemTab = () => {
                   <div className="settings-row">
                     <span>Reading Intervals :</span>
                     <div className="input-with-unit">
-                        <input type="number" className="settings-input" defaultValue="5" />
-                        <span className="unit-label">mins.</span>
+                      <input
+                        type="number"
+                        className="settings-input"
+                        value={intervals.reading}
+                        onChange={(e) => handleIntervalChange('reading', e.target.value)}
+                      />
+                      <span className="unit-label">mins.</span>
                     </div>
                   </div>
                   <div className="settings-row">
                     <span>Predicting Intervals :</span>
                     <div className="input-with-unit">
-                        <input type="number" className="settings-input" defaultValue="60" />
-                        <span className="unit-label">mins.</span>
+                      <input
+                        type="number"
+                        className="settings-input"
+                        value={intervals.predicting}
+                        onChange={(e) => handleIntervalChange('predicting', e.target.value)}
+                      />
+                      <span className="unit-label">mins.</span>
                     </div>
                   </div>
                 </div>
@@ -229,20 +302,38 @@ const SystemTab = () => {
                     <div className="toggle-group">
                       <div className="toggle-row">
                         <span>Normal Thresholds</span>
-                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={notifications.normal}
+                            onChange={() => handleNotificationChange('normal')}
+                          />
+                          <span className="slider"></span>
+                        </label>
                       </div>
                       <div className="toggle-row">
                         <span>Needs Attention</span>
-                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={notifications.attention}
+                            onChange={() => handleNotificationChange('attention')}
+                          />
+                          <span className="slider"></span>
+                        </label>
                       </div>
                       <div className="toggle-row">
                         <span>Highly Critical</span>
-                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={notifications.critical}
+                            onChange={() => handleNotificationChange('critical')}
+                          />
+                          <span className="slider"></span>
+                        </label>
                       </div>
-                      <div className="toggle-row">
-                        <span>Extremely Critical</span>
-                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
-                      </div>
+                      {/* Removed Extremely Critical toggle */}
                     </div>
                   </div>
 
@@ -251,19 +342,37 @@ const SystemTab = () => {
                     <div className="toggle-group">
                       <div className="toggle-row">
                         <span>Power/Turbine Loss</span>
-                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={notifications.powerLoss}
+                            onChange={() => handleNotificationChange('powerLoss')}
+                          />
+                          <span className="slider"></span>
+                        </label>
                       </div>
                       <div className="toggle-row">
                         <span>Sensor Disconnect</span>
-                        <label className="switch"><input type="checkbox" defaultChecked /><span className="slider"></span></label>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={notifications.sensorDisconnect}
+                            onChange={() => handleNotificationChange('sensorDisconnect')}
+                          />
+                          <span className="slider"></span>
+                        </label>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="settings-actions">
-                  <button className="action-button save-btn">SAVE CHANGES</button>
-                  <button className="action-button reset-btn">RESET TO DEFAULT</button>
+                  <button className="action-button save-btn" onClick={saveChanges}>
+                    SAVE CHANGES
+                  </button>
+                  <button className="action-button reset-btn" onClick={resetToDefault}>
+                    RESET TO DEFAULT
+                  </button>
                 </div>
               </div>
             </div>

@@ -2,15 +2,28 @@ import React, { useState } from 'react';
 import { Dropdown } from 'primereact/dropdown';
 
 const ContactsTab = () => {
-  // --- Data & State ---
-  const [contacts, setContacts] = useState([
-    { name: 'Administrator/s', phone: '+63 XXX XXX XXXX', alertLevel: 'ALL' },
-    { name: 'Brgy. Officials', phone: '+63 XXX XXX XXXX', alertLevel: 'CRITICAL' },
-  ]);
+  // --- Load initial contacts from localStorage, or use defaults ---
+  const loadInitialContacts = () => {
+    const saved = localStorage.getItem('contacts');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse saved contacts', e);
+      }
+    }
+    // Default data – now using valid phone numbers
+    return [
+      { name: 'Administrator/s', phone: '+630000000001', alertLevel: 'ALL' },
+      { name: 'Brgy. Officials', phone: '+630000000002', alertLevel: 'CRITICAL' },
+    ];
+  };
+
+  const [contacts, setContacts] = useState(loadInitialContacts);
 
   // Editing state
   const [editingIndex, setEditingIndex] = useState(-1);
-  const [editForm, setEditForm] = useState({ name: '', phone: '', alertLevel: 'ALL' });
+  const [editForm, setEditForm] = useState({ name: '', phone: '+63', alertLevel: 'ALL' });
 
   // Options for alert level dropdown
   const alertLevelOptions = [
@@ -35,6 +48,22 @@ const ContactsTab = () => {
     { time: '12:30', tag: '[ALRT]', type: 'crit', sender: 'ALL', msg: '7.80FT' },
   ];
 
+  // --- Phone number helpers ---
+  const formatPhone = (input) => {
+    // Remove all non‑digits
+    const digits = input.replace(/\D/g, '');
+    // Ensure it starts with 63 (the country code)
+    let normalized = digits.startsWith('63') ? digits : '63' + digits;
+    // Take only the first 12 digits (63 + up to 10 digits)
+    normalized = normalized.slice(0, 12);
+    // Always show the + prefix
+    return '+' + normalized;
+  };
+
+  const isValidPhone = (phone) => {
+    return /^\+63\d{10}$/.test(phone);
+  };
+
   // --- Handlers ---
 
   // Start editing a row
@@ -43,8 +72,12 @@ const ContactsTab = () => {
     setEditForm(contacts[index]);
   };
 
-  // Save changes made in edit mode
+  // Save changes made in edit mode – validate phone before saving
   const handleSaveEdit = () => {
+    if (!isValidPhone(editForm.phone)) {
+      alert('Phone number must be in the format +63 followed by exactly 10 digits (e.g., +639123456789).');
+      return;
+    }
     const updatedContacts = [...contacts];
     updatedContacts[editingIndex] = editForm;
     setContacts(updatedContacts);
@@ -71,19 +104,20 @@ const ContactsTab = () => {
     }
   };
 
-  // Add a new blank contact and start editing it
+  // Add a new blank contact – ensure phone starts with +63
   const handleAdd = () => {
-    const newContact = { name: '', phone: '+63 ', alertLevel: 'ALL' };
+    const newContact = { name: '', phone: '+63', alertLevel: 'ALL' };
     const newIndex = contacts.length; // will be the last index
     setContacts([...contacts, newContact]);
     setEditingIndex(newIndex);
     setEditForm(newContact);
   };
 
-  // Dummy Save button (placeholder for real persistence)
+  // SAVE button – persists contacts to localStorage
   const handleSave = () => {
-    alert('Changes saved (simulated)');
-    console.log('Current contacts:', contacts);
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+    alert('Contacts saved successfully!');
+    console.log('Saved contacts:', contacts);
   };
 
   // Dummy Send button
@@ -91,8 +125,11 @@ const ContactsTab = () => {
     alert(`Send SMS to ${selectedRecipient || 'no recipient'}`);
   };
 
-  // Update edit form fields
+  // Update edit form fields – for phone, apply formatting
   const handleEditChange = (field, value) => {
+    if (field === 'phone') {
+      value = formatPhone(value);
+    }
     setEditForm({ ...editForm, [field]: value });
   };
 
@@ -135,6 +172,7 @@ const ContactsTab = () => {
                               value={editForm.phone}
                               onChange={(e) => handleEditChange('phone', e.target.value)}
                               style={{ width: '100%' }}
+                              placeholder="+63XXXXXXXXXX"
                             />
                           </td>
                           <td>
@@ -157,16 +195,16 @@ const ContactsTab = () => {
                           <td>{contact.phone}</td>
                           <td>{contact.alertLevel}</td>
                           <td>
-                            <button 
-                              className="table-action-btn" 
+                            <button
+                              className="table-action-btn"
                               onClick={() => handleEdit(index)}
                             >
                               EDIT
                             </button>
-                            <button 
-                              className="table-action-btn" 
+                            <button
+                              className="table-action-btn"
                               onClick={() => handleDelete(index)}
-                              style={{ marginLeft: '0.5rem' }} // spacing, can be adjusted via CSS
+                              style={{ marginLeft: '0.5rem' }}
                             >
                               DELETE
                             </button>
@@ -192,7 +230,7 @@ const ContactsTab = () => {
                 <div className="form-row">
                   <div className="form-label">TYPE MESSAGE:</div>
                   <div className="form-input-container">
-                    <textarea 
+                    <textarea
                       className="custom-textarea"
                       defaultValue="Test ID: 001 Status: GSM Link Verification Characters: ABCabc123!@# Time: 2025-12-29 11:20"
                     />
@@ -202,11 +240,11 @@ const ContactsTab = () => {
                 <div className="form-row" style={{ marginBottom: 0, alignItems: 'center' }}>
                   <div className="form-label">SEND TO:</div>
                   <div className="form-input-container" style={{ display: 'flex', gap: '0.5rem' }}>
-                    <Dropdown 
-                      value={selectedRecipient} 
-                      onChange={(e) => setSelectedRecipient(e.value)} 
-                      options={recipientOptions} 
-                      placeholder="Select Recipient" 
+                    <Dropdown
+                      value={selectedRecipient}
+                      onChange={(e) => setSelectedRecipient(e.value)}
+                      options={recipientOptions}
+                      placeholder="Select Recipient"
                       style={{ width: '100%' }}
                     />
                     <button className="control-btn" onClick={handleSend}>SEND</button>
