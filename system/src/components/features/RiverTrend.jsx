@@ -1,145 +1,115 @@
 import { useState, useEffect } from 'react';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 
 function RiverTrend() {
+  const [data, setData] = useState([]);
+
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-GB', { hour12: false });
   };
 
-  const generateInitialData = () => {
-    const dataPoints = [];
-    const now = new Date();
-    for (let i = 19; i >= 0; i--) {
-      const d = new Date(now.getTime() - (i - 1) * 1000); 
-      const timeStr = formatTime(d);
-      
-      dataPoints.push({
-        time: timeStr,
-        current: i === 0 ? null : Number((6.5 + Math.random() * 0.5).toFixed(2)),
-        predicted: Number((6.8 + Math.random() * 0.3).toFixed(2))
+  const updateData = async () => {
+    try {
+      const response = await fetch('/monitorData.json');
+      const allData = await response.json();
+
+      if (allData.length === 0) return;
+
+      // Take the last 20 readings (instead of 19) so we have enough points
+      const last20 = allData.slice(-20);
+
+      // Build chart data: each point gets current (actual) and predicted
+      const chartData = last20.map(entry => ({
+        time: entry.time,
+        current: entry.distance,
+        predicted: entry.predicted   // forecast for 5 minutes after this reading
+      }));
+
+      // Add a future point to extend the predicted line by one step
+      const latest = allData[allData.length - 1];
+      const [hour, minute, second] = latest.time.split(':').map(Number);
+      const latestDate = new Date();
+      latestDate.setHours(hour, minute, second);
+      const futureDate = new Date(latestDate.getTime() + 5 * 60000); // +5 min
+      const futureTimeStr = formatTime(futureDate);
+
+      chartData.push({
+        time: futureTimeStr,
+        current: null,
+        predicted: latest.predicted   // this prediction is already for this future time
       });
+
+      setData(chartData);
+    } catch (error) {
+      console.error('Error fetching trend data:', error);
     }
-    return dataPoints;
   };
 
-  const [data, setData] = useState(generateInitialData());
-
   useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const futureTime = new Date(now.getTime() + 1000); 
-      
-      const timeNowStr = formatTime(now);
-      const timeFutureStr = formatTime(futureTime);
-      
-      setData(prevData => {
-        const updatedData = [...prevData];
-        const lastIndex = updatedData.length - 1;
-        
-        updatedData[lastIndex] = {
-          ...updatedData[lastIndex],
-          current: Number((6.5 + Math.random() * 0.5).toFixed(2))
-        };
-
-        const newFuturePoint = {
-          time: timeFutureStr,
-          current: null, 
-          predicted: Number((6.8 + Math.random() * 0.3).toFixed(2))
-        };
-
-        return [...updatedData.slice(1), newFuturePoint];
-      });
-    }, 1000);
-
+    updateData();
+    const interval = setInterval(updateData, 5000);
     return () => clearInterval(interval);
   }, []);
-  
+
   return (
     <div className="card-container" id="rivertrend">
       <h2 className="card-title">RIVER TREND</h2>
       <div className="innercard-container" id='rivertrend-contents'>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart 
+          <LineChart
             data={data}
             margin={{ top: 30, right: 35, left: 30, bottom: 40 }}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-            
             <XAxis
               dataKey="time"
               tick={{ fontSize: 11, fill: '#666' }}
-              tickMargin={15} 
+              tickMargin={15}
               axisLine={{ stroke: '#ccc' }}
-              label={{
-                value: 'time (hrs)',
-                position: 'insideBottom',
-                offset: -20, 
-                style: { fontStyle: 'italic', fontSize: '11px', fill: '#999' }
-              }}
+              label={{ value: 'time (hrs)', position: 'insideBottom', offset: -20, style: { fontStyle: 'italic', fontSize: '11px', fill: '#999' } }}
             />
-            
             <YAxis
-              domain={[5, 12]} 
+              domain={[5, 12]}
               ticks={[5, 6, 7, 8, 9, 10, 11, 12]}
               tick={{ fontSize: 11, fill: '#666' }}
-              tickMargin={15} 
+              tickMargin={15}
               axisLine={{ stroke: '#ccc' }}
               tickFormatter={(value) => `${value} ft.`}
-              label={{ 
-                value: 'water level (ft.)', 
-                angle: -90, 
-                position: 'insideLeft',
-                offset: -10,
-                style: { fontStyle: 'italic', textAnchor: 'middle', fontSize: '11px', fill: '#999' }
-              }}
+              label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft', offset: -10, style: { fontStyle: 'italic', textAnchor: 'middle', fontSize: '11px', fill: '#999' } }}
             />
-            
-            <Tooltip 
-              labelFormatter={(label) => `time: ${label}`} 
-              formatter={(value, name) => [`${value} ft.`, name]}
-              contentStyle={{ 
-                  borderRadius: '10px', 
-                  border: '1px solid #ddd',
-                  padding: '10px',
-                  fontSize:'12px' 
-              }}
-              itemStyle={{padding: '2px 0' }}
+            <Tooltip
+              labelFormatter={(label) => `time: ${label}`}
+              formatter={(value, name) => [`${value} ft.`, name === 'current' ? 'Actual' : 'Predicted']}
+              contentStyle={{ borderRadius: '10px', border: '1px solid #ddd', padding: '10px', fontSize:'12px' }}
+              itemStyle={{ padding: '2px 0' }}
             />
-            
             <Legend
               verticalAlign='top'
               align='right'
               iconType='plainline'
               wrapperStyle={{ top: 20, right: 10, fontSize: '12px' }}
+              formatter={(value) => value === 'current' ? 'Actual' : 'Predicted'}
             />
-            
-            <Line 
+            <Line
               name="predicted"
-              type="monotone" 
-              dataKey="predicted" 
-              stroke="#0072CE" 
-              strokeWidth={2} 
+              type="monotone"
+              dataKey="predicted"
+              stroke="#0072CE"
+              strokeWidth={2}
               dot={{ r: 4, fill: '#fff', stroke: '#0072CE', strokeWidth: 2 }}
-              activeDot={{ r: 6 }} 
+              activeDot={{ r: 6 }}
+              connectNulls={true}
             />
-            
-            <Line 
+            <Line
               name="current"
-              type="monotone" 
-              dataKey="current" 
-              stroke="#FFB800" 
-              strokeWidth={2} 
-              connectNulls={false} 
-              dot={{ r: 4, fill: '#fff', stroke: '#FFB800', strokeWidth: 2 }} 
+              type="monotone"
+              dataKey="current"
+              stroke="#FFB800"
+              strokeWidth={2}
+              connectNulls={false}
+              dot={{ r: 4, fill: '#fff', stroke: '#FFB800', strokeWidth: 2 }}
               activeDot={{ r: 6 }}
             />
           </LineChart>

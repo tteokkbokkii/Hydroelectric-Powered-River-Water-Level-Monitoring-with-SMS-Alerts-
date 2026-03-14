@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 
 function RiverLevel() {
-  const [isManual, setIsManual] = useState(false); // Toggle for debugging
+  const [isManual, setIsManual] = useState(false);
   const [manualLevel, setManualLevel] = useState(7.00);
-  const [expectedLevel, setExpectedLevel] = useState(10.50);
-  const [time, setTime] = useState(0);
-  
+  const [currentLevel, setCurrentLevel] = useState(8.5);
+  const [predictedLevel, setPredictedLevel] = useState(10.5);
+
   const minLevel = 5;
   const maxLevel = 12;
-  const rulerSpan = 80; 
+  const rulerSpan = 80;
   const rulerOffset = 10;
 
   const statusLevels = [
@@ -19,29 +19,41 @@ function RiverLevel() {
     { label: "EXTREMELY CRITICAL", min: 11.5, color: "#FF0000" }
   ];
 
+  // Fetch latest reading and its predicted value
   useEffect(() => {
-    if (isManual) return;
-    const interval = setInterval(() => {
-      setTime((t) => t + 0.005);
-      setExpectedLevel(9.75 + (0.75 * Math.cos(time * 0.5)));
-    }, 50);
+    const fetchLatest = async () => {
+      try {
+        const response = await fetch('/monitorData.json');
+        const data = await response.json();
+        if (data.length > 0) {
+          const latest = data[data.length - 1];
+          setCurrentLevel(latest.distance);
+          setPredictedLevel(latest.predicted);
+        }
+      } catch (error) {
+        console.error('Error fetching monitor data:', error);
+      }
+    };
+
+    fetchLatest();
+    const interval = setInterval(fetchLatest, 5000);
     return () => clearInterval(interval);
-  }, [time, isManual]);
+  }, []);
 
-  // Logic: Use manual slider if debugging, otherwise use dynamic math
-  const currentLevel = isManual ? manualLevel : (8.5 + (1.5 * Math.sin(time)));
+  const displayLevel = isManual ? manualLevel : currentLevel;
+  const displayPredicted = isManual ? predictedLevel : predictedLevel; // predicted is from data
 
-  const currentStatus = [...statusLevels].reverse().find(s => currentLevel >= s.min) || statusLevels[0];
+  const currentStatus = [...statusLevels].reverse().find(s => displayLevel >= s.min) || statusLevels[0];
 
   const calibrate = (val) => {
     const normalized = (val - minLevel) / (maxLevel - minLevel);
     return minLevel + (normalized * (maxLevel - minLevel) * (rulerSpan / 100)) + ((rulerOffset / 100) * (maxLevel - minLevel));
   };
 
-  const data = [{ 
-    time: 'Live', 
-    current: calibrate(currentLevel), 
-    expected: calibrate(expectedLevel) 
+  const data = [{
+    time: 'Live',
+    current: calibrate(displayLevel),
+    predicted: calibrate(displayPredicted)
   }];
 
   return (
@@ -55,23 +67,20 @@ function RiverLevel() {
 
       <div className="innercard-container" id='riverlevel-contents'>        
         <div className='live-expected'>
-            <p>EXPECTED</p>
-            <h1>{expectedLevel.toFixed(2)} ft.</h1>
+          <p>PREDICTED</p>
+          <h1>{displayPredicted.toFixed(2)} ft.</h1>
         </div>
-
         <div className='live-current'>
-            <p>CURRENT</p>
-            <h1>{currentLevel.toFixed(2)} ft.</h1>
+          <p>CURRENT</p>
+          <h1>{displayLevel.toFixed(2)} ft.</h1>
         </div>
 
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} barGap="-100%" barCategoryGap={0} margin={0}>
             <XAxis hide dataKey="time" />
             <YAxis hide domain={[minLevel, maxLevel]}/>
-
-            <Bar dataKey="expected" fill="#008cff66" isAnimationActive={false} />
+            <Bar dataKey="predicted" fill="#008cff66" isAnimationActive={false} />
             <Bar dataKey="current" fill="#1e00ff99" isAnimationActive={false} />
-
             <g>
               <line x1="45%" y1="10%" x2="45%" y2="90%" stroke="black" strokeWidth="2" />
               {Array.from({ length: (maxLevel - minLevel) * 4 + 1 }).map((_, i) => {
@@ -95,20 +104,6 @@ function RiverLevel() {
           </BarChart>
         </ResponsiveContainer>
       </div>
-
-      {/* DEBUG CONTROL PANEL
-      <div style={{ marginTop: '1rem', padding: '10px', background: '#ddd', borderRadius: '8px', display: 'flex', gap: '15px', alignItems: 'center' }}>
-        <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
-          <input type="checkbox" checked={isManual} onChange={() => setIsManual(!isManual)} /> DEBUG MODE
-        </label>
-        {isManual && (
-          <input 
-            type="range" min={minLevel} max={maxLevel} step="0.01" 
-            value={manualLevel} onChange={(e) => setManualLevel(parseFloat(e.target.value))} 
-            style={{ flexGrow: 1 }}
-          />
-        )}
-      </div>*/}
     </div>
   );
 }
