@@ -25,9 +25,9 @@ function App() {
                     <Route path='/System' element={<System/>}/>
                 </Routes>
             </Router> 
-            
+
         </>
-    ); // Added the missing semicolon and ensured the brace is closed below
+    ); 
 }
 
 export default App
