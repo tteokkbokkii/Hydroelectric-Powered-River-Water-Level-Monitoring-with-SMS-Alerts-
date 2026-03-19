@@ -29,7 +29,6 @@ function App() {
             </Router>
             */}
 
-
             <HandshakeCheck />
         </>
     ); // Added the missing semicolon and ensured the brace is closed below
