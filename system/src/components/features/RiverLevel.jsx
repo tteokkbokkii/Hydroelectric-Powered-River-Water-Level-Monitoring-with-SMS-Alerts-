@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import mqtt from 'mqtt';
 
 function RiverLevel() {
+  // 1. State Hooks
   const [isManual, setIsManual] = useState(false);
   const [manualLevel, setManualLevel] = useState(7.00);
-  const [currentLevel, setCurrentLevel] = useState(8.5);
-  const [predictedLevel, setPredictedLevel] = useState(10.5);
+  const [currentLevel, setCurrentLevel] = useState(0);
+  const [predictedLevel, setPredictedLevel] = useState(0);
 
+  // 2. Constants for UI
   const minLevel = 5;
   const maxLevel = 12;
   const rulerSpan = 80;
@@ -19,35 +22,48 @@ function RiverLevel() {
     { label: "EXTREMELY CRITICAL", min: 11.5, color: "#FF0000" }
   ];
 
-  // Fetch latest reading and its predicted value
+  // 3. MQTT Logic
   useEffect(() => {
-    const fetchLatest = async () => {
-      try {
-        const response = await fetch('/monitorData.json');
-        const data = await response.json();
-        if (data.length > 0) {
-          const latest = data[data.length - 1];
-          setCurrentLevel(latest.distance);
-          setPredictedLevel(latest.predicted);
-        }
-      } catch (error) {
-        console.error('Error fetching monitor data:', error);
-      }
-    };
+    const client = mqtt.connect('ws://192.168.100.97:9001');
 
-    fetchLatest();
-    const interval = setInterval(fetchLatest, 5000);
-    return () => clearInterval(interval);
+    client.on('connect', () => {
+      console.log('Connected to Pi MQTT!');
+      client.subscribe('home/tank/level'); 
+    });
+
+    client.on('message', (topic, message) => {
+      const rawCm = parseFloat(message.toString());
+      if (!isNaN(rawCm)) {
+        // Convert the incoming CM from ESP32 to Feet
+        const feet = rawCm / 30.48; 
+        
+        setCurrentLevel(feet);
+        // Using your logic: Predicted is roughly current + 0.5ft
+        setPredictedLevel(feet + 0.5); 
+        
+        console.log(`Live MQTT Data: ${rawCm}cm -> ${feet.toFixed(2)}ft`);
+      }
+    });
+
+    client.on('error', (err) => {
+      console.error('MQTT Connection Error: ', err);
+    });
+
+    return () => {
+      if (client) client.end();
+    };
   }, []);
 
+  // 4. Derived Variables (Must be inside the function to react to state changes)
   const displayLevel = isManual ? manualLevel : currentLevel;
-  const displayPredicted = isManual ? predictedLevel : predictedLevel; // predicted is from data
-
+  const displayPredicted = isManual ? (manualLevel + 0.5) : predictedLevel; 
   const currentStatus = [...statusLevels].reverse().find(s => displayLevel >= s.min) || statusLevels[0];
 
   const calibrate = (val) => {
     const normalized = (val - minLevel) / (maxLevel - minLevel);
-    return minLevel + (normalized * (maxLevel - minLevel) * (rulerSpan / 100)) + ((rulerOffset / 100) * (maxLevel - minLevel));
+    // Prevents the bar from going off-chart if level is below minLevel
+    const clampedNormalized = Math.max(0, Math.min(1, normalized));
+    return minLevel + (clampedNormalized * (maxLevel - minLevel) * (rulerSpan / 100)) + ((rulerOffset / 100) * (maxLevel - minLevel));
   };
 
   const data = [{
@@ -56,6 +72,7 @@ function RiverLevel() {
     predicted: calibrate(displayPredicted)
   }];
 
+  // 5. Render UI
   return (
     <div className="card-container" id="riverlevel">
       <div id="riverlevel-card-header">
@@ -65,7 +82,7 @@ function RiverLevel() {
         </div>
       </div>
 
-      <div className="innercard-container" id='riverlevel-contents'>        
+      <div className="innercard-container" id='riverlevel-contents'>         
         <div className='live-expected'>
           <p>PREDICTED</p>
           <h1>{displayPredicted.toFixed(2)} ft.</h1>

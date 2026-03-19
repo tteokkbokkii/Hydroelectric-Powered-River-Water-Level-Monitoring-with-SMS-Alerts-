@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "mqtt": "^5.15.0",
     "primeicons": "^7.0.0",
     "recharts": "^3.6.0"
   }

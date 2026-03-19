@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import mqtt from 'mqtt'; // 1. Added MQTT
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -22,16 +23,41 @@ const HistoryTab = () => {
   const predictedChartRef = useRef(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/monitorData.json');
-        const data = await response.json();
-        setAllData(data);
-      } catch (error) {
-        console.error('Error loading history data:', error);
+    // 2. Connect to the Pi via WebSockets
+    const client = mqtt.connect('ws://192.168.100.97:9001');
+
+    client.on('connect', () => {
+      console.log('History Tab connected to MQTT');
+      client.subscribe('home/tank/level');
+    });
+
+    client.on('message', (topic, message) => {
+      const rawCm = parseFloat(message.toString());
+      if (!isNaN(rawCm)) {
+        const feet = rawCm / 30.48;
+        const now = new Date();
+        
+        // Match the format your JSON used: YYYY-MM-DD
+        const dateStr = now.toISOString().slice(0, 10);
+        const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).slice(0, 5);
+
+        let status = "NORMAL";
+        if (feet >= 11.5) status = "CRITICAL";
+        else if (feet >= 9.0) status = "WARNING";
+
+        const newEntry = {
+          date: dateStr,
+          time: timeStr,
+          distance: feet,
+          predicted: feet + 0.5, // Your 5-min forecast logic
+          range: status
+        };
+
+        setAllData((prevData) => [...prevData, newEntry]);
       }
-    };
-    fetchData();
+    });
+
+    return () => { if (client) client.end(); };
   }, []);
 
   const filteredData = useMemo(() => {

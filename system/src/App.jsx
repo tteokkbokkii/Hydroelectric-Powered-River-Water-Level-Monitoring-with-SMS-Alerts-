@@ -11,21 +11,26 @@ import Contacts from './pages/Contacts'
 import Dashboard from './pages/Dashboard'
 import History from './pages/History'
 import System from './pages/System'
+import HandshakeCheck from './components/HandshakeCheck.jsx';
 
 function App() {
-    return(
-      <>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path='/Dashboard' element={<Dashboard/>}/>
-          <Route path='/Contacts' element={<Contacts/>}/>
-          <Route path='/History' element={<History/>}/>
-          <Route path='/System' element={<System/>}/>
-        </Routes>
-    </Router>
-      </>
-    )
+    return (
+        <> 
+            {/* Commented out router for now */}
+            {/* <Router>
+                <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path='/Dashboard' element={<Dashboard/>}/>
+                    <Route path='/Contacts' element={<Contacts/>}/>
+                    <Route path='/History' element={<History/>}/>
+                    <Route path='/System' element={<System/>}/>
+                </Routes>
+            </Router> 
+            */}
+
+            <HandshakeCheck />
+        </>
+    ); // Added the missing semicolon and ensured the brace is closed below
 }
 
 export default App
