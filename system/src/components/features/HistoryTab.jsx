@@ -128,12 +128,12 @@ const HistoryTab = () => {
           >
             ACTUAL READING
           </button>
-          <button
-            className={`nav-item ${activeTab === 'PREDICTION' ? 'is-active' : ''}`}
-            onClick={() => setActiveTab('PREDICTED READING')}
-          >
-            PREDICTED READING
-          </button>
+            <button
+              className={`nav-item ${activeTab === 'PREDICTED READING' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('PREDICTED READING')}
+            >
+              PREDICTED READING
+            </button>
         </div>
 
         <div className="tab-panel content-padding">

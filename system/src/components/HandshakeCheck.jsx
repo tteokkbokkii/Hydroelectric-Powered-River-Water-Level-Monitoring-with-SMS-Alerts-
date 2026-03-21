@@ -19,13 +19,16 @@ const HandshakeCheck = () => {
     });
 
     client.on('message', (topic, message) => {
-      try {
-        const parsed = JSON.parse(message.toString());
-        setData(parsed);
-      } catch (e) {
-        console.error("Payload error:", message.toString());
-      }
-    });
+  try {
+    const rawMessage = message.toString().trim(); // Trim extra spaces
+    const parsed = JSON.parse(rawMessage);
+    setData(parsed);
+    setStatus("Connected"); // Keep status green when data arrives
+  } catch (e) {
+    console.error("Payload error:", message.toString());
+    // If it fails, try to see if it's just a simple string issue
+  }
+});
 
     return () => {
       client.end();

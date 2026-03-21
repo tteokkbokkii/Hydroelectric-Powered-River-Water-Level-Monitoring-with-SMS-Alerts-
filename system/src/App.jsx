@@ -17,8 +17,7 @@ import HandshakeCheck from './components/HandshakeCheck.jsx';
 function App() {
     return (
         <>
-            {/* Commented out router for now */}
-            {/* <Router>
+            <Router>
                 <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path='/Dashboard' element={<Dashboard/>}/>
@@ -27,9 +26,9 @@ function App() {
                     <Route path='/System' element={<System/>}/>
                 </Routes>
             </Router>
-            */}
-
-            <HandshakeCheck />
+            {
+                /*<HandshakeCheck/>*/
+            }
         </>
     ); // Added the missing semicolon and ensured the brace is closed below
 }
