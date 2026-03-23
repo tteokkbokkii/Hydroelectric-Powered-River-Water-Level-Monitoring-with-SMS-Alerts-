@@ -181,3 +181,55 @@
         width: 150px;
     }
 }
+
+@media (max-width: 768px) {
+    .header-container {
+        height: 100px;
+        flex-wrap: nowrap;
+    }
+
+    .logo {
+        margin-left: 2em;          /* increased from 0.5em for more left spacing */
+        width: 3em;
+    }
+
+    /* Hide the title text */
+    #title {
+        display: none;
+    }
+
+    .date-time-container {
+        font-size: 0.8rem;
+        padding-right: 0.5em;
+    }
+
+    .date {
+        letter-spacing: 1px;
+    }
+
+    .time {
+        font-size: 1em;
+    }
+
+    .dropdown {
+        padding: 0 1em;
+    }
+
+    .dropdown .contents {
+        width: 180px;
+    }
+}
+
+@media (max-width: 480px) {
+    .date-time-container {
+        display: none;
+    }
+
+    .dropdown {
+        padding: 0 2em;         /* increased right padding for comfortable edge spacing */
+    }
+
+    .dropdown .contents {
+        width: 150px;
+    }
+}
