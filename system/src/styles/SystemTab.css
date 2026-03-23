@@ -5,8 +5,15 @@
     overflow: hidden;
 }
 
-/* Removed .main-content definition – now handled globally in index.css */
-/* Only keep page‑specific styles */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #f0f2f5;
+    min-height: 0;
+    padding-bottom: 50px;
+    box-sizing: border-box;
+}
 
 .card-wrapper {
     background-color: #F4F4F4;
@@ -245,7 +252,7 @@ input:checked + .slider:before {
     transform: translateX(14px);
 }
 
-/* Responsive */
+/* Responsive adjustments */
 @media (max-width: 1024px) {
     .system-grid, .settings-grid {
         flex-direction: column;
@@ -287,49 +294,52 @@ input:checked + .slider:before {
         min-width: 60px;
         font-size: 0.7rem;
     }
-}
 
-@media (max-width: 768px) {
+    /* Push notification toggles */
     .notification-section {
         flex-direction: column;
         gap: 15px;
     }
-
     .section-label {
         width: auto;
         margin-bottom: 8px;
     }
-
     .toggle-group {
         width: 100%;
     }
-
     .toggle-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
         flex-wrap: wrap;
         gap: 8px;
     }
-
     .toggle-row span {
         flex: 1;
         font-size: 0.85rem;
     }
-
     .switch {
         flex-shrink: 0;
     }
-
-    /* Adjust overall column padding to avoid overflow */
     .settings-column {
         padding: 0 10px;
     }
 
-    /* Make sure the card doesn't overflow */
-    .card-wrapper {
-        width: calc(100vw - 1rem);
-        padding: 1rem;
-        margin: 0.5rem;
+    /* ABOUT tab alignment */
+    .system-grid {
+        align-items: flex-start;
+        text-align: left;
+    }
+    .system-column {
+        text-align: left;
+    }
+    .data-row {
+        justify-content: flex-start;
+        gap: 1rem;
+    }
+
+    /* REBOOT button alignment */
+    .reboot-container {
+        display: flex;
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 20px;
     }
 }

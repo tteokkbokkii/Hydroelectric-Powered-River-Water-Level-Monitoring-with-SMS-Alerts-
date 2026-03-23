@@ -189,8 +189,8 @@
     }
 
     .logo {
-        margin-left: 2em;          /* increased from 0.5em for more left spacing */
-        width: 3em;
+        margin-left: 1.5em;          /* increased left spacing */
+        width: 4.5em;              /* keep original size */
     }
 
     /* Hide the title text */
@@ -226,7 +226,7 @@
     }
 
     .dropdown {
-        padding: 0 2em;         /* increased right padding for comfortable edge spacing */
+        padding: 0 1.8em;
     }
 
     .dropdown .contents {
