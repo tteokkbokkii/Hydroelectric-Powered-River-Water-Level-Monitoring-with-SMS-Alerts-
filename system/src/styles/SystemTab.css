@@ -288,3 +288,48 @@ input:checked + .slider:before {
         font-size: 0.7rem;
     }
 }
+
+@media (max-width: 768px) {
+    .notification-section {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .section-label {
+        width: auto;
+        margin-bottom: 8px;
+    }
+
+    .toggle-group {
+        width: 100%;
+    }
+
+    .toggle-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .toggle-row span {
+        flex: 1;
+        font-size: 0.85rem;
+    }
+
+    .switch {
+        flex-shrink: 0;
+    }
+
+    /* Adjust overall column padding to avoid overflow */
+    .settings-column {
+        padding: 0 10px;
+    }
+
+    /* Make sure the card doesn't overflow */
+    .card-wrapper {
+        width: calc(100vw - 1rem);
+        padding: 1rem;
+        margin: 0.5rem;
+    }
+}
