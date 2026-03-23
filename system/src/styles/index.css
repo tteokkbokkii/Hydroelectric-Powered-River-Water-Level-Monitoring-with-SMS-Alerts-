@@ -108,10 +108,19 @@ html, body {
         height: auto !important;
         gap: 20px;
         padding: 15px;
+        overflow: visible !important;
     }
 
     .card-container {
         min-height: 400px;
+    }
+
+    /* Ensure the main content scrolls on mobile */
+    .main-content {
+        overflow-y: auto;
+        height: auto;
+        min-height: 100vh;
+        padding-bottom: 60px;
     }
 }
 
