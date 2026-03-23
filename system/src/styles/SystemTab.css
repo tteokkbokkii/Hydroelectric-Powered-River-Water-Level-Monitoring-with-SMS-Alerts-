@@ -5,15 +5,8 @@
     overflow: hidden;
 }
 
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background-color: #f0f2f5;
-    min-height: 0;
-    padding-bottom: 50px; 
-    box-sizing: border-box;
-}
+/* Removed .main-content definition – now handled globally in index.css */
+/* Only keep page‑specific styles */
 
 .card-wrapper {
     background-color: #F4F4F4;
@@ -110,7 +103,7 @@
     background-color: #005a96;
 }
 
-.SysTab-title{
+.SysTab-title {
     font-family: InterMedium;
 }
 
@@ -204,7 +197,7 @@
 }
 
 .reset-btn {
-    background-color: #0072bc; /* Based on image, both are blue */
+    background-color: #0072bc;
 }
 
 /* Custom Toggle Switch */
@@ -215,12 +208,19 @@
     height: 20px;
 }
 
-.switch input { opacity: 0; width: 0; height: 0; }
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
 
 .slider {
     position: absolute;
     cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background-color: #ccc;
     transition: .4s;
     border-radius: 20px;
@@ -229,13 +229,62 @@
 .slider:before {
     position: absolute;
     content: "";
-    height: 14px; width: 14px;
-    left: 3px; bottom: 3px;
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
     background-color: white;
     transition: .4s;
     border-radius: 50%;
 }
 
-input:checked + .slider { background-color: #0072bc; }
-input:checked + .slider:before { transform: translateX(14px); }
+input:checked + .slider {
+    background-color: #0072bc;
+}
+input:checked + .slider:before {
+    transform: translateX(14px);
+}
 
+/* Responsive */
+@media (max-width: 1024px) {
+    .system-grid, .settings-grid {
+        flex-direction: column;
+    }
+
+    .system-column, .settings-column {
+        padding: 0 15px;
+        margin-bottom: 30px;
+    }
+
+    .border-right {
+        border-right: none;
+        border-bottom: 1.5px solid #ccc;
+        padding-bottom: 30px;
+    }
+
+    .settings-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .action-button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .card-wrapper {
+        width: calc(100vw - 1rem);
+        margin: 0.5rem;
+        padding: 1rem;
+    }
+
+    .data-row {
+        font-size: 0.75rem;
+    }
+
+    .status-pill {
+        min-width: 60px;
+        font-size: 0.7rem;
+    }
+}

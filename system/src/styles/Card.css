@@ -154,3 +154,50 @@
 .control-btn:hover, .table-action-btn:hover {
   background: #005bb5;
 }
+
+/* Existing styles remain, add at end */
+
+/* Make RiverLevel responsive */
+@media (max-width: 1024px) {
+  #riverlevel-contents {
+    min-width: auto;
+  }
+
+  .live-expected, .live-current {
+    left: 3%;
+  }
+
+  .live-expected h1, .live-current h1 {
+    font-size: 1.8rem;
+  }
+
+  .live-expected p, .live-current p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .live-expected h1, .live-current h1 {
+    font-size: 1.5rem;
+  }
+
+  .status-indicator {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    margin-right: 0.5em;
+  }
+
+  #riverlevel-card-header {
+    flex-wrap: wrap;
+  }
+
+  #riverlevel-title {
+    font-size: 1rem;
+  }
+}
+
+/* Ensure RiverTrend chart container is responsive */
+#rivertrend-contents {
+  height: auto;
+  min-width: auto;
+}

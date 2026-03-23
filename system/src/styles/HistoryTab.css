@@ -114,3 +114,52 @@
 .p-datepicker-trigger{
     background-color: #0072CE;
 }
+
+/* Existing styles remain, add at end */
+
+@media (max-width: 1024px) {
+  .columns-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .content-column {
+    flex: none;
+    width: 100%;
+  }
+
+  .chart-wrapper {
+    height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tab-nav {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .nav-item {
+    padding: 8px 20px;
+    font-size: 0.8rem;
+  }
+
+  #history-panel {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .calendar-history {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .export-bttn {
+    width: 100%;
+  }
+
+  .chart-wrapper {
+    height: 250px;
+  }
+}

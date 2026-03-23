@@ -10,10 +10,12 @@ function Dashboard(){
       <>
         <Header/>
         <Announcement/>
-        <div className='dashboard-grid'>
-          <RiverLevel/>
-          <RiverTrend/>
-          <RecentLogs/>
+        <div className="main-content">
+          <div className='dashboard-grid'>
+            <RiverLevel/>
+            <RiverTrend/>
+            <RecentLogs/>
+          </div>
         </div>
         <Footer/>
       </>

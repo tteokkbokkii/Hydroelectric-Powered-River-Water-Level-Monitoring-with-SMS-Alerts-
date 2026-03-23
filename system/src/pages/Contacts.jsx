@@ -8,7 +8,9 @@ function Contacts(){
       <>
         <Header/>
         <Announcement/>
-        <ContactsTab/>
+        <div className="main-content">
+          <ContactsTab/>
+        </div>
         <Footer/>
       </>
     )
