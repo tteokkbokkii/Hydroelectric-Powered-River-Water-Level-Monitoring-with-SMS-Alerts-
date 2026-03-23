@@ -155,9 +155,7 @@
   background: #005bb5;
 }
 
-/* Existing styles remain, add at end */
-
-/* Make RiverLevel responsive */
+/* Responsive adjustments */
 @media (max-width: 1024px) {
   #riverlevel-contents {
     min-width: auto;
@@ -185,6 +183,7 @@
     padding: 4px 10px;
     font-size: 0.7rem;
     margin-right: 0.5em;
+    margin-top: 5px;   /* space below title */
   }
 
   #riverlevel-card-header {
@@ -193,6 +192,11 @@
 
   #riverlevel-title {
     font-size: 1rem;
+  }
+
+  /* Move predicted/current boxes to align with left edge of colored bar */
+  .live-expected, .live-current {
+    left: 8%;          /* adjust as needed */
   }
 }
 

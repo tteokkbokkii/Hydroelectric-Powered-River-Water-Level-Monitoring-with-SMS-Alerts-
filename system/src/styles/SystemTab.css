@@ -335,11 +335,19 @@ input:checked + .slider:before {
         gap: 1rem;
     }
 
-    /* REBOOT button alignment */
+    /* REBOOT button alignment (left) */
     .reboot-container {
         display: flex;
         width: 100%;
         justify-content: flex-start;
         margin-top: 20px;
+    }
+
+    /* Right-align values for ABOUT tab */
+    .system-grid .data-row {
+        justify-content: space-between !important;
+    }
+    .system-grid .data-row span:last-child {
+        text-align: right;
     }
 }

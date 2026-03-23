@@ -169,10 +169,7 @@ const SystemTab = () => {
                     <span>Network:</span>
                     <span className="status-pill">4G / LTE</span>
                   </div>
-                  <div className="data-row">
-                    <span>Battery Health:</span>
-                    <span className="status-pill">100%</span>
-                  </div>
+                  {/* Battery Health removed */}
                 </div>
               </div>
 
