@@ -1,58 +1,33 @@
-import { useState, useEffect } from 'react';
-import mqtt from 'mqtt'; // 1. Added MQTT import
+import React from 'react';
 
-function RecentLogs() {
-  const [logs, setLogs] = useState([]);
+// Notice we are accepting { logs } as a prop from Dashboard.jsx now
+function RecentLogs({ logs }) {
+  
+  // This helper function handles the color/text logic based on your feet thresholds
+  const getRange = (feet) => {
+    if (feet >= 11.5) return "CRITICAL";
+    if (feet >= 9.0) return "WARNING";
+    return "NORMAL";
+  };
 
-  useEffect(() => {
-    // 2. Connect to the Pi
-    const client = mqtt.connect('ws://192.168.100.97:9001');
-
-    client.on('connect', () => {
-      console.log('Logs connected to MQTT');
-      client.subscribe('home/tank/level');
-    });
-
-    client.on('message', (topic, message) => {
-      const rawCm = parseFloat(message.toString());
-      if (!isNaN(rawCm)) {
-        const feet = rawCm / 30.48;
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('en-GB', { hour12: false });
-
-        // Determine the range based on your thresholds
-        let range = "NORMAL";
-        if (feet >= 11.5) range = "CRITICAL";
-        else if (feet >= 9.0) range = "WARNING";
-
-        const newEntry = {
-          time: timeStr,
-          range: range,
-          distance: feet
-        };
-
-        setLogs((prevLogs) => {
-          // Add new reading to the top (index 0)
-          const updated = [newEntry, ...prevLogs];
-          // Keep it to the last 19 readings as per your original code
-          return updated.slice(0, 19);
-        });
-      }
-    });
-
-    return () => { if (client) client.end(); };
-  }, []);
-
-  // --- YOUR ORIGINAL UI ---
   return (
     <div className='card-container' id='recentlogs'>
       <h2 className='card-title'>RECENT LOGS</h2>
       <div className='innercard-container' id='recentlogs-contents'>
-        {logs.map((log, index) => (
-          <p key={index}>
-            [{log.time}] - [{log.range}] WATER ELEVATION: {log.distance.toFixed(2)} ft.
-          </p>
-        ))}
+        {/* If there's no data yet, show a loading message */}
+        {logs.length === 0 && <p>Waiting for database entries...</p>}
+
+        {logs.map((log, index) => {
+          // log.value is the level, log.time is the timestamp from SQLite
+          const feet = log.value; 
+          const range = getRange(feet);
+          
+          return (
+            <p key={log.id || index}>
+              [{log.time}] - [{range}] WATER ELEVATION: {feet.toFixed(2)} ft.
+            </p>
+          );
+        })}
       </div>
     </div>
   );
