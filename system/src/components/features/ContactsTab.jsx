@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Dropdown } from 'primereact/dropdown';
-import mqtt from 'mqtt';
 
 // ---------- Generic Popup Component (using Portal) ----------
 const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null }] }) => {
@@ -55,7 +54,6 @@ const ContactsTab = () => {
   const [selectedRecipient, setSelectedRecipient] = useState(null);
   const [customMessage, setCustomMessage] = useState("Test ID: 001 Status: GSM Link Verification...");
   const [smsLogs, setSmsLogs] = useState([]);
-  const [mqttClient, setMqttClient] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Popup state
@@ -171,7 +169,6 @@ const ContactsTab = () => {
       {
         label: 'YES',
         onClick: () => {
-          // Defer follow-up popup to ensure current popup closes first
           setTimeout(() => {
             setIsSaving(true);
             try {
@@ -279,19 +276,19 @@ const ContactsTab = () => {
         <div className="table-fixed-container">
           <table className="modern-table">
             <thead>
-               <tr>
+              <tr>
                 <th style={{ width: '30%' }}>RECIPIENT NAME</th>
                 <th style={{ width: '30%' }}>PHONE NUMBER</th>
                 <th style={{ width: '20%' }}>ALERT LEVEL</th>
                 <th style={{ width: '20%' }}>ACTION</th>
-               </tr>
+              </tr>
             </thead>
             <tbody>
               {editingIndex === 'new' && (
                 <tr className="fixed-row adding-mode">
-                  <td><input autoFocus className="table-input" placeholder="Name..." value={editForm.name} onChange={(e) => handleEditChange('name', e.target.value)} disabled={isSaving} /></td>
-                  <td><input className="table-input" value={editForm.phone} onChange={(e) => handleEditChange('phone', e.target.value)} disabled={isSaving} /></td>
-                  <td><Dropdown className="table-dropdown" value={editForm.alertLevel} options={alertLevelOptions} onChange={(e) => handleEditChange('alertLevel', e.value)} disabled={isSaving} /></td>
+                   <td><input autoFocus className="table-input" placeholder="Name..." value={editForm.name} onChange={(e) => handleEditChange('name', e.target.value)} disabled={isSaving} /></td>
+                   <td><input className="table-input" value={editForm.phone} onChange={(e) => handleEditChange('phone', e.target.value)} disabled={isSaving} /></td>
+                   <td><Dropdown className="table-dropdown" value={editForm.alertLevel} options={alertLevelOptions} onChange={(e) => handleEditChange('alertLevel', e.value)} disabled={isSaving} /></td>
                   <td className="action-cell">
                     <button className="icon-only-btn save" onClick={handleSaveEdit} disabled={isSaving}>
                       {isSaving ? <i className="pi pi-spin pi-spinner" /> : '✓'}

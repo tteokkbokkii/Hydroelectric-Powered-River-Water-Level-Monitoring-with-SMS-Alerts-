@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { Toast } from 'primereact/toast';
-import mqtt from 'mqtt';
 
 // ---------- Custom Number Input Component ----------
 const NumberInput = ({ value, onChange, step = 0.1, min, max, unit, decimalPlaces = 2 }) => {
@@ -88,7 +88,7 @@ const NumberInput = ({ value, onChange, step = 0.1, min, max, unit, decimalPlace
   );
 };
 
-// ---------- Generic Popup Component ----------
+// ---------- Generic Popup Component (using Portal) ----------
 const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null }] }) => {
   useEffect(() => {
     const handleEscape = (e) => {
@@ -103,7 +103,7 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
     onClose();
   };
 
-  return (
+  return ReactDOM.createPortal(
     <div className="notification-overlay" onClick={onClose}>
       <div className={`notification-card ${severity}`} onClick={(e) => e.stopPropagation()}>
         <button className="notification-close-x" onClick={onClose}>×</button>
@@ -125,12 +125,10 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
-
-const API_BASE = 'http://192.168.100.97:5000/api';
-const MQTT_BROKER = 'ws://192.168.100.97:9001';
 
 const SystemTab = () => {
   const [activeTab, setActiveTab] = useState('SETTINGS');
@@ -151,9 +149,7 @@ const SystemTab = () => {
     sensorDisconnect: true
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [mqttClient, setMqttClient] = useState(null);
   const toast = useRef(null);
-  const lastRange = useRef(null);
 
   // Popup state
   const [popup, setPopup] = useState({ visible: false, message: '', severity: '', buttons: [] });
@@ -166,80 +162,15 @@ const SystemTab = () => {
     setPopup({ visible: false, message: '', severity: '', buttons: [] });
   };
 
-  // Fetch settings from backend on mount
+  // Load settings from localStorage on mount
   useEffect(() => {
-    fetch(`${API_BASE}/settings`)
-      .then(res => res.json())
-      .then(data => {
-        setThresholds({
-          normal: data.threshold_normal,
-          attention: data.threshold_attention,
-          critical: data.threshold_critical
-        });
-        setIntervals({
-          reading: data.reading_interval,
-          predicting: data.predicting_interval
-        });
-      })
-      .catch(err => console.error('Error fetching settings:', err));
+    const savedThresholds = localStorage.getItem('sensorThresholds');
+    const savedIntervals = localStorage.getItem('readingIntervals');
+    const savedNotifications = localStorage.getItem('notificationSettings');
+    if (savedThresholds) setThresholds(JSON.parse(savedThresholds));
+    if (savedIntervals) setIntervals(JSON.parse(savedIntervals));
+    if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
   }, []);
-
-  // MQTT connection for real-time readings and status
-  useEffect(() => {
-    const client = mqtt.connect(MQTT_BROKER);
-    client.on('connect', () => {
-      console.log('System Tab connected to MQTT');
-      client.subscribe('sensor/hulo/reading');
-      client.subscribe('system/status');
-      setMqttClient(client);
-    });
-    client.on('message', (topic, message) => {
-      if (topic === 'sensor/hulo/reading') {
-        try {
-          const data = JSON.parse(message.toString());
-          const level = data.distance;
-          let currentRange = '';
-          if (level >= thresholds.critical) currentRange = 'CRITICAL';
-          else if (level >= thresholds.attention) currentRange = 'WARNING';
-          else currentRange = 'SAFE';
-
-          if (lastRange.current !== currentRange) {
-            let msg = '';
-            let severity = '';
-            if (currentRange === 'CRITICAL' && notifications.critical) {
-              msg = 'The water level reached critical levels.';
-              severity = 'error';
-            } else if (currentRange === 'WARNING' && notifications.attention) {
-              msg = 'The water level needs Coast Guard judgment.';
-              severity = 'warn';
-            } else if (currentRange === 'SAFE' && notifications.normal) {
-              msg = 'The water level is currently normal.';
-              severity = 'info';
-            }
-            if (msg) showPopup(msg, severity);
-            lastRange.current = currentRange;
-          }
-        } catch (e) {
-          console.error('Error parsing reading:', e);
-        }
-      } else if (topic === 'system/status') {
-        try {
-          const status = JSON.parse(message.toString());
-          if (notifications.powerLoss && status.reset_reason === 'POWER_ON') {
-            showPopup('Power loss detected. System restarted.', 'error');
-          }
-          if (notifications.sensorDisconnect && (!status.ultrasonic_connected || !status.float_connected)) {
-            showPopup('One or more sensors are disconnected. Please check connections.', 'warn');
-          }
-        } catch (e) {
-          console.error('Error parsing status:', e);
-        }
-      }
-    });
-    return () => {
-      if (client) client.end();
-    };
-  }, [thresholds, notifications]);
 
   const handleThresholdChange = (key, value) => {
     setThresholds(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
@@ -256,19 +187,9 @@ const SystemTab = () => {
   const saveChanges = async () => {
     setIsLoading(true);
     try {
-      const payload = {
-        threshold_normal: thresholds.normal,
-        threshold_attention: thresholds.attention,
-        threshold_critical: thresholds.critical,
-        reading_interval: intervals.reading,
-        predicting_interval: intervals.predicting
-      };
-      const response = await fetch(`${API_BASE}/settings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) throw new Error('Failed to save settings');
+      localStorage.setItem('sensorThresholds', JSON.stringify(thresholds));
+      localStorage.setItem('readingIntervals', JSON.stringify(intervals));
+      localStorage.setItem('notificationSettings', JSON.stringify(notifications));
       showPopup('Settings saved successfully!', 'success');
     } catch (err) {
       console.error(err);
@@ -279,27 +200,60 @@ const SystemTab = () => {
   };
 
   const resetToDefault = () => {
-    setThresholds({
-      normal: 6.5,
-      attention: 8.0,
-      critical: 9.5
-    });
-    setIntervals({
-      reading: 5,
-      predicting: 60
-    });
-    setNotifications({
+    const defaultThresholds = { normal: 6.5, attention: 8.0, critical: 9.5 };
+    const defaultIntervals = { reading: 5, predicting: 60 };
+    const defaultNotifications = {
       normal: true,
       attention: true,
       critical: true,
       powerLoss: true,
       sensorDisconnect: true
-    });
+    };
+    setThresholds(defaultThresholds);
+    setIntervals(defaultIntervals);
+    setNotifications(defaultNotifications);
     showPopup('Settings have been reset to defaults. Click SAVE CHANGES to apply.', 'info');
   };
 
   const handleReboot = () => {
     showPopup('Reboot request sent', 'info');
+  };
+
+  // Test functions to simulate notifications (for local testing)
+  const testNormalNotification = () => {
+    if (notifications.normal) {
+      showPopup('The water level is currently normal.', 'info');
+    } else {
+      showPopup('Normal threshold alerts are disabled', 'error');
+    }
+  };
+  const testWarningNotification = () => {
+    if (notifications.attention) {
+      showPopup('The water level needs Coast Guard judgment.', 'warn');
+    } else {
+      showPopup('Needs Attention alerts are disabled', 'error');
+    }
+  };
+  const testCriticalNotification = () => {
+    if (notifications.critical) {
+      showPopup('The water level reached critical levels.', 'error');
+    } else {
+      showPopup('Highly Critical alerts are disabled', 'error');
+    }
+  };
+  const testPowerLossNotification = () => {
+    if (notifications.powerLoss) {
+      showPopup('Power loss detected. System restarted.', 'error');
+    } else {
+      showPopup('Power/Turbine Loss alerts are disabled', 'error');
+    }
+  };
+  const testSensorDisconnectNotification = () => {
+    if (notifications.sensorDisconnect) {
+      showPopup('One or more sensors are disconnected. Please check connections.', 'warn');
+    } else {
+      showPopup('Sensor Disconnect alerts are disabled', 'error');
+    }
   };
 
   return (
@@ -466,6 +420,28 @@ const SystemTab = () => {
         }
         .notification-secondary-btn:hover {
           background-color: #d0d5db;
+        }
+
+        /* Test buttons */
+        .test-buttons {
+          margin-top: 20px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          justify-content: center;
+        }
+        .test-btn {
+          background: #e9ecef;
+          border: none;
+          border-radius: 6px;
+          padding: 6px 12px;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+        .test-btn:hover {
+          background: #d0d5db;
         }
       `}</style>
 
@@ -676,6 +652,15 @@ const SystemTab = () => {
                         </label>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Test buttons for local simulation */}
+                  <div className="test-buttons">
+                    <button className="test-btn" onClick={testNormalNotification}>Test Normal</button>
+                    <button className="test-btn" onClick={testWarningNotification}>Test Warning</button>
+                    <button className="test-btn" onClick={testCriticalNotification}>Test Critical</button>
+                    <button className="test-btn" onClick={testPowerLossNotification}>Test Power Loss</button>
+                    <button className="test-btn" onClick={testSensorDisconnectNotification}>Test Sensor Disconnect</button>
                   </div>
                 </div>
 
