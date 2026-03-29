@@ -1,30 +1,26 @@
 import React from 'react';
 
-// Notice we are accepting { logs } as a prop from Dashboard.jsx now
 function RecentLogs({ logs }) {
-  
-  // This helper function handles the color/text logic based on your feet thresholds
-  const getRange = (feet) => {
-    if (feet >= 11.5) return "CRITICAL";
-    if (feet >= 9.0) return "WARNING";
-    return "NORMAL";
-  };
-
   return (
     <div className='card-container' id='recentlogs'>
       <h2 className='card-title'>RECENT LOGS</h2>
       <div className='innercard-container' id='recentlogs-contents'>
-        {/* If there's no data yet, show a loading message */}
-        {logs.length === 0 && <p>Waiting for database entries...</p>}
+        
+        {logs.length === 0 && (
+          <p className="loading-text">Waiting for database entries...</p>
+        )}
 
         {logs.map((log, index) => {
-          // log.value is the level, log.time is the timestamp from SQLite
-          const feet = log.value; 
-          const range = getRange(feet);
+          // Mapping variables to the unified keys from Flask API
+          const value = log.distance || 0;
+          const time = log.time || "--:--";
+          const status = log.range || "UNKNOWN";
           
           return (
-            <p key={log.id || index}>
-              [{log.time}] - [{range}] WATER ELEVATION: {feet.toFixed(2)} ft.
+            <p key={log.id || index} className={`log-entry ${status.toLowerCase()}`}>
+              <span className="log-time">[{time}]</span> - 
+              <span className="log-status"> [{status}]</span> 
+              <span className="log-value"> WATER ELEVATION: {value.toFixed(2)} cm.</span>
             </p>
           );
         })}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; // Added hooks
+import { useState, useEffect } from 'react';
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import Announcement from '../components/Announcement.jsx'
@@ -7,27 +7,31 @@ import RiverTrend from '../components/features/RiverTrend.jsx'
 import RecentLogs from '../components/features/RecentLogs.jsx'
 
 function Dashboard(){
-    const [waterData, setWaterData] = useState([]); // Storage for DB data
+    const [waterData, setWaterData] = useState([]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Use your Laptop IP (192.168.1.85) so the ESP32 can also see it
-                const response = await fetch('http://192.168.1.85:5000/api/history');
+                // UPDATE: Use the IP your Flask app just gave you (172.20.10.7)
+                // Use /api/data to match your Flask route
+                const response = await fetch('http://192.168.4.1:5000/api/data');
                 const data = await response.json();
-                setWaterData(data); // Put the DB rows into our state
+                
+                console.log("Data received:", data); // Check your F12 console for this!
+                setWaterData(data); 
             } catch (error) {
                 console.error("Database Fetch Error:", error);
             }
         };
 
-        fetchData(); // Run once on load
-        const interval = setInterval(fetchData, 3000); // Auto-refresh every 3 seconds
-        return () => clearInterval(interval); // Clean up on close
+        fetchData(); 
+        const interval = setInterval(fetchData, 3000); 
+        return () => clearInterval(interval); 
     }, []);
 
-    // We take the VERY FIRST row as the "Current" level
-    const latestLevel = waterData.length > 0 ? waterData[0].value : 0;
+    // FIX: Change .value to .distance_ft to match your SQLite column
+    const latestLevel = waterData.length > 0 ? waterData[0].distance_ft : 0;
+    const latestPredicted = waterData.length > 0 ? waterData[0].predicted_level : 0;
 
     return(
       <>
@@ -35,8 +39,11 @@ function Dashboard(){
         <Announcement/>
         <div className="main-content">
           <div className='dashboard-grid'>
-            {/* Pass the data down as "Props" */}
-            <RiverLevel currentLevel={latestLevel} />
+            {/* Pass the corrected data down */}
+            <RiverLevel 
+                currentLevel={latestLevel} 
+                predictedLevel={latestPredicted} 
+            />
             <RiverTrend history={waterData} />
             <RecentLogs logs={waterData} />
           </div>
