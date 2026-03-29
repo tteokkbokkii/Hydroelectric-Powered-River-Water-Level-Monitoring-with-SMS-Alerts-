@@ -8,7 +8,7 @@ function Contacts(){
       <>
         <Header/>
         <Announcement/>
-        <div className="main-content">
+        <div className="main-content contacts-main-content">
           <ContactsTab/>
         </div>
         <Footer/>

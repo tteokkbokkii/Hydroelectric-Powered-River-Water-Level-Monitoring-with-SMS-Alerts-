@@ -8,6 +8,8 @@
     padding: 20px;
     background: #f8f9fb;
     font-family: inherit;
+    flex: 1;
+    min-height: 0;
 }
 
 .card-panel {
@@ -22,6 +24,7 @@
     border: 1px solid #eef2f6;
     overflow: hidden;
     min-height: 0;
+    height: 100%;
 }
 
 .right-flex {
@@ -29,33 +32,7 @@
     padding: 1.8em;
 }
 
-.add-btn {
-    background: #0072CE;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 0.85rem;
-    transition: background 0.2s;
-    text-transform: uppercase;
-    flex-shrink: 0;
-}
-
-.innercard-container {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-}
-
+/* Panel header row (title + add button) */
 .panel-header-row {
     display: flex;
     justify-content: space-between;
@@ -73,17 +50,16 @@
     font-family: 'InterBlack', sans-serif;
 }
 
-/* --- 2. CONTACTS TABLE --- */
+/* --- 2. CONTACTS TABLE (LEFT PANEL) --- */
 .table-fixed-container {
     flex: 1;
     min-height: 0;
-    overflow-x: auto;
     overflow-y: auto;
     border: 1px solid #edf2f7;
     border-radius: 15px;
     background: #ffffff;
-    margin-bottom: 15px;
-    margin-top: 15px;
+    margin: 15px 0;
+    padding-bottom: 15px;
 }
 
 .modern-table {
@@ -112,11 +88,74 @@
     color: #444;
 }
 
-.modern-table tbody tr:hover {
-    background-color: #f9f9f9;
+/* --- 3. SMS TESTING SECTION (sticky at bottom) --- */
+.sms-testing-section {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding-top: 10px;
 }
 
-/* --- 3. INPUTS & DYNAMIC ROWS --- */
+.sms-form-subcard {
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 15px;
+    border: 1px solid #edf2f7;
+}
+
+/* --- 4. SMS LOGS (RIGHT PANEL) --- */
+.logs-container {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 15px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.logs-scrollable {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 15px;
+}
+
+.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'InterMedium', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.95rem;
+}
+
+.log-row td {
+    padding: 4px 0;
+    vertical-align: top;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.l-time { width: 55px; color: #64748b; }
+.l-tag { width: 70px; }
+.l-sender { width: 85px; font-weight: 900; }
+.log-row.alrt { color: #FF0000; }
+.log-row.maint { color: #0072CE; }
+.log-row.sys { color: #E67E22; }
+
+/* --- 5. ACTION BUTTONS & INPUTS --- */
+.add-btn {
+    background: #0072CE;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
 .table-input,
 .table-dropdown.p-dropdown {
     width: 100%;
@@ -138,7 +177,6 @@
     background-color: #f0f7ff !important;
 }
 
-/* --- 4. ACTION BUTTONS --- */
 .action-cell {
     display: flex;
     gap: 6px;
@@ -191,7 +229,6 @@
     color: white;
 }
 
-/* --- 5. BADGES --- */
 .badge {
     padding: 4px 14px;
     border-radius: 20px;
@@ -213,29 +250,6 @@
     color: #dc2626;
 }
 
-/* --- 6. SMS TESTING SECTION --- */
-.sms-testing-section {
-    flex-shrink: 0;
-    margin-top: auto;
-    padding-top: 10px;
-}
-
-.sms-form-subcard {
-    padding: 20px;
-    background: #ffffff;
-    border-radius: 15px;
-    border: 1px solid #edf2f7;
-}
-
-.subtitle-sec {
-    display: block;
-    font-size: 1.48rem;
-    margin: 0.2em;
-    font-weight: bold;
-    font-family: InterBlack;
-    color: #0072bc;
-}
-
 .form-row {
     display: flex;
     align-items: center;
@@ -249,7 +263,6 @@
     color: #475569;
     text-transform: uppercase;
 }
-
 .modern-textarea {
     flex: 1;
     height: 38px;
@@ -265,10 +278,6 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
-.modern-textarea::-webkit-scrollbar {
-    display: none;
-}
-
 .send-group {
     display: flex;
     flex: 1;
@@ -288,58 +297,7 @@
     cursor: pointer;
 }
 
-/* --- 7. SMS LOGS --- */
-.logs-container {
-    background-color: #ffffff;
-    padding: 15px;
-    border-radius: 15px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-}
-
-.logs-scrollable {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.logs-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'InterMedium', sans-serif;
-    text-transform: uppercase;
-    font-size: 0.95rem;
-}
-
-.log-row td {
-    padding: 4px 0;
-    vertical-align: top;
-    border-bottom: 1px solid #f0f0f0;
-}
-.l-time {
-    width: 55px;
-    color: #64748b;
-}
-.l-tag {
-    width: 70px;
-}
-.l-sender {
-    width: 85px;
-    font-weight: 900;
-}
-.log-row.alrt {
-    color: #FF0000;
-}
-.log-row.maint {
-    color: #0072CE;
-}
-.log-row.sys {
-    color: #E67E22;
-}
-
-/* --- 8. PRIMEREACT FIXES --- */
+/* --- 6. PRIMEREACT DROPDOWN FIXES --- */
 .table-dropdown.p-dropdown .p-dropdown-label {
     padding: 0 10px !important;
     display: flex;
@@ -352,7 +310,7 @@
     height: 100%;
 }
 
-/* --- 9. RESPONSIVE --- */
+/* --- 7. MOBILE (page scrolls, no internal scroll on panels) --- */
 @media (max-width: 1024px) {
     .tab-layout {
         flex-direction: column !important;
@@ -366,10 +324,31 @@
         width: 100%;
         margin-bottom: 10px;
         height: auto;
+        overflow: visible;
     }
 
     .right-flex {
         padding: 20px;
+    }
+
+    .table-fixed-container {
+        overflow: visible;
+        max-height: none;
+        margin: 15px 0;
+        padding-bottom: 15px;
+    }
+
+    .logs-container {
+        min-height: auto;
+        overflow: visible;
+        flex: none;
+    }
+
+    .logs-scrollable {
+        overflow: visible;
+        flex: none;
+        padding-bottom: 15px;
+        margin-bottom: 60px;  /* ← ADDED: extra bottom space to push past footer */
     }
 
     .form-row {
@@ -421,4 +400,144 @@
         height: 28px;
         font-size: 12px;
     }
+}
+
+/* --- 8. DESKTOP: fixed‑height cards with internal scrolling --- */
+@media (min-width: 1025px) {
+    .contacts-main-content {
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .contacts-main-content .tab-layout {
+        flex: 1;
+        min-height: 0;
+    }
+    .contacts-main-content .card-panel {
+        height: auto;
+        max-height: 100%;
+    }
+    .right-flex {
+        height: auto;
+        max-height: 100%;
+    }
+    .logs-container {
+        flex: 1;
+        min-height: 0;
+    }
+    .logs-scrollable {
+        overflow-y: auto;
+        flex: 1;
+        padding-bottom: 15px;
+    }
+}
+
+/* --- Popup Styles --- */
+.notification-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-in;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.notification-card {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  width: 90%;
+  max-width: 400px;
+  animation: slideUp 0.3s ease-out;
+}
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.notification-close-x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.notification-close-x:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+.notification-header {
+  padding: 20px 20px 0 20px;
+  border-bottom: 1px solid #eef2f6;
+}
+.notification-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  font-family: InterBlack, sans-serif;
+  text-transform: uppercase;
+}
+.notification-card.error .notification-header h3 { color: #dc2626; }
+.notification-card.warn .notification-header h3 { color: #f59e0b; }
+.notification-card.info .notification-header h3 { color: #0072CE; }
+.notification-card.success .notification-header h3 { color: #10b981; }
+.notification-body {
+  padding: 20px;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #333;
+  font-family: InterMedium, sans-serif;
+}
+.notification-footer {
+  padding: 0 20px 20px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.notification-primary-btn, .notification-secondary-btn {
+  background-color: #0072CE;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 24px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: InterMedium, sans-serif;
+  transition: background 0.2s;
+}
+.notification-primary-btn:hover {
+  background-color: #005bb5;
+}
+.notification-secondary-btn {
+  background-color: #e9ecef;
+  color: #333;
+}
+.notification-secondary-btn:hover {
+  background-color: #d0d5db;
+}
+
+.notification-footer.footer-left {
+  justify-content: flex-start;
 }
