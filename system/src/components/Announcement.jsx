@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import mqtt from 'mqtt';
+
+const MQTT_BROKER = 'ws://192.168.100.97:9001';   // adjust to your Pi's IP
+const SIMULATION = false;   // set true for local testing
 
 const Announcement = () => {
-  // ---------- State ----------
   const [message, setMessage] = useState('RIVER ELEVATION AT -- FT. | NORMAL');
   const [color, setColor] = useState('#ABD9FF');
   const [isScrolling, setIsScrolling] = useState(false);
@@ -9,59 +12,20 @@ const Announcement = () => {
   const containerRef = useRef(null);
   const animationRef = useRef(null);
   const scrollPosRef = useRef(0);
-  const directionRef = useRef(1);
+  const directionRef = useRef(1); // 1 = right, -1 = left
   const maxOffsetRef = useRef(0);
 
-  // ---------- Simulation state ----------
-  const [waterLevel, setWaterLevel] = useState(6.5);           // feet
-  const [thresholds, setThresholds] = useState({
-    normal: 6.5,
-    attention: 8.0,
-    critical: 9.5
-  });
-  const [extraMessages, setExtraMessages] = useState([]);      // e.g. ['Power Loss', 'Sensor Disconnect']
-
-  // Load thresholds from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('sensorThresholds');
-    if (saved) {
-      setThresholds(JSON.parse(saved));
-    }
-  }, []);
-
-  // Listen for localStorage changes (if thresholds are updated in SystemTab)
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === 'sensorThresholds' && e.newValue) {
-        setThresholds(JSON.parse(e.newValue));
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  // Helper to update announcement based on current waterLevel and thresholds
-  const updateFromState = () => {
-    // Determine range
-    let range = 'NORMAL';
-    if (waterLevel >= thresholds.critical) {
-      range = 'HIGHLY CRITICAL';
-    } else if (waterLevel >= thresholds.attention) {
-      range = 'NEEDS ATTENTION';
-    }
-    updateAnnouncement(waterLevel, range, extraMessages);
-  };
-
-  // Main announcement updater
-  const updateAnnouncement = (waterLevel, range, extraMessagesList) => {
+  // Helper to build the announcement text and color
+  const updateAnnouncement = (waterLevel, range, extraMessages = []) => {
     const mainText = `RIVER ELEVATION AT ${waterLevel.toFixed(2)} FT. | ${range}`;
-    const fullText = extraMessagesList.length ? `${mainText} | ${extraMessagesList.join(' | ')}` : mainText;
+    const fullText = extraMessages.length ? `${mainText} | ${extraMessages.join(' | ')}` : mainText;
+    // Convert to uppercase
     setMessage(fullText.toUpperCase());
 
     let newColor = '#ABD9FF';
-    if (extraMessagesList.includes('Power Loss') ||
-        extraMessagesList.includes('Sensor Disconnect') ||
-        extraMessagesList.includes('Server Disconnect')) {
+    if (extraMessages.includes('Power Loss') ||
+        extraMessages.includes('Sensor Disconnect') ||
+        extraMessages.includes('Server Disconnect')) {
       newColor = '#ED2100';
     } else if (range === 'HIGHLY CRITICAL') {
       newColor = '#ED2100';
@@ -73,12 +37,7 @@ const Announcement = () => {
     setColor(newColor);
   };
 
-  // Update when any state changes
-  useEffect(() => {
-    updateFromState();
-  }, [waterLevel, thresholds, extraMessages]);
-
-  // ---------- Scrolling logic (same as before) ----------
+  // Start/stop back‑and‑forth scrolling based on overflow
   useEffect(() => {
     const container = containerRef.current;
     const textEl = textRef.current;
@@ -89,6 +48,7 @@ const Announcement = () => {
       const textWidth = textEl.scrollWidth;
 
       if (textWidth > containerWidth && !isScrolling) {
+        // Start scrolling
         setIsScrolling(true);
         const maxOffset = textWidth - containerWidth;
         maxOffsetRef.current = maxOffset;
@@ -96,6 +56,7 @@ const Announcement = () => {
         directionRef.current = 1;
         startAnimation();
       } else if (textWidth <= containerWidth && isScrolling) {
+        // Stop scrolling
         setIsScrolling(false);
         cancelAnimationFrame(animationRef.current);
         textEl.style.transform = 'translateX(0)';
@@ -105,7 +66,7 @@ const Announcement = () => {
     const startAnimation = () => {
       const step = () => {
         if (!isScrolling) return;
-        let newPos = scrollPosRef.current + directionRef.current * 1;
+        let newPos = scrollPosRef.current + directionRef.current * 1; // speed factor (pixels per frame)
         const max = maxOffsetRef.current;
         if (newPos >= max) {
           newPos = max;
@@ -132,106 +93,104 @@ const Announcement = () => {
     };
   }, [message, isScrolling]);
 
-  // ---------- Control panel for local simulation ----------
-  const [showControls, setShowControls] = useState(false);
+  // ---------- Real MQTT version ----------
+  useEffect(() => {
+    if (SIMULATION) return;
+    let mqttClient = null;
+    let mounted = true;
 
-  const togglePowerLoss = () => {
-    setExtraMessages(prev =>
-      prev.includes('Power Loss')
-        ? prev.filter(m => m !== 'Power Loss')
-        : [...prev, 'Power Loss']
-    );
-  };
-  const toggleSensorDisconnect = () => {
-    setExtraMessages(prev =>
-      prev.includes('Sensor Disconnect')
-        ? prev.filter(m => m !== 'Sensor Disconnect')
-        : [...prev, 'Sensor Disconnect']
-    );
-  };
-  const resetMessages = () => {
-    setExtraMessages([]);
-  };
+    const connectMQTT = () => {
+      const client = mqtt.connect(MQTT_BROKER);
+      client.on('connect', () => {
+        console.log('Announcement: connected to MQTT');
+        client.subscribe('sensor/hulo/reading');
+        client.subscribe('system/status');
+      });
+
+      client.on('message', (topic, message) => {
+        if (!mounted) return;
+        const payload = JSON.parse(message.toString());
+        if (topic === 'sensor/hulo/reading') {
+          const level = payload.distance;
+          const rawRange = payload.range;
+          let rangeText = '';
+          if (rawRange === 'SAFE') rangeText = 'NORMAL';
+          else if (rawRange === 'WARNING') rangeText = 'NEEDS ATTENTION';
+          else if (rawRange === 'CRITICAL') rangeText = 'HIGHLY CRITICAL';
+          window._announcementData = { level, rangeText };
+        } else if (topic === 'system/status') {
+          const status = payload;
+          const extras = [];
+          if (status.reset_reason === 'POWER_ON') extras.push('Power Loss');
+          if (!status.ultrasonic_connected || !status.float_connected) extras.push('Sensor Disconnect');
+          if (window._announcementData) {
+            updateAnnouncement(window._announcementData.level, window._announcementData.rangeText, extras);
+          } else {
+            updateAnnouncement(0, 'NORMAL', extras);
+          }
+        }
+      });
+      mqttClient = client;
+    };
+
+    connectMQTT();
+    return () => {
+      mounted = false;
+      if (mqttClient) mqttClient.end();
+    };
+  }, []);
+
+  // ---------- Simulation version (for local testing) ----------
+  useEffect(() => {
+    if (!SIMULATION) return;
+    const states = [
+      { level: 5.2, range: 'NORMAL', extras: [] },
+      { level: 8.7, range: 'NEEDS ATTENTION', extras: [] },
+      { level: 10.8, range: 'HIGHLY CRITICAL', extras: [] },
+      { level: 6.3, range: 'NORMAL', extras: ['Power Loss'] },
+      { level: 9.2, range: 'NEEDS ATTENTION', extras: ['Sensor Disconnect'] },
+      { level: 11.2, range: 'HIGHLY CRITICAL', extras: ['Power Loss', 'Sensor Disconnect'] },
+    ];
+    let idx = 0;
+    const interval = setInterval(() => {
+      const state = states[idx % states.length];
+      updateAnnouncement(state.level, state.range, state.extras);
+      idx++;
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fallback initial message
+  useEffect(() => {
+    if (!SIMULATION && !window._announcementData) {
+      updateAnnouncement(0, 'NORMAL', []);
+    }
+  }, []);
 
   return (
-    <>
-      <div className="announcement-bar" style={{ backgroundColor: color }}>
-        <div
-          className="announcement-text-container"
-          ref={containerRef}
-          style={{ position: 'relative', overflow: 'hidden', whiteSpace: 'nowrap' }}
-        >
-          <p
-            ref={textRef}
-            style={{
-              margin: 0,
-              padding: '5.5px 0',
-              textAlign: 'center',
-              fontFamily: 'InterMedium',
-              display: 'inline-block',
-              whiteSpace: 'nowrap',
-              transform: 'translateX(0)',
-              transition: isScrolling ? 'none' : 'transform 0.2s ease',
-            }}
-          >
-            {message}
-          </p>
-        </div>
-      </div>
-
-      {/* Floating control panel (only for local testing) */}
+    <div className="announcement-bar" style={{ backgroundColor: color }}>
       <div
-        style={{
-          position: 'fixed',
-          bottom: '70px',
-          right: '10px',
-          background: '#fff',
-          border: '1px solid #ccc',
-          borderRadius: '8px',
-          padding: '10px',
-          fontSize: '12px',
-          zIndex: 9999,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          fontFamily: 'InterMedium',
-        }}
+        className="announcement-text-container"
+        ref={containerRef}
+        style={{ position: 'relative', overflow: 'hidden', whiteSpace: 'nowrap' }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-          <strong>Announcement Simulator</strong>
-          <button
-            onClick={() => setShowControls(!showControls)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}
-          >
-            {showControls ? '−' : '+'}
-          </button>
-        </div>
-        {showControls && (
-          <div style={{ marginTop: '8px' }}>
-            <div style={{ marginBottom: '8px' }}>
-              <label>Water Level (ft): </label>
-              <input
-                type="number"
-                step="0.1"
-                value={waterLevel}
-                onChange={(e) => setWaterLevel(parseFloat(e.target.value))}
-                style={{ width: '80px', marginLeft: '5px' }}
-              />
-            </div>
-            <div style={{ marginBottom: '5px' }}>
-              <button onClick={togglePowerLoss} style={{ marginRight: '5px', padding: '2px 8px' }}>
-                {extraMessages.includes('Power Loss') ? '✓ Power Loss' : 'Power Loss'}
-              </button>
-              <button onClick={toggleSensorDisconnect} style={{ marginRight: '5px', padding: '2px 8px' }}>
-                {extraMessages.includes('Sensor Disconnect') ? '✓ Sensor Disconnect' : 'Sensor Disconnect'}
-              </button>
-              <button onClick={resetMessages} style={{ padding: '2px 8px' }}>Reset Extras</button>
-            </div>
-            <div style={{ fontSize: '10px', color: '#666', marginTop: '5px' }}>
-              Thresholds: Normal {thresholds.normal} | Attention {thresholds.attention} | Critical {thresholds.critical}
-            </div>
-          </div>
-        )}
+        <p
+          ref={textRef}
+          style={{
+            margin: 0,
+            padding: '5.5px 0',
+            textAlign: 'center',
+            fontFamily: 'InterMedium',
+            display: 'inline-block',
+            whiteSpace: 'nowrap',
+            transform: 'translateX(0)',
+            transition: isScrolling ? 'none' : 'transform 0.2s ease',
+          }}
+        >
+          {message}
+        </p>
       </div>
-    </>
+    </div>
   );
 };
 
