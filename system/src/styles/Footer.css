@@ -20,14 +20,36 @@
     align-items: center;
 }
 
-.gsm-signal {
-    background-color: #0072CE;
-    height: 100%;
-    width: 3.0em;
+.system-status p {
+    margin: 0;
+    font-size: 0.9rem;
 }
 
-.battery {
-    background-color: #01345f;
+.system-status span {
+    font-weight: bold;
+}
+
+.signal-container {
     height: 100%;
-    width: 3.0em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-right: 1.5em;   /* same as left padding */
+}
+
+.signal-bars-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 20px;
+}
+
+.signal-bar {
+    width: 4px;
+    background-color: #a0a0a0;
+    transition: background-color 0.2s;
+}
+
+.signal-bar.active {
+    background-color: #0072CE;
 }
