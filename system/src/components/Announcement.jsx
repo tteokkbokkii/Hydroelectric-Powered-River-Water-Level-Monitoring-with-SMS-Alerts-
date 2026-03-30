@@ -19,9 +19,9 @@ const Announcement = () => {
     attention: 8.0,
     critical: 9.5
   });
-  const [extraMessages, setExtraMessages] = useState([]);
+  const [extraMessages, setExtraMessages] = useState([]); // system events
 
-  // Load thresholds from localStorage on mount
+  // Load thresholds from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('sensorThresholds');
     if (saved) {
@@ -38,6 +38,17 @@ const Announcement = () => {
     return () => window.removeEventListener('thresholdsChanged', handleThresholdsChange);
   }, []);
 
+  // Notify footer when system events change
+  useEffect(() => {
+    const event = new CustomEvent('footerStatusChange', {
+      detail: {
+        powerLoss: extraMessages.includes('Power Loss'),
+        sensorDisconnect: extraMessages.includes('Sensor Disconnect')
+      }
+    });
+    window.dispatchEvent(event);
+  }, [extraMessages]);
+
   // Helper to update announcement based on current waterLevel and thresholds
   const updateFromState = () => {
     let range = 'NORMAL';
@@ -46,21 +57,16 @@ const Announcement = () => {
     } else if (waterLevel >= thresholds.attention) {
       range = 'NEEDS ATTENTION';
     }
-    updateAnnouncement(waterLevel, range, extraMessages);
+    updateAnnouncement(waterLevel, range);
   };
 
   // Main announcement updater
-  const updateAnnouncement = (waterLevel, range, extraMessagesList) => {
+  const updateAnnouncement = (waterLevel, range) => {
     const mainText = `RIVER ELEVATION AT ${waterLevel.toFixed(2)} FT. | ${range}`;
-    const fullText = extraMessagesList.length ? `${mainText} | ${extraMessagesList.join(' | ')}` : mainText;
-    setMessage(fullText.toUpperCase());
+    setMessage(mainText.toUpperCase());
 
     let newColor = '#ABD9FF';
-    if (extraMessagesList.includes('Power Loss') ||
-        extraMessagesList.includes('Sensor Disconnect') ||
-        extraMessagesList.includes('Server Disconnect')) {
-      newColor = '#ED2100';
-    } else if (range === 'HIGHLY CRITICAL') {
+    if (range === 'HIGHLY CRITICAL') {
       newColor = '#ED2100';
     } else if (range === 'NEEDS ATTENTION') {
       newColor = '#fffd74';
@@ -73,7 +79,7 @@ const Announcement = () => {
   // Update when any state changes
   useEffect(() => {
     updateFromState();
-  }, [waterLevel, thresholds, extraMessages]);
+  }, [waterLevel, thresholds]);
 
   // ---------- Scrolling logic ----------
   useEffect(() => {
@@ -220,7 +226,7 @@ const Announcement = () => {
               <button onClick={toggleSensorDisconnect} style={{ marginRight: '5px', padding: '2px 8px' }}>
                 {extraMessages.includes('Sensor Disconnect') ? '✓ Sensor Disconnect' : 'Sensor Disconnect'}
               </button>
-              <button onClick={resetMessages} style={{ padding: '2px 8px' }}>Reset Extras</button>
+              <button onClick={resetMessages} style={{ padding: '2px 8px' }}>Reset System Status</button>
             </div>
             <div style={{ fontSize: '10px', color: '#666', marginTop: '5px' }}>
               Thresholds: Normal {thresholds.normal} | Attention {thresholds.attention} | Critical {thresholds.critical}
