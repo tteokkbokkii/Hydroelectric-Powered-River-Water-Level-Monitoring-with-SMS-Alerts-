@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import mqtt from 'mqtt';
 
-const MQTT_BROKER = 'ws://192.168.100.97:9001';   // adjust to your Pi IP
+const MQTT_BROKER = 'ws://192.168.100.97:9001';
 
 const Footer = () => {
   const [signalBars, setSignalBars] = useState(0);
   const [systemStatus, setSystemStatus] = useState('NORMAL');
-  const [statusColor, setStatusColor] = useState('#0072CE');
 
   useEffect(() => {
     const client = mqtt.connect(MQTT_BROKER);
@@ -33,14 +32,11 @@ const Footer = () => {
           if (!status.ultrasonic_connected || !status.float_connected) issues.push('SENSOR DISCONNECT');
 
           let displayText = 'NORMAL';
-          let color = '#0072CE';
           if (issues.length > 0) {
             displayText = issues.join(' | ');
-            color = '#ED2100';
           }
 
           setSystemStatus(displayText);
-          setStatusColor(color);
         } catch (e) {
           console.error('Failed to parse system status:', message.toString());
         }
@@ -52,8 +48,8 @@ const Footer = () => {
     };
   }, []);
 
-  // Render signal bars (blue active, gray inactive)
   const renderBars = () => {
+    const heights = [6, 12, 18, 24];
     const bars = [];
     for (let i = 0; i < 4; i++) {
       const isActive = i < signalBars;
@@ -63,10 +59,11 @@ const Footer = () => {
           className={`signal-bar ${isActive ? 'active' : ''}`}
           style={{
             width: '4px',
-            height: `${6 + i * 2}px`,
+            height: `${heights[i]}px`,
             marginLeft: '2px',
             backgroundColor: isActive ? '#0072CE' : '#a0a0a0',
             transition: 'background-color 0.2s',
+            borderRadius: '2px',
           }}
         />
       );
@@ -74,10 +71,28 @@ const Footer = () => {
     return bars;
   };
 
+  const isNormal = systemStatus === 'NORMAL';
+  const badgeColor = isNormal ? '#0072CE' : '#ED2100';
+  const badgeBg = isNormal ? '#e6f2ff' : '#ffe6e6';
+  const badgeBorder = isNormal ? '#0072CE' : '#ED2100';
+
   return (
     <footer className='footer-container'>
       <div className='system-status'>
-        <p>SYSTEM STATUS: <span style={{ color: statusColor, fontWeight: 'bold' }}>{systemStatus}</span></p>
+        <div
+          className='status-badge'
+          style={{
+            backgroundColor: badgeBg,
+            borderColor: badgeBorder,
+          }}
+        >
+          <span className='status-label' style={{ color: badgeColor }}>
+            CONNECTIONS:{' '}
+          </span>
+          <span className='status-value' style={{ color: badgeColor, fontWeight: 'bold' }}>
+            {systemStatus}
+          </span>
+        </div>
       </div>
       <div className='signal-container'>
         <div className="signal-bars-container">
