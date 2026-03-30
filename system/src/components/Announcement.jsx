@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import mqtt from 'mqtt';
 
-const MQTT_BROKER = 'ws://192.168.100.97:9001';   // adjust to your Pi's IP
-const SIMULATION = false;   // set true for local testing
+const MQTT_BROKER = 'ws://192.168.100.97:9001';   // replace with your Pi IP
+const SIMULATION = false;   // keep false for real MQTT
 
 const Announcement = () => {
   const [message, setMessage] = useState('RIVER ELEVATION AT -- FT. | NORMAL');
@@ -12,14 +12,13 @@ const Announcement = () => {
   const containerRef = useRef(null);
   const animationRef = useRef(null);
   const scrollPosRef = useRef(0);
-  const directionRef = useRef(1); // 1 = right, -1 = left
+  const directionRef = useRef(1);
   const maxOffsetRef = useRef(0);
 
   // Helper to build the announcement text and color
   const updateAnnouncement = (waterLevel, range, extraMessages = []) => {
     const mainText = `RIVER ELEVATION AT ${waterLevel.toFixed(2)} FT. | ${range}`;
     const fullText = extraMessages.length ? `${mainText} | ${extraMessages.join(' | ')}` : mainText;
-    // Convert to uppercase
     setMessage(fullText.toUpperCase());
 
     let newColor = '#ABD9FF';
@@ -48,7 +47,6 @@ const Announcement = () => {
       const textWidth = textEl.scrollWidth;
 
       if (textWidth > containerWidth && !isScrolling) {
-        // Start scrolling
         setIsScrolling(true);
         const maxOffset = textWidth - containerWidth;
         maxOffsetRef.current = maxOffset;
@@ -56,7 +54,6 @@ const Announcement = () => {
         directionRef.current = 1;
         startAnimation();
       } else if (textWidth <= containerWidth && isScrolling) {
-        // Stop scrolling
         setIsScrolling(false);
         cancelAnimationFrame(animationRef.current);
         textEl.style.transform = 'translateX(0)';
@@ -66,7 +63,7 @@ const Announcement = () => {
     const startAnimation = () => {
       const step = () => {
         if (!isScrolling) return;
-        let newPos = scrollPosRef.current + directionRef.current * 1; // speed factor (pixels per frame)
+        let newPos = scrollPosRef.current + directionRef.current * 1; // speed
         const max = maxOffsetRef.current;
         if (newPos >= max) {
           newPos = max;
@@ -93,7 +90,7 @@ const Announcement = () => {
     };
   }, [message, isScrolling]);
 
-  // ---------- Real MQTT version ----------
+  // ---------- MQTT real version ----------
   useEffect(() => {
     if (SIMULATION) return;
     let mqttClient = null;
@@ -112,11 +109,12 @@ const Announcement = () => {
         const payload = JSON.parse(message.toString());
         if (topic === 'sensor/hulo/reading') {
           const level = payload.distance;
-          const rawRange = payload.range;
+          const rawRange = payload.range;   // "SAFE", "WARNING", "CRITICAL"
           let rangeText = '';
           if (rawRange === 'SAFE') rangeText = 'NORMAL';
           else if (rawRange === 'WARNING') rangeText = 'NEEDS ATTENTION';
           else if (rawRange === 'CRITICAL') rangeText = 'HIGHLY CRITICAL';
+          // store for later combination with status
           window._announcementData = { level, rangeText };
         } else if (topic === 'system/status') {
           const status = payload;
@@ -138,26 +136,6 @@ const Announcement = () => {
       mounted = false;
       if (mqttClient) mqttClient.end();
     };
-  }, []);
-
-  // ---------- Simulation version (for local testing) ----------
-  useEffect(() => {
-    if (!SIMULATION) return;
-    const states = [
-      { level: 5.2, range: 'NORMAL', extras: [] },
-      { level: 8.7, range: 'NEEDS ATTENTION', extras: [] },
-      { level: 10.8, range: 'HIGHLY CRITICAL', extras: [] },
-      { level: 6.3, range: 'NORMAL', extras: ['Power Loss'] },
-      { level: 9.2, range: 'NEEDS ATTENTION', extras: ['Sensor Disconnect'] },
-      { level: 11.2, range: 'HIGHLY CRITICAL', extras: ['Power Loss', 'Sensor Disconnect'] },
-    ];
-    let idx = 0;
-    const interval = setInterval(() => {
-      const state = states[idx % states.length];
-      updateAnnouncement(state.level, state.range, state.extras);
-      idx++;
-    }, 8000);
-    return () => clearInterval(interval);
   }, []);
 
   // Fallback initial message

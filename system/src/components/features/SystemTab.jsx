@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { Toast } from 'primereact/toast';
 import mqtt from 'mqtt';
 
@@ -88,7 +89,7 @@ const NumberInput = ({ value, onChange, step = 0.1, min, max, unit, decimalPlace
   );
 };
 
-// ---------- Generic Popup Component ----------
+// ---------- Generic Popup Component (using Portal) ----------
 const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null }] }) => {
   useEffect(() => {
     const handleEscape = (e) => {
@@ -103,7 +104,7 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
     onClose();
   };
 
-  return (
+  return ReactDOM.createPortal(
     <div className="notification-overlay" onClick={onClose}>
       <div className={`notification-card ${severity}`} onClick={(e) => e.stopPropagation()}>
         <button className="notification-close-x" onClick={onClose}>×</button>
@@ -125,7 +126,8 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

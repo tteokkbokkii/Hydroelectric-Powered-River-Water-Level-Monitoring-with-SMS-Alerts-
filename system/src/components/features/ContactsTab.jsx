@@ -21,7 +21,6 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
     onClose();
   };
 
-  // No conditional left alignment – always right-aligned
   return ReactDOM.createPortal(
     <div className="notification-overlay" onClick={onClose}>
       <div className={`notification-card ${severity}`} onClick={(e) => e.stopPropagation()}>
