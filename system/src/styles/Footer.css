@@ -20,12 +20,24 @@
     align-items: center;
 }
 
-.system-status p {
-    margin: 0;
+.status-badge {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: bold;
     font-size: 0.9rem;
+    border: 1.5px solid;
+    white-space: nowrap;
 }
 
-.system-status span {
+.status-label {
+    font-weight: 500;
+    /* color will be set inline */
+}
+
+.status-value {
     font-weight: bold;
 }
 
@@ -34,20 +46,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-right: 1.5em;   /* same as left padding */
+    padding-right: 1.5em;
 }
 
 .signal-bars-container {
     display: flex;
     align-items: flex-end;
     gap: 2px;
-    height: 20px;
+    height: 24px;
 }
 
 .signal-bar {
     width: 4px;
     background-color: #a0a0a0;
     transition: background-color 0.2s;
+    border-radius: 2px;
 }
 
 .signal-bar.active {

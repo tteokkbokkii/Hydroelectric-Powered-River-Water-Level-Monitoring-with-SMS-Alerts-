@@ -3,9 +3,7 @@ import React, { useState, useEffect } from 'react';
 const Footer = () => {
   const [signalBars, setSignalBars] = useState(3);
   const [systemStatus, setSystemStatus] = useState('NORMAL');
-  const [statusColor, setStatusColor] = useState('#0072CE');
 
-  // Listen for status changes from Announcement
   useEffect(() => {
     const handleStatusChange = (event) => {
       const { powerLoss, sensorDisconnect } = event.detail;
@@ -14,19 +12,15 @@ const Footer = () => {
       if (sensorDisconnect) issues.push('SENSOR DISCONNECT');
 
       let displayText = 'NORMAL';
-      let color = '#0072CE';
       if (issues.length > 0) {
         displayText = issues.join(' | ');
-        color = '#ED2100';
       }
       setSystemStatus(displayText);
-      setStatusColor(color);
     };
     window.addEventListener('footerStatusChange', handleStatusChange);
     return () => window.removeEventListener('footerStatusChange', handleStatusChange);
   }, []);
 
-  // Simulate signal strength changes (random)
   useEffect(() => {
     const interval = setInterval(() => {
       const newBars = Math.floor(Math.random() * 5);
@@ -35,8 +29,8 @@ const Footer = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Render signal bars (blue active, gray inactive)
   const renderBars = () => {
+    const heights = [6, 12, 18, 24];
     const bars = [];
     for (let i = 0; i < 4; i++) {
       const isActive = i < signalBars;
@@ -46,10 +40,11 @@ const Footer = () => {
           className={`signal-bar ${isActive ? 'active' : ''}`}
           style={{
             width: '4px',
-            height: `${6 + i * 2}px`,
+            height: `${heights[i]}px`,
             marginLeft: '2px',
             backgroundColor: isActive ? '#0072CE' : '#a0a0a0',
             transition: 'background-color 0.2s',
+            borderRadius: '2px',
           }}
         />
       );
@@ -57,10 +52,28 @@ const Footer = () => {
     return bars;
   };
 
+  const isNormal = systemStatus === 'NORMAL';
+  const badgeColor = isNormal ? '#0072CE' : '#ED2100';
+  const badgeBg = isNormal ? '#e6f2ff' : '#ffe6e6';
+  const badgeBorder = isNormal ? '#0072CE' : '#ED2100';
+
   return (
     <footer className='footer-container'>
       <div className='system-status'>
-        <p>SYSTEM STATUS: <span style={{ color: statusColor, fontWeight: 'bold' }}>{systemStatus}</span></p>
+        <div
+          className='status-badge'
+          style={{
+            backgroundColor: badgeBg,
+            borderColor: badgeBorder,
+          }}
+        >
+          <span className='status-label' style={{ color: badgeColor }}>
+            CONNECTIONS:{' '}
+          </span>
+          <span className='status-value' style={{ color: badgeColor, fontWeight: 'bold' }}>
+            {systemStatus}
+          </span>
+        </div>
       </div>
       <div className='signal-container'>
         <div className="signal-bars-container">
