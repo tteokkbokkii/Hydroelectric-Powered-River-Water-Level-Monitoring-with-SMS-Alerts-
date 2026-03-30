@@ -191,6 +191,10 @@ const SystemTab = () => {
       localStorage.setItem('readingIntervals', JSON.stringify(intervals));
       localStorage.setItem('notificationSettings', JSON.stringify(notifications));
       showPopup('Settings saved successfully!', 'success');
+      
+      // Dispatch custom event to notify Announcement component
+      const event = new CustomEvent('thresholdsChanged', { detail: thresholds });
+      window.dispatchEvent(event);
     } catch (err) {
       console.error(err);
       showPopup('Could not save settings. Please try again.', 'error');

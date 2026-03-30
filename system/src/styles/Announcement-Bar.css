@@ -1,8 +1,24 @@
 /* --- Announcement Bar --- */
+.announcement-bar {
+  width: 100%;
+  overflow: hidden;
+  font-family: InterMedium;
+  transition: background-color 0.3s ease;
+}
+
+.announcement-text-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: center;        /* ensures the inline-block is centered when not overflowing */
+}
+
 .announcement-bar p {
-    margin: 0;
-    background-color: #ABD9FF;
-    padding: 5.5px 0;
-    text-align: center; /* Center for now*/
-    font-family: InterMedium;
+  margin: 0;
+  padding: 5.5px 0;
+  font-family: InterMedium;
+  display: inline-block;
+  white-space: nowrap;
+  transition: transform 0.05s linear;  /* smooth movement */
 }
