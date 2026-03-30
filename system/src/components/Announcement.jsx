@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import mqtt from 'mqtt';
 
 const MQTT_BROKER = 'ws://192.168.100.97:9001';   // replace with your Pi IP
-const SIMULATION = false;   // keep false for real MQTT
 
 const Announcement = () => {
   const [message, setMessage] = useState('RIVER ELEVATION AT -- FT. | NORMAL');
@@ -16,17 +15,12 @@ const Announcement = () => {
   const maxOffsetRef = useRef(0);
 
   // Helper to build the announcement text and color
-  const updateAnnouncement = (waterLevel, range, extraMessages = []) => {
+  const updateAnnouncement = (waterLevel, range) => {
     const mainText = `RIVER ELEVATION AT ${waterLevel.toFixed(2)} FT. | ${range}`;
-    const fullText = extraMessages.length ? `${mainText} | ${extraMessages.join(' | ')}` : mainText;
-    setMessage(fullText.toUpperCase());
+    setMessage(mainText.toUpperCase());
 
     let newColor = '#ABD9FF';
-    if (extraMessages.includes('Power Loss') ||
-        extraMessages.includes('Sensor Disconnect') ||
-        extraMessages.includes('Server Disconnect')) {
-      newColor = '#ED2100';
-    } else if (range === 'HIGHLY CRITICAL') {
+    if (range === 'HIGHLY CRITICAL') {
       newColor = '#ED2100';
     } else if (range === 'NEEDS ATTENTION') {
       newColor = '#fffd74';
@@ -92,7 +86,6 @@ const Announcement = () => {
 
   // ---------- MQTT real version ----------
   useEffect(() => {
-    if (SIMULATION) return;
     let mqttClient = null;
     let mounted = true;
 
@@ -101,31 +94,19 @@ const Announcement = () => {
       client.on('connect', () => {
         console.log('Announcement: connected to MQTT');
         client.subscribe('sensor/hulo/reading');
-        client.subscribe('system/status');
       });
 
       client.on('message', (topic, message) => {
         if (!mounted) return;
-        const payload = JSON.parse(message.toString());
         if (topic === 'sensor/hulo/reading') {
+          const payload = JSON.parse(message.toString());
           const level = payload.distance;
           const rawRange = payload.range;   // "SAFE", "WARNING", "CRITICAL"
           let rangeText = '';
           if (rawRange === 'SAFE') rangeText = 'NORMAL';
           else if (rawRange === 'WARNING') rangeText = 'NEEDS ATTENTION';
           else if (rawRange === 'CRITICAL') rangeText = 'HIGHLY CRITICAL';
-          // store for later combination with status
-          window._announcementData = { level, rangeText };
-        } else if (topic === 'system/status') {
-          const status = payload;
-          const extras = [];
-          if (status.reset_reason === 'POWER_ON') extras.push('Power Loss');
-          if (!status.ultrasonic_connected || !status.float_connected) extras.push('Sensor Disconnect');
-          if (window._announcementData) {
-            updateAnnouncement(window._announcementData.level, window._announcementData.rangeText, extras);
-          } else {
-            updateAnnouncement(0, 'NORMAL', extras);
-          }
+          updateAnnouncement(level, rangeText);
         }
       });
       mqttClient = client;
@@ -140,9 +121,7 @@ const Announcement = () => {
 
   // Fallback initial message
   useEffect(() => {
-    if (!SIMULATION && !window._announcementData) {
-      updateAnnouncement(0, 'NORMAL', []);
-    }
+    updateAnnouncement(0, 'NORMAL');
   }, []);
 
   return (
