@@ -17,8 +17,7 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
     onClose();
   };
 
-  const isSingleButton = buttons.length === 1;
-
+  // No conditional left alignment – always right-aligned
   return ReactDOM.createPortal(
     <div className="notification-overlay" onClick={onClose}>
       <div className={`notification-card ${severity}`} onClick={(e) => e.stopPropagation()}>
@@ -29,7 +28,7 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
         <div className="notification-body">
           <p>{message}</p>
         </div>
-        <div className={`notification-footer ${isSingleButton ? 'footer-left' : ''}`}>
+        <div className="notification-footer">
           {buttons.map((btn, idx) => (
             <button
               key={idx}
@@ -276,7 +275,7 @@ const ContactsTab = () => {
         <div className="table-fixed-container">
           <table className="modern-table">
             <thead>
-              <tr>
+               <tr>
                 <th style={{ width: '30%' }}>RECIPIENT NAME</th>
                 <th style={{ width: '30%' }}>PHONE NUMBER</th>
                 <th style={{ width: '20%' }}>ALERT LEVEL</th>
