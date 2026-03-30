@@ -52,7 +52,7 @@ const Footer = () => {
     };
   }, []);
 
-  // Render signal bars
+  // Render signal bars (blue active, gray inactive)
   const renderBars = () => {
     const bars = [];
     for (let i = 0; i < 4; i++) {
@@ -65,7 +65,7 @@ const Footer = () => {
             width: '4px',
             height: `${6 + i * 2}px`,
             marginLeft: '2px',
-            backgroundColor: isActive ? '#FFFFFF' : '#a0a0a0',
+            backgroundColor: isActive ? '#0072CE' : '#a0a0a0',
             transition: 'background-color 0.2s',
           }}
         />
@@ -79,12 +79,11 @@ const Footer = () => {
       <div className='system-status'>
         <p>SYSTEM STATUS: <span style={{ color: statusColor, fontWeight: 'bold' }}>{systemStatus}</span></p>
       </div>
-      <div className='gsm-signal'>
+      <div className='signal-container'>
         <div className="signal-bars-container">
           {renderBars()}
         </div>
       </div>
-      <div className='battery'></div>
     </footer>
   );
 };

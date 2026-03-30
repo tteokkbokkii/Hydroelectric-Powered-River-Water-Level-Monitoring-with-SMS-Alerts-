@@ -22,7 +22,8 @@
 
 .system-status p {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    font-weight: 500;
 }
 
 .system-status span {
@@ -34,7 +35,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-right: 1.5em;   /* same as left padding */
+    padding-right: 1.5em;
 }
 
 .signal-bars-container {
