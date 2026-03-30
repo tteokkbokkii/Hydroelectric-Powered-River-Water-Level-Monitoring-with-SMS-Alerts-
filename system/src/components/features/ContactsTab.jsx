@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom';
 import { Dropdown } from 'primereact/dropdown';
 import mqtt from 'mqtt';
 
+const API_BASE = 'http://192.168.100.97:5000/api';
+const MQTT_BROKER = 'ws://192.168.100.97:9001';
+
 // ---------- Generic Popup Component (using Portal) ----------
 const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null }] }) => {
   useEffect(() => {
@@ -18,8 +21,7 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
     onClose();
   };
 
-  const isSingleButton = buttons.length === 1;
-
+  // No conditional left alignment – always right-aligned
   return ReactDOM.createPortal(
     <div className="notification-overlay" onClick={onClose}>
       <div className={`notification-card ${severity}`} onClick={(e) => e.stopPropagation()}>
@@ -30,7 +32,7 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
         <div className="notification-body">
           <p>{message}</p>
         </div>
-        <div className={`notification-footer ${isSingleButton ? 'footer-left' : ''}`}>
+        <div className="notification-footer">
           {buttons.map((btn, idx) => (
             <button
               key={idx}
@@ -75,37 +77,63 @@ const ContactsTab = () => {
     { label: 'CRITICAL', value: 'CRITICAL' }
   ];
 
-  // ---------- LOAD CONTACTS FROM LOCALSTORAGE ----------
+  // ---------- Fetch contacts from REST API ----------
   useEffect(() => {
-    const saved = localStorage.getItem('contacts_test');
-    if (saved) {
-      try {
-        setContacts(JSON.parse(saved));
-      } catch (e) {
-        console.error('Error parsing saved contacts', e);
+    fetch(`${API_BASE}/contacts`)
+      .then(res => res.json())
+      .then(data => setContacts(data))
+      .catch(err => console.error('Error fetching contacts:', err));
+  }, []);
+
+  // ---------- Fetch initial SMS logs ----------
+  useEffect(() => {
+    fetch(`${API_BASE}/sms-logs`)
+      .then(res => res.json())
+      .then(data => setSmsLogs(data))
+      .catch(err => console.error('Error fetching SMS logs:', err));
+  }, []);
+
+  // ---------- MQTT connection for real-time updates ----------
+  useEffect(() => {
+    const client = mqtt.connect(MQTT_BROKER);
+    client.on('connect', () => {
+      console.log('Contacts Tab connected to MQTT');
+      client.subscribe('contacts/update');
+      client.subscribe('sms/log');
+      setMqttClient(client);
+    });
+    client.on('message', (topic, message) => {
+      if (topic === 'contacts/update') {
+        try {
+          const updatedContacts = JSON.parse(message.toString());
+          setContacts(updatedContacts);
+          console.log('Contacts updated via MQTT');
+        } catch (e) {
+          console.error('Failed to parse contacts update:', message.toString());
+        }
+      } else if (topic === 'sms/log') {
+        try {
+          const log = JSON.parse(message.toString());
+          const now = new Date();
+          const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).slice(0,5);
+          setSmsLogs(prev => [{
+            time: timeStr,
+            recipient: log.recipient,
+            message: log.message,
+            type: log.type,
+            color: log.type === 'alert' ? 'alrt' : 'maint'
+          }, ...prev].slice(0, 50));
+        } catch (e) {
+          console.error('Failed to parse SMS log:', message.toString());
+        }
       }
-    } else {
-      const defaultContacts = [
-        { id: 1, name: 'John Doe', phone: '+639123456789', alertLevel: 'ALL' },
-        { id: 2, name: 'Jane Smith', phone: '+639987654321', alertLevel: 'WARNING' },
-        { id: 3, name: 'Emergency Contact', phone: '+639112233445', alertLevel: 'CRITICAL' },
-      ];
-      setContacts(defaultContacts);
-      localStorage.setItem('contacts_test', JSON.stringify(defaultContacts));
-    }
+    });
+    return () => {
+      if (client) client.end();
+    };
   }, []);
 
-  // ---------- LOAD SMS LOGS (dummy) ----------
-  useEffect(() => {
-    const dummyLogs = [
-      { time: '16:45', recipient: '+639123456789', message: 'Water level reached CRITICAL levels', type: 'alert', color: 'alrt' },
-      { time: '14:30', recipient: '+639987654321', message: 'Test message from admin', type: 'manual', color: 'maint' },
-      { time: '12:15', recipient: '+639112233445', message: 'Water level reached WARNING levels', type: 'alert', color: 'alrt' },
-    ];
-    setSmsLogs(dummyLogs);
-  }, []);
-
-  // ---------- Contact Handlers (using localStorage) ----------
+  // ---------- Contact Handlers (CRUD with API) ----------
   const handleEdit = (index) => {
     if (isSaving) return;
     setEditingIndex(index);
@@ -135,19 +163,24 @@ const ContactsTab = () => {
 
     setIsSaving(true);
     try {
-      let updatedContacts;
       if (editingIndex === 'new') {
-        const newId = Date.now();
-        const newContact = { ...editForm, id: newId };
-        updatedContacts = [...contacts, newContact];
+        const response = await fetch(`${API_BASE}/contacts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editForm)
+        });
+        if (!response.ok) throw new Error('Failed to add contact');
         showPopup('Contact added successfully!', 'success');
       } else {
-        updatedContacts = [...contacts];
-        updatedContacts[editingIndex] = { ...editForm, id: contacts[editingIndex].id };
+        const contactId = contacts[editingIndex].id;
+        const response = await fetch(`${API_BASE}/contacts/${contactId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editForm)
+        });
+        if (!response.ok) throw new Error('Failed to update contact');
         showPopup('Contact updated successfully!', 'success');
       }
-      setContacts(updatedContacts);
-      localStorage.setItem('contacts_test', JSON.stringify(updatedContacts));
       setEditingIndex(-1);
     } catch (err) {
       console.error(err);
@@ -163,21 +196,22 @@ const ContactsTab = () => {
     setEditForm({ name: '', phone: '+63', alertLevel: 'ALL' });
   };
 
-  const handleDelete = (index) => {
+  const handleDelete = async (index) => {
     if (isSaving) return;
     const contactName = contacts[index].name;
     // Confirmation popup
     showPopup(`Delete contact "${contactName}"?`, 'info', [
       {
         label: 'YES',
-        onClick: () => {
-          // Defer follow-up popup to ensure current popup closes first
-          setTimeout(() => {
+        onClick: async () => {
+          setTimeout(async () => {
             setIsSaving(true);
             try {
-              const updatedContacts = contacts.filter((_, i) => i !== index);
-              setContacts(updatedContacts);
-              localStorage.setItem('contacts_test', JSON.stringify(updatedContacts));
+              const contactId = contacts[index].id;
+              const response = await fetch(`${API_BASE}/contacts/${contactId}`, {
+                method: 'DELETE'
+              });
+              if (!response.ok) throw new Error('Failed to delete contact');
               showPopup(`Contact "${contactName}" deleted.`, 'success');
             } catch (err) {
               console.error(err);
@@ -199,7 +233,7 @@ const ContactsTab = () => {
     ]);
   };
 
-  // ---------- Manual SMS sending (local simulation) ----------
+  // ---------- Manual SMS sending ----------
   const handleSend = () => {
     if (!selectedRecipient) {
       showPopup('Please select a recipient', 'error');
@@ -220,19 +254,18 @@ const ContactsTab = () => {
       {
         label: 'YES',
         onClick: () => {
-          setTimeout(() => {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).slice(0,5);
-            const newLog = {
-              time: timeStr,
-              recipient: contact.phone,
-              message: customMessage,
-              type: 'manual',
-              color: 'maint'
-            };
-            setSmsLogs(prev => [newLog, ...prev].slice(0, 50));
-            showPopup(`Message for "${contact.name}" issued.`, 'success');
-          }, 50);
+          if (mqttClient && mqttClient.connected) {
+            setTimeout(() => {
+              const payload = JSON.stringify({
+                phone: contact.phone,
+                message: customMessage
+              });
+              mqttClient.publish('sms/send', payload);
+              showPopup(`Message for "${contact.name}" issued.`, 'success');
+            }, 50);
+          } else {
+            showPopup('MQTT not connected, cannot send SMS', 'error');
+          }
         }
       },
       {
@@ -279,19 +312,19 @@ const ContactsTab = () => {
         <div className="table-fixed-container">
           <table className="modern-table">
             <thead>
-               <tr>
+              <tr>
                 <th style={{ width: '30%' }}>RECIPIENT NAME</th>
                 <th style={{ width: '30%' }}>PHONE NUMBER</th>
                 <th style={{ width: '20%' }}>ALERT LEVEL</th>
                 <th style={{ width: '20%' }}>ACTION</th>
-               </tr>
+              </tr>
             </thead>
             <tbody>
               {editingIndex === 'new' && (
                 <tr className="fixed-row adding-mode">
-                  <td><input autoFocus className="table-input" placeholder="Name..." value={editForm.name} onChange={(e) => handleEditChange('name', e.target.value)} disabled={isSaving} /></td>
-                  <td><input className="table-input" value={editForm.phone} onChange={(e) => handleEditChange('phone', e.target.value)} disabled={isSaving} /></td>
-                  <td><Dropdown className="table-dropdown" value={editForm.alertLevel} options={alertLevelOptions} onChange={(e) => handleEditChange('alertLevel', e.value)} disabled={isSaving} /></td>
+                   <td><input autoFocus className="table-input" placeholder="Name..." value={editForm.name} onChange={(e) => handleEditChange('name', e.target.value)} disabled={isSaving} /></td>
+                   <td><input className="table-input" value={editForm.phone} onChange={(e) => handleEditChange('phone', e.target.value)} disabled={isSaving} /></td>
+                   <td><Dropdown className="table-dropdown" value={editForm.alertLevel} options={alertLevelOptions} onChange={(e) => handleEditChange('alertLevel', e.value)} disabled={isSaving} /></td>
                   <td className="action-cell">
                     <button className="icon-only-btn save" onClick={handleSaveEdit} disabled={isSaving}>
                       {isSaving ? <i className="pi pi-spin pi-spinner" /> : '✓'}
