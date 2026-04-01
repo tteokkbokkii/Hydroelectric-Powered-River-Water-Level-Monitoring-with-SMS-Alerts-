@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import mqtt from 'mqtt';
 
-const MQTT_BROKER = "ws://192.168.100.97:9001";
+const MQTT_BROKER = "ws://192.168.43.154:9001";
 const TOPIC = "river/monitor/json";
 
 const HandshakeCheck = () => {

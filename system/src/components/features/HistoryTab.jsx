@@ -29,7 +29,7 @@ const HistoryTab = () => {
     const fetchHistory = async () => {
       try {
         // Updated to use the IP that worked in your browser
-        const response = await fetch('http://172.20.10.7:5000/api/data');
+        const response = await fetch('http://192.168.43.154:5000/api/data');
         const result = await response.json();
         
         // Map database columns to the names used in this JSX
