@@ -198,11 +198,16 @@ useEffect(() => {
     });
 
     client.on('message', (topic, message) => {
+      const payloadString = message.toString();
+      console.log(`📩 Received on ${topic}:`, payloadString);
+
+      // --- Handle Sensor Readings ---
       if (topic === 'sensor/hulo/reading') {
         try {
-          const data = JSON.parse(message.toString());
+          const data = JSON.parse(payloadString);
           const level = data.distance;
           let currentRange = '';
+          
           if (level >= thresholds.critical) currentRange = 'CRITICAL';
           else if (level >= thresholds.attention) currentRange = 'WARNING';
           else currentRange = 'SAFE';
@@ -216,11 +221,15 @@ useEffect(() => {
             if (msg) showPopup(msg, severity);
             lastRange.current = currentRange;
           }
-        } catch (e) { console.error('Error parsing reading:', e); }
+        } catch (e) { 
+          console.error('Error parsing sensor reading:', e); 
+        }
       } 
-      else if (topic === 'system/status') {
+
+      // --- Handle System Status ---
+      if (topic === 'system/status') {
         try {
-          const status = JSON.parse(message.toString());
+          const status = JSON.parse(payloadString);
           setLiveStatus(prev => ({
             ...prev,
             systemUp: status.uptime || prev.systemUp,
@@ -233,12 +242,14 @@ useEffect(() => {
             rtc: status.rtc_synced ? 'SYNCED' : 'UNSYNCED',
             gsm: status.gsm_status || prev.gsm
           }));
-        } catch (e) { console.error('Error parsing status:', e); }
+        } catch (e) {
+          console.error('Error parsing status JSON:', e);
+        }
       }
     });
 
     return () => { if (client) client.end(); };
-  }, [thresholds, notifications]);
+}, [thresholds, notifications]);
 
   const handleThresholdChange = (key, value) => {
     setThresholds(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
