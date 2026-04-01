@@ -6,17 +6,16 @@ def init_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS readings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            time TEXT,
-            distance REAL,
-            range TEXT,
-            predicted REAL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            distance_ft REAL,
+            predicted_ft REAL,
+            status TEXT,
+            f_safe INTEGER,
+            f_warn INTEGER,
+            f_crit INTEGER,
+            rtc_time TEXT,
+            server_time DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
     conn.commit()
     conn.close()
-    print("Database initialized: river_monitor.db")
-
-if __name__ == "__main__":
-    init_db()
+    print("✅ Schema Ready with RTC support.")

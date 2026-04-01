@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import sqlite3
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -48,6 +49,16 @@ def get_history():
         return jsonify(results)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/settings', methods=['POST'])
+def update_settings():
+    data = request.json
+    # This line saves the data to a physical file on the Pi
+    with open('settings.json', 'w') as f:
+        json.dump(data, f)
+    
+    print(f"✅ Settings permanently saved to disk: {data}")
+    return jsonify({"status": "success", "message": "Settings updated"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

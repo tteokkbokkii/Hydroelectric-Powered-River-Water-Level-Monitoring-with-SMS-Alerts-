@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import mqtt from 'mqtt';
 
-const MQTT_BROKER = 'ws://192.168.100.97:9001';   // adjust to your Pi IP
+const MQTT_BROKER = 'ws://192.168.43.154:9001';
 
 const Footer = () => {
   const [signalBars, setSignalBars] = useState(0);

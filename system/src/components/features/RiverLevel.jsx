@@ -19,7 +19,7 @@ function RiverLevel({ currentLevel: propLevel, predictedLevel: propPredicted }) 
 
   useEffect(() => {
     // Aligned with Raspberry Pi Hotspot IP and default Mosquitto WebSocket port
-    const client = mqtt.connect('ws://192.168.4.1:9001'); 
+    const client = mqtt.connect('ws://192.168.4.1:5000');
 
     client.on('connect', () => {
       client.subscribe('sensor/hulo/reading'); 
