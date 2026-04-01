@@ -50,15 +50,29 @@ def get_history():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/api/settings', methods=['POST'])
-def update_settings():
-    data = request.json
-    # This line saves the data to a physical file on the Pi
-    with open('settings.json', 'w') as f:
-        json.dump(data, f)
-    
-    print(f"✅ Settings permanently saved to disk: {data}")
-    return jsonify({"status": "success", "message": "Settings updated"}), 200
+@app.route('/api/settings', methods=['GET', 'POST']) # <--- Must have BOTH
+def settings():
+    if request.method == 'GET':
+        # If the file exists, return the saved settings
+        try:
+            with open('settings.json', 'r') as f:
+                return jsonify(json.load(f))
+        except FileNotFoundError:
+            # Return defaults if no file exists yet
+            return jsonify({
+                "threshold_normal": 6.5,
+                "threshold_attention": 8.0,
+                "threshold_critical": 9.5,
+                "reading_interval": 5,
+                "predicting_interval": 60
+            })
+
+    if request.method == 'POST':
+        data = request.json
+        with open('settings.json', 'w') as f:
+            json.dump(data, f)
+        print(f"✅ Settings saved: {data}")
+        return jsonify({"status": "success"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
