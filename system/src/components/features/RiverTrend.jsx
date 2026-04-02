@@ -7,42 +7,40 @@ import mqtt from 'mqtt';
 function RiverTrend({ history }) {
   const [liveData, setLiveData] = useState([]);
 
-  // 1. Load History from Database when the Dashboard fetches it
+  // 1. Load History from Database
   useEffect(() => {
-    if (history && history.length > 0) {
-      // Map unified database keys (distance, time, predicted) to the chart keys
-      // We .reverse() so newest data is on the right of the line chart
+    if (Array.isArray(history) && history.length > 0) {
       const formattedHistory = [...history].reverse().map(item => ({
-        time: item.time,
-        current: item.distance,
-        predicted: item.predicted
+        time: item.time || "--:--",
+        current: Number(item.distance) || 0,
+        predicted: Number(item.predicted) || 0
       }));
-      setLiveData(formattedHistory.slice(-20)); // Limit to last 20 data points
+      setLiveData(formattedHistory.slice(-20)); 
     }
   }, [history]);
 
-  // 2. MQTT Logic for real-time line updates
+  // 2. MQTT Logic for real-time updates
   useEffect(() => {
     // Aligned with Raspberry Pi Hotspot IP and WebSocket port
-    const client = mqtt.connect('ws://192.168.43.154:9001');
+    const client = mqtt.connect('ws://172.20.10.5:9001');
 
     client.on('connect', () => {
       client.subscribe('sensor/hulo/reading');
-      console.log("Trend Component: MQTT Connected");
+      console.log("Trend Component: MQTT Connected to 192.168.4.1");
     });
 
     client.on('message', (topic, message) => {
       try {
         const data = JSON.parse(message.toString());
         const newPoint = {
-          time: data.time,
-          current: data.distance,
-          predicted: data.predicted
+          time: data.time || "--:--",
+          current: Number(data.distance) || 0,
+          predicted: Number(data.predicted) || 0
         };
 
         setLiveData((prev) => {
           const updated = [...prev, newPoint];
-          return updated.slice(-20); // Maintain a moving window of 20 points
+          return updated.slice(-20); 
         });
       } catch (e) {
         console.error("MQTT Trend Parse Error", e);
@@ -69,12 +67,6 @@ function RiverTrend({ history }) {
               tick={{ fontSize: 11, fill: '#666' }}
               tickMargin={15}
               axisLine={{ stroke: '#ccc' }}
-              label={{ 
-                value: 'time (hrs)', 
-                position: 'insideBottom', 
-                offset: -20, 
-                style: { fontStyle: 'italic', fontSize: '11px', fill: '#999' } 
-              }}
             />
             <YAxis
               domain={[5, 12]}
@@ -83,17 +75,14 @@ function RiverTrend({ history }) {
               tickMargin={15}
               axisLine={{ stroke: '#ccc' }}
               tickFormatter={(value) => `${value} ft.`}
-              label={{ 
-                value: 'water level (ft.)', 
-                angle: -90, 
-                position: 'insideLeft', 
-                offset: -10, 
-                style: { fontStyle: 'italic', textAnchor: 'middle', fontSize: '11px', fill: '#999' } 
-              }}
             />
             <Tooltip
               labelFormatter={(label) => `time: ${label}`}
-              formatter={(value, name) => [`${value.toFixed(2)} ft.`, name === 'current' ? 'Actual' : 'Predicted']}
+              // ADDED SAFETY: Check if value exists before calling .toFixed()
+              formatter={(value, name) => [
+                `${(Number(value) || 0).toFixed(2)} ft.`, 
+                name === 'current' ? 'Actual' : 'Predicted'
+              ]}
               contentStyle={{ borderRadius: '10px', border: '1px solid #ddd', padding: '10px', fontSize: '12px' }}
             />
             <Legend
@@ -110,7 +99,6 @@ function RiverTrend({ history }) {
               stroke="#0072CE"
               strokeWidth={2}
               dot={{ r: 3, fill: '#fff', stroke: '#0072CE', strokeWidth: 2 }}
-              activeDot={{ r: 5 }}
               isAnimationActive={false} 
             />
             <Line
@@ -120,7 +108,6 @@ function RiverTrend({ history }) {
               stroke="#FFB800"
               strokeWidth={2}
               dot={{ r: 3, fill: '#fff', stroke: '#FFB800', strokeWidth: 2 }}
-              activeDot={{ r: 5 }}
               isAnimationActive={false}
             />
           </LineChart>

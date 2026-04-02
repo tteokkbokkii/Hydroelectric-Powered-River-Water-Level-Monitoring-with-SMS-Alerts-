@@ -1,9 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import mqtt from 'mqtt';
 
-const MQTT_BROKER = 'ws://192.168.43.154:9001';
+const MQTT_BROKER = 'ws://172.20.10.5:9001';
 
 const Announcement = () => {
+  // Load saved water level and thresholds from localStorage
+  const [waterLevel, setWaterLevel] = useState(() => {
+    const saved = localStorage.getItem('announcement_waterLevel');
+    return saved ? parseFloat(saved) : 0;
+  });
+  const [thresholds, setThresholds] = useState(() => {
+    const saved = localStorage.getItem('announcement_thresholds');
+    return saved ? JSON.parse(saved) : { normal: 6.5, attention: 8.0, critical: 9.5 };
+  });
+
   const [message, setMessage] = useState('RIVER ELEVATION AT -- FT. | NORMAL');
   const [color, setColor] = useState('#ABD9FF');
   const [isScrolling, setIsScrolling] = useState(false);
@@ -14,8 +24,14 @@ const Announcement = () => {
   const directionRef = useRef(1);
   const maxOffsetRef = useRef(0);
 
-  // Helper to build the announcement text and color
-  const updateAnnouncement = (waterLevel, range) => {
+  // Helper to update the announcement text and color
+  const updateAnnouncement = () => {
+    let range = 'NORMAL';
+    if (waterLevel >= thresholds.critical) {
+      range = 'HIGHLY CRITICAL';
+    } else if (waterLevel >= thresholds.attention) {
+      range = 'NEEDS ATTENTION';
+    }
     const mainText = `RIVER ELEVATION AT ${waterLevel.toFixed(2)} FT. | ${range}`;
     setMessage(mainText.toUpperCase());
 
@@ -30,7 +46,60 @@ const Announcement = () => {
     setColor(newColor);
   };
 
-  // Start/stop back‑and‑forth scrolling based on overflow
+  // Save water level and thresholds to localStorage when they change
+  useEffect(() => {
+    if (waterLevel !== 0) localStorage.setItem('announcement_waterLevel', waterLevel);
+  }, [waterLevel]);
+  useEffect(() => {
+    localStorage.setItem('announcement_thresholds', JSON.stringify(thresholds));
+  }, [thresholds]);
+
+  // Update announcement when waterLevel or thresholds change
+  useEffect(() => {
+    updateAnnouncement();
+  }, [waterLevel, thresholds]);
+
+  // MQTT subscription
+  useEffect(() => {
+    let mqttClient = null;
+    let mounted = true;
+
+    const connectMQTT = () => {
+      const client = mqtt.connect(MQTT_BROKER);
+      client.on('connect', () => {
+        console.log('Announcement: connected to MQTT');
+        client.subscribe('sensor/hulo/reading');
+        client.subscribe('system/settings');
+      });
+
+      client.on('message', (topic, message) => {
+        if (!mounted) return;
+        try {
+          const payload = JSON.parse(message.toString());
+          if (topic === 'sensor/hulo/reading') {
+            setWaterLevel(payload.distance);
+          } else if (topic === 'system/settings') {
+            setThresholds({
+              normal: payload.threshold_normal,
+              attention: payload.threshold_attention,
+              critical: payload.threshold_critical
+            });
+          }
+        } catch (e) {
+          console.error('Announcement parse error:', e);
+        }
+      });
+      mqttClient = client;
+    };
+
+    connectMQTT();
+    return () => {
+      mounted = false;
+      if (mqttClient) mqttClient.end();
+    };
+  }, []);
+
+  // ---------- Scrolling logic (unchanged) ----------
   useEffect(() => {
     const container = containerRef.current;
     const textEl = textRef.current;
@@ -57,7 +126,7 @@ const Announcement = () => {
     const startAnimation = () => {
       const step = () => {
         if (!isScrolling) return;
-        let newPos = scrollPosRef.current + directionRef.current * 1; // speed
+        let newPos = scrollPosRef.current + directionRef.current * 1;
         const max = maxOffsetRef.current;
         if (newPos >= max) {
           newPos = max;
@@ -83,46 +152,6 @@ const Announcement = () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [message, isScrolling]);
-
-  // ---------- MQTT real version ----------
-  useEffect(() => {
-    let mqttClient = null;
-    let mounted = true;
-
-    const connectMQTT = () => {
-      const client = mqtt.connect(MQTT_BROKER);
-      client.on('connect', () => {
-        console.log('Announcement: connected to MQTT');
-        client.subscribe('sensor/hulo/reading');
-      });
-
-      client.on('message', (topic, message) => {
-        if (!mounted) return;
-        if (topic === 'sensor/hulo/reading') {
-          const payload = JSON.parse(message.toString());
-          const level = payload.distance;
-          const rawRange = payload.range;   // "SAFE", "WARNING", "CRITICAL"
-          let rangeText = '';
-          if (rawRange === 'SAFE') rangeText = 'NORMAL';
-          else if (rawRange === 'WARNING') rangeText = 'NEEDS ATTENTION';
-          else if (rawRange === 'CRITICAL') rangeText = 'HIGHLY CRITICAL';
-          updateAnnouncement(level, rangeText);
-        }
-      });
-      mqttClient = client;
-    };
-
-    connectMQTT();
-    return () => {
-      mounted = false;
-      if (mqttClient) mqttClient.end();
-    };
-  }, []);
-
-  // Fallback initial message
-  useEffect(() => {
-    updateAnnouncement(0, 'NORMAL');
-  }, []);
 
   return (
     <div className="announcement-bar" style={{ backgroundColor: color }}>

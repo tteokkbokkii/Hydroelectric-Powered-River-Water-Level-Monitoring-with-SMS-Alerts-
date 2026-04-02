@@ -8,14 +8,14 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             distance_ft REAL,
             predicted_ft REAL,
-            status TEXT,
-            f_safe INTEGER,
-            f_warn INTEGER,
-            f_crit INTEGER,
-            rtc_time TEXT,
+            status TEXT,               -- SAFE, WARNING, CRITICAL
+            rtc_time TEXT,             -- from ESP32 RTC (YYYY-MM-DD HH:MM:SS)
             server_time DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
     conn.commit()
     conn.close()
-    print("✅ Schema Ready with RTC support.")
+    print("✅ Database initialized with unified schema.")
+
+if __name__ == "__main__":
+    init_db()

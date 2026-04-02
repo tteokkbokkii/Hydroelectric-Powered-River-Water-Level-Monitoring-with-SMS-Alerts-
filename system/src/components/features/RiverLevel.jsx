@@ -5,35 +5,45 @@ import mqtt from 'mqtt';
 function RiverLevel({ currentLevel: propLevel, predictedLevel: propPredicted }) {
   const [mqttLevel, setMqttLevel] = useState(0);
   const [mqttPredicted, setMqttPredicted] = useState(0);
+  const [thresholds, setThresholds] = useState(() => {
+    const saved = localStorage.getItem('riverlevel_thresholds');
+    return saved ? JSON.parse(saved) : { normal: 6.5, attention: 8.0, critical: 9.5 };
+  });
 
   // Calibration settings
   const minLevel = 5;
   const maxLevel = 12;
 
-  const statusLevels = [
-    { label: "NORMAL THRESHOLD", min: 0, color: "#0072CE" },
-    { label: "NEEDS ATTENTION", min: 9.0, color: "#FFA500" },
-    { label: "HIGHLY CRITICAL", min: 10.5, color: "#FF4500" },
-    { label: "EXTREMELY CRITICAL", min: 11.5, color: "#FF0000" }
-  ];
-
+  // Save thresholds to localStorage when they change
   useEffect(() => {
-    // Aligned with Raspberry Pi Hotspot IP and default Mosquitto WebSocket port
-    const client = mqtt.connect('ws://192.168.43.154:5000');
+    localStorage.setItem('riverlevel_thresholds', JSON.stringify(thresholds));
+  }, [thresholds]);
+
+  // Subscribe to MQTT for sensor readings and settings
+  useEffect(() => {
+    const client = mqtt.connect('ws://172.20.10.5:9001');
 
     client.on('connect', () => {
-      client.subscribe('sensor/hulo/reading'); 
-      console.log("MQTT Connected to Raspberry Pi");
+      console.log('RiverLevel MQTT connected');
+      client.subscribe('sensor/hulo/reading');
+      client.subscribe('system/settings');
     });
 
     client.on('message', (topic, message) => {
       try {
         const data = JSON.parse(message.toString());
-        // Aligned with unified keys: distance and predicted
-        setMqttLevel(data.distance);
-        setMqttPredicted(data.predicted);
+        if (topic === 'sensor/hulo/reading') {
+          setMqttLevel(data.distance);
+          setMqttPredicted(data.predicted);
+        } else if (topic === 'system/settings') {
+          setThresholds({
+            normal: data.threshold_normal,
+            attention: data.threshold_attention,
+            critical: data.threshold_critical
+          });
+        }
       } catch (e) {
-        console.error("Payload format error:", e);
+        console.error('MQTT parse error:', e);
       }
     });
 
@@ -42,11 +52,23 @@ function RiverLevel({ currentLevel: propLevel, predictedLevel: propPredicted }) 
     };
   }, []);
 
-  // Priority: 1. Live MQTT data, 2. Database Props
+  // Priority: live MQTT data over props
   const displayLevel = mqttLevel > 0 ? mqttLevel : propLevel;
-  const displayPredicted = mqttPredicted > 0 ? mqttPredicted : propPredicted; 
-  
-  const currentStatus = [...statusLevels].reverse().find(s => displayLevel >= s.min) || statusLevels[0];
+  const displayPredicted = mqttPredicted > 0 ? mqttPredicted : propPredicted;
+
+  // Determine status based on thresholds (using the same logic as announcement bar)
+  let statusLabel = 'NORMAL THRESHOLD';
+  let statusColor = '#0072CE';
+  if (displayLevel >= thresholds.critical) {
+    statusLabel = 'HIGHLY CRITICAL';
+    statusColor = '#FF4500';
+  } else if (displayLevel >= thresholds.attention) {
+    statusLabel = 'NEEDS ATTENTION';
+    statusColor = '#FFA500';
+  } else {
+    statusLabel = 'NORMAL THRESHOLD';
+    statusColor = '#0072CE';
+  }
 
   const calibrate = (val) => {
     const normalized = (val - minLevel) / (maxLevel - minLevel);
@@ -64,8 +86,8 @@ function RiverLevel({ currentLevel: propLevel, predictedLevel: propPredicted }) 
     <div className="card-container" id="riverlevel">
       <div id="riverlevel-card-header">
         <h2 className="card-title">LIVE LEVEL OF RIVER WATER</h2>
-        <div className="status-indicator" style={{ backgroundColor: currentStatus.color }}>
-          {currentStatus.label}
+        <div className="status-indicator" style={{ backgroundColor: statusColor }}>
+          {statusLabel}
         </div>
       </div>
 

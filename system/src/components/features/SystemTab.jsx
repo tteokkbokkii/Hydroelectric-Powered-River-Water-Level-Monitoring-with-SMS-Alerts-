@@ -131,15 +131,16 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
   );
 };
 
-const API_BASE = 'http://192.168.43.154:5000/api';
-const MQTT_BROKER = 'ws://192.168.43.154:9001';
+const API_BASE = 'http://172.20.10.5:5000/api';
+const MQTT_BROKER = 'ws://172.20.10.5:9001';
 
 const SystemTab = () => {
   const [activeTab, setActiveTab] = useState('ABOUT');
   
+  // Live status (ABOUT tab)
   const [liveStatus, setLiveStatus] = useState({
-    serverIp: '192.168.1.15',
-    mqttPort: '1883',
+    serverIp: '172.20.10.5',
+    mqttPort: '9001',
     systemUp: '00d 00h 00m',
     signal: '--',
     network: '--',
@@ -151,6 +152,7 @@ const SystemTab = () => {
     gsm: '--'
   });
 
+  // Settings state
   const [thresholds, setThresholds] = useState({ normal: 6.5, attention: 8.0, critical: 9.5 });
   const [intervals, setIntervals] = useState({ reading: 5, predicting: 60 });
   const [notifications, setNotifications] = useState({
@@ -158,6 +160,7 @@ const SystemTab = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [mqttClient, setMqttClient] = useState(null);
+  const mqttClientRef = useRef(null);  // to access latest client without triggering effects
   const toast = useRef(null);
   const lastRange = useRef(null);
   const [popup, setPopup] = useState({ visible: false, message: '', severity: '', buttons: [] });
@@ -169,11 +172,11 @@ const SystemTab = () => {
     setPopup({ visible: false, message: '', severity: '', buttons: [] });
   };
 
-useEffect(() => {
+  // ---------- Load settings from API once (on mount) ----------
+  useEffect(() => {
     fetch(`${API_BASE}/settings`)
       .then(res => res.json())
       .then(data => {
-        console.log("Data received from Pi:", data);
         setThresholds({
           normal: data.threshold_normal,
           attention: data.threshold_attention,
@@ -183,31 +186,40 @@ useEffect(() => {
           reading: data.reading_interval,
           predicting: data.predicting_interval
         });
+        // Publish to MQTT so other components get the initial settings
+        if (mqttClientRef.current && mqttClientRef.current.connected) {
+          const payload = {
+            threshold_normal: data.threshold_normal,
+            threshold_attention: data.threshold_attention,
+            threshold_critical: data.threshold_critical,
+            reading_interval: data.reading_interval,
+            predicting_interval: data.predicting_interval
+          };
+          mqttClientRef.current.publish('system/settings', JSON.stringify(payload));
+        }
       })
       .catch(err => console.error('Error fetching settings:', err));
-  }, []);
+  }, []); // runs once
 
-useEffect(() => {
+  // ---------- MQTT connection ----------
+  useEffect(() => {
     const client = mqtt.connect(MQTT_BROKER);
+    mqttClientRef.current = client;
+    setMqttClient(client);
     
     client.on('connect', () => {
-      console.log("Connected to MQTT Broker");
+      console.log("SystemTab connected to MQTT");
       client.subscribe('sensor/hulo/reading');
       client.subscribe('system/status');
-      setMqttClient(client);
     });
 
     client.on('message', (topic, message) => {
       const payloadString = message.toString();
-      console.log(`📩 Received on ${topic}:`, payloadString);
-
-      // --- Handle Sensor Readings ---
       if (topic === 'sensor/hulo/reading') {
         try {
           const data = JSON.parse(payloadString);
           const level = data.distance;
           let currentRange = '';
-          
           if (level >= thresholds.critical) currentRange = 'CRITICAL';
           else if (level >= thresholds.attention) currentRange = 'WARNING';
           else currentRange = 'SAFE';
@@ -215,9 +227,18 @@ useEffect(() => {
           if (lastRange.current !== currentRange) {
             let msg = '';
             let severity = '';
-            if (currentRange === 'CRITICAL' && notifications.critical) { msg = 'The water level reached critical levels.'; severity = 'error'; }
-            else if (currentRange === 'WARNING' && notifications.attention) { msg = 'The water level needs Coast Guard judgment.'; severity = 'warn'; }
-            else if (currentRange === 'SAFE' && notifications.normal) { msg = 'The water level is currently normal.'; severity = 'info'; }
+            if (currentRange === 'CRITICAL' && notifications.critical) { 
+              msg = 'The water level reached critical levels.'; 
+              severity = 'error'; 
+            }
+            else if (currentRange === 'WARNING' && notifications.attention) { 
+              msg = 'The water level needs Coast Guard judgment.'; 
+              severity = 'warn'; 
+            }
+            else if (currentRange === 'SAFE' && notifications.normal) { 
+              msg = 'The water level is currently normal.'; 
+              severity = 'info'; 
+            }
             if (msg) showPopup(msg, severity);
             lastRange.current = currentRange;
           }
@@ -226,7 +247,6 @@ useEffect(() => {
         }
       } 
 
-      // --- Handle System Status ---
       if (topic === 'system/status') {
         try {
           const status = JSON.parse(payloadString);
@@ -249,8 +269,9 @@ useEffect(() => {
     });
 
     return () => { if (client) client.end(); };
-}, [thresholds, notifications]);
+  }, [thresholds, notifications]); // re‑subscribe if thresholds/notifications change (affects range logic)
 
+  // ---------- Handlers ----------
   const handleThresholdChange = (key, value) => {
     setThresholds(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
   };
@@ -279,6 +300,10 @@ useEffect(() => {
         body: JSON.stringify(payload)
       });
       if (!response.ok) throw new Error('Failed to save settings');
+      // Publish to MQTT using the ref
+      if (mqttClientRef.current && mqttClientRef.current.connected) {
+        mqttClientRef.current.publish('system/settings', JSON.stringify(payload));
+      }
       showPopup('Settings saved successfully!', 'success');
     } catch (err) {
       console.error(err);
@@ -301,6 +326,7 @@ useEffect(() => {
     showPopup('Reboot request sent', 'info');
   };
 
+  // ---------- Render ----------
   return (
     <div className="main-content">
       <Toast ref={toast} />
@@ -465,6 +491,13 @@ useEffect(() => {
                       <span>Needs Attention</span>
                       <label className="switch">
                         <input type="checkbox" checked={notifications.attention} onChange={() => handleNotificationChange('attention')} />
+                        <span className="slider"></span>
+                      </label>
+                    </div>
+                    <div className="toggle-row">
+                      <span>Highly Critical</span>
+                      <label className="switch">
+                        <input type="checkbox" checked={notifications.critical} onChange={() => handleNotificationChange('critical')} />
                         <span className="slider"></span>
                       </label>
                     </div>
