@@ -94,7 +94,7 @@ def broadcast_status(client):
 def heartbeat_loop(client):
     while True:
         broadcast_status(client)
-        publish_settings(client)   # publish settings every 30 seconds
+        publish_settings(client)
         time.sleep(30)
 
 def on_message(client, userdata, msg):
@@ -103,12 +103,11 @@ def on_message(client, userdata, msg):
         last_esp_contact = time.time()
         try:
             data = json.loads(msg.payload.decode())
-            # Extract fields
+            print(f"Inserting: {data}")   # debug
             distance_ft = data.get("distance")
             predicted_ft = data.get("predicted")
-            status = data.get("range")          # SAFE, WARNING, CRITICAL
-            rtc_time = f"{data.get('date')} {data.get('time')}"   # combine date and time
-
+            status = data.get("range")
+            rtc_time = f"{data.get('date')} {data.get('time')}"
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
             c.execute('''
@@ -121,8 +120,8 @@ def on_message(client, userdata, msg):
         except Exception as e:
             print(f"Error processing message: {e}")
 
-# Setup MQTT client
-client = mqtt.Client()
+# Use the new callback API version
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.on_message = on_message
 
 try:
