@@ -20,16 +20,32 @@ const HistoryTab = () => {
   const [activeTab, setActiveTab] = useState('ACTUAL');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [allData, setAllData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const actualChartRef = useRef(null);
   const predictedChartRef = useRef(null);
 
+  // Helper to get local date string (YYYY-MM-DD)
+  const getLocalDateStr = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Fetch history from Flask API
   useEffect(() => {
     const fetchHistory = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await fetch(`${API_BASE}/history?date=${selectedDate.toISOString().slice(0,10)}`);
+        const dateStr = getLocalDateStr(selectedDate);
+        console.log(`Fetching history for date: ${dateStr}`);
+        const response = await fetch(`${API_BASE}/history?date=${dateStr}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
+        console.log("API response:", result);
         if (Array.isArray(result)) {
           setAllData(result);
         } else {
@@ -37,13 +53,15 @@ const HistoryTab = () => {
         }
       } catch (err) {
         console.error("History fetch error:", err);
+        setError(err.message);
         setAllData([]);
+      } finally {
+        setLoading(false);
       }
     };
     fetchHistory();
   }, [selectedDate]);
 
-  // No need to filter further – the API already returns data for the selected date
   const filteredData = useMemo(() => {
     return [...allData].sort((a, b) => a.time.localeCompare(b.time));
   }, [allData]);
@@ -104,11 +122,15 @@ const HistoryTab = () => {
 
           <div className="columns-container" style={{ display: 'flex', gap: '20px', height: '400px' }}>
             <div style={{ flex: 1, border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden' }}>
-              <DataTable value={filteredData} scrollable scrollHeight="350px" size="small" emptyMessage="No data found for this date.">
-                <Column field="time" header="TIME" sortable />
-                <Column field="distance" header="VALUE" body={(row) => `${(Number(row.distance) || 0).toFixed(2)} ft.`} />
-                <Column field="range" header="STATUS" />
-              </DataTable>
+              {loading && <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>}
+              {error && <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>Error: {error}</div>}
+              {!loading && !error && (
+                <DataTable value={filteredData} scrollable scrollHeight="350px" size="small" emptyMessage="No data found for this date.">
+                  <Column field="time" header="TIME" sortable />
+                  <Column field="distance" header="VALUE" body={(row) => `${(Number(row.distance) || 0).toFixed(2)} ft.`} />
+                  <Column field="range" header="STATUS" />
+                </DataTable>
+              )}
             </div>
 
             <div style={{ flex: 1.5, background: '#f9f9f9', padding: '10px', borderRadius: '8px' }}>
