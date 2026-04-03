@@ -90,17 +90,18 @@ def broadcast_status(client):
         "rpi_online": True,
         "esp_connected": is_alive,
         "ultrasonic_active": is_alive and esp32_health.get("ultrasonic") == "OK",
-        "float_ready": is_alive and esp32_heacdlth.get("float") == "OK",
+        "float_ready": is_alive and esp32_health.get("float") == "OK",
         "rtc_synced": True,
         "gsm_status": "READY"
     }
-    client.publish(STATUS_TOPIC, json.dumps(status_payload))
+    # ADD retain=True so the UI loads data instantly on navigation
+    client.publish(STATUS_TOPIC, json.dumps(status_payload), retain=True)
 
 def heartbeat_loop(client):
     while True:
         broadcast_status(client)
         publish_settings(client)
-        time.sleep(30)
+        time.sleep(2) # Faster updates (2-5 seconds) for a better UI experience
 
 def on_message(client, userdata, msg):
     global last_esp_contact, sensor_health, esp32_health # Ensure all three are here

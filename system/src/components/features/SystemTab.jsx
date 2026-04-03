@@ -202,6 +202,7 @@ const SystemTab = () => {
   }, []); // runs once
 
   // ---------- MQTT connection ----------
+// ---------- MQTT connection ----------
   useEffect(() => {
     const client = mqtt.connect(MQTT_BROKER);
     mqttClientRef.current = client;
@@ -215,14 +216,13 @@ const SystemTab = () => {
 
     client.on('message', (topic, message) => {
       const payloadString = message.toString();
+      
+      // 1. Handle Sensor Readings (Popups/Alerts)
       if (topic === 'sensor/hulo/reading') {
         try {
           const data = JSON.parse(payloadString);
           const level = data.distance;
-          let currentRange = '';
-          if (level >= thresholds.critical) currentRange = 'CRITICAL';
-          else if (level >= thresholds.attention) currentRange = 'WARNING';
-          else currentRange = 'SAFE';
+          let currentRange = data.range || '';
 
           if (lastRange.current !== currentRange) {
             let msg = '';
@@ -242,11 +242,10 @@ const SystemTab = () => {
             if (msg) showPopup(msg, severity);
             lastRange.current = currentRange;
           }
-        } catch (e) { 
-          console.error('Error parsing sensor reading:', e); 
-        }
+        } catch (e) { console.error('Error parsing sensor reading:', e); }
       } 
 
+      // 2. Handle System Status (The "About" Pills)
       if (topic === 'system/status') {
         try {
           const status = JSON.parse(payloadString);
@@ -262,15 +261,13 @@ const SystemTab = () => {
             rtc: status.rtc_synced ? 'SYNCED' : 'UNSYNCED',
             gsm: status.gsm_status || prev.gsm
           }));
-        } catch (e) {
-          console.error('Error parsing status JSON:', e);
-        }
+        } catch (e) { console.error('Error parsing status JSON:', e); }
       }
     });
 
     return () => { if (client) client.end(); };
-  }, [thresholds, notifications]); // re‑subscribe if thresholds/notifications change (affects range logic)
-
+  }, [notifications]); // Only re-run if notifications settings change
+  
   // ---------- Handlers ----------
   const handleThresholdChange = (key, value) => {
     setThresholds(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
