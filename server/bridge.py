@@ -79,22 +79,21 @@ def get_uptime_string():
     return f"{days:02d}d {hours:02d}h {minutes:02d}m"
 
 def broadcast_status(client):
-    global last_esp_contact
-    esp32_health = {"online": True, "ultrasonic": "OK", "float": "OK"}
+    global last_esp_contact, esp32_health
+    is_alive = (time.time() - last_esp_contact) < 30
+    
     status_payload = {
         "uptime": get_uptime_string(),
         "signal_quality": get_wifi_rssi(),
-        "esp_connected": is_alive,
-        "ultrasonic_active": is_alive and esp32_health["ultrasonic"] == "OK",
-        "float_ready": is_alive and esp32_health["float"] == "OK",
         "network_type": "WIFI",
         "rpi_online": True,
-        "esp_connected": esp_online,
-        "ultrasonic_active": esp_online,
-        "float_ready": True,
+        "esp_connected": is_alive,
+        "ultrasonic_active": is_alive and esp32_health.get("ultrasonic") == "OK",
+        "float_ready": is_alive and esp32_health.get("float") == "OK",
         "rtc_synced": True,
         "gsm_status": "READY"
     }
+    
     client.publish(STATUS_TOPIC, json.dumps(status_payload))
 
 def heartbeat_loop(client):
@@ -147,8 +146,10 @@ client.on_message = on_message
 try:
     client.connect(MQTT_SERVER, 1883)
     client.subscribe(MQTT_TOPIC)
+    client.subscribe("system/status/esp32")  # ADD THIS
+    client.subscribe(SENSOR_STATUS_TOPIC)    # ADD THIS
+    
     threading.Thread(target=heartbeat_loop, args=(client,), daemon=True).start()
-    print("Bridge active. Monitoring ESP32 and System Health...")
     client.loop_forever()
 except Exception as e:
     print(f"Connection failed: {e}")
