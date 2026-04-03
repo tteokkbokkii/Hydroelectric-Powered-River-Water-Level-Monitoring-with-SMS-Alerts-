@@ -78,10 +78,24 @@ def get_uptime_string():
     minutes, seconds = divmod(seconds, 60)
     return f"{days:02d}d {hours:02d}h {minutes:02d}m"
 
+def get_gsm_status():
+    try:
+        # Replace '/dev/ttyUSB0' or '/dev/ttyAMA0' with your actual GSM port
+        # and set the correct baudrate (usually 9600 or 115200)
+        with serial.Serial('/dev/ttyUSB0', 9600, timeout=1) as ser:
+            ser.write(b'AT\r')
+            line = ser.readline().decode().strip()
+            if "OK" in line:
+                return "READY"
+            return "ERROR"
+    except Exception:
+        return "DISCONNECTED"
+    
 def broadcast_status(client):
     global last_esp_contact, esp32_health
     
-    is_alive = (time.time() - last_esp_contact) < 30
+    is_alive = (time.time() - last_esp_contact) < 10 # Shortened to 10s for faster UI
+    gsm_state = get_gsm_status() # Real-time check
     
     status_payload = {
         "uptime": get_uptime_string(),
@@ -92,9 +106,8 @@ def broadcast_status(client):
         "ultrasonic_active": is_alive and esp32_health.get("ultrasonic") == "OK",
         "float_ready": is_alive and esp32_health.get("float") == "OK",
         "rtc_synced": True,
-        "gsm_status": "READY"
+        "gsm_status": gsm_state # Now dynamic!
     }
-    # ADD retain=True so the UI loads data instantly on navigation
     client.publish(STATUS_TOPIC, json.dumps(status_payload), retain=True)
 
 def heartbeat_loop(client):
@@ -146,6 +159,12 @@ def on_message(client, userdata, msg):
 # Use the new callback API version
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.on_message = on_message
+client.will_set(STATUS_TOPIC, json.dumps({
+    "esp_connected": False,
+    "rpi_online": False,
+    "ultrasonic_active": False,
+    "float_ready": False
+}), retain=True)
 
 try:
     client.connect(MQTT_SERVER, 1883)
