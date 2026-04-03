@@ -2,55 +2,52 @@ import React, { useState, useEffect } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import mqtt from 'mqtt';
 
 function RiverTrend({ history }) {
-  const [liveData, setLiveData] = useState([]);
+  const [chartData, setChartData] = useState([]);
 
-  // 1. Load History from Database
   useEffect(() => {
-    if (Array.isArray(history) && history.length > 0) {
-      const formattedHistory = [...history].reverse().map(item => ({
-        time: item.time || "--:--",
-        current: Number(item.distance) || 0,
-        predicted: Number(item.predicted) || 0
-      }));
-      setLiveData(formattedHistory.slice(-20)); 
+    if (!Array.isArray(history) || history.length === 0) {
+      setChartData([]);
+      return;
     }
-  }, [history]);
 
-  // 2. MQTT Logic for real-time updates
-  useEffect(() => {
-    // Aligned with Raspberry Pi Hotspot IP and WebSocket port
-    const client = mqtt.connect('ws://172.20.10.5:9001');
+    // Sort history by time (ascending) so oldest first, newest last
+    const sorted = [...history].sort((a, b) => a.time.localeCompare(b.time));
+    
+    // Take the last 19 readings (newest)
+    const last19 = sorted.slice(-19);
+    const formatted = last19.map(item => ({
+      time: item.time,
+      current: Number(item.distance) || 0,
+      predicted: Number(item.predicted) || 0
+    }));
 
-    client.on('connect', () => {
-      client.subscribe('sensor/hulo/reading');
-      console.log("Trend Component: MQTT Connected to 172.20.10.5");
-    });
-
-    client.on('message', (topic, message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        const newPoint = {
-          time: data.time || "--:--",
-          current: Number(data.distance) || 0,
-          predicted: Number(data.predicted) || 0
-        };
-
-        setLiveData((prev) => {
-          const updated = [...prev, newPoint];
-          return updated.slice(-20); 
-        });
-      } catch (e) {
-        console.error("MQTT Trend Parse Error", e);
+    // Add a future point using the latest reading (the last element in sorted)
+    const latest = sorted[sorted.length - 1];
+    if (latest && latest.predicted) {
+      // Compute future time (+5 minutes)
+      let futureTime = latest.time;
+      if (latest.time) {
+        const [hour, minute] = latest.time.split(':').map(Number);
+        let newHour = hour;
+        let newMinute = minute + 5;
+        if (newMinute >= 60) {
+          newHour += 1;
+          newMinute -= 60;
+        }
+        if (newHour >= 24) newHour = 0;
+        futureTime = `${newHour.toString().padStart(2,'0')}:${newMinute.toString().padStart(2,'0')}`;
       }
-    });
+      formatted.push({
+        time: futureTime,
+        current: null,
+        predicted: Number(latest.predicted)
+      });
+    }
 
-    return () => {
-      if (client) client.end();
-    };
-  }, []);
+    setChartData(formatted);
+  }, [history]);
 
   return (
     <div className="card-container" id="rivertrend">
@@ -58,7 +55,7 @@ function RiverTrend({ history }) {
       <div className="innercard-container" id='rivertrend-contents'>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
-            data={liveData}
+            data={chartData}
             margin={{ top: 30, right: 35, left: 30, bottom: 40 }}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
@@ -78,11 +75,7 @@ function RiverTrend({ history }) {
             />
             <Tooltip
               labelFormatter={(label) => `time: ${label}`}
-              // ADDED SAFETY: Check if value exists before calling .toFixed()
-              formatter={(value, name) => [
-                `${(Number(value) || 0).toFixed(2)} ft.`, 
-                name === 'current' ? 'Actual' : 'Predicted'
-              ]}
+              formatter={(value, name) => [`${(Number(value) || 0).toFixed(2)} ft.`, name === 'current' ? 'Actual' : 'Predicted']}
               contentStyle={{ borderRadius: '10px', border: '1px solid #ddd', padding: '10px', fontSize: '12px' }}
             />
             <Legend
@@ -99,7 +92,8 @@ function RiverTrend({ history }) {
               stroke="#0072CE"
               strokeWidth={2}
               dot={{ r: 3, fill: '#fff', stroke: '#0072CE', strokeWidth: 2 }}
-              isAnimationActive={false} 
+              isAnimationActive={false}
+              connectNulls={true}
             />
             <Line
               name="current"
@@ -109,6 +103,7 @@ function RiverTrend({ history }) {
               strokeWidth={2}
               dot={{ r: 3, fill: '#fff', stroke: '#FFB800', strokeWidth: 2 }}
               isAnimationActive={false}
+              connectNulls={false}
             />
           </LineChart>
         </ResponsiveContainer>

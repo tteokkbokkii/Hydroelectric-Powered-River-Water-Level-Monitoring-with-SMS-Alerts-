@@ -128,15 +128,32 @@
     font-size: 0.95rem;
 }
 
-.log-row td {
-    padding: 4px 0;
-    vertical-align: top;
+/* --- ADDED: Spacing for SMS logs cells --- */
+.logs-table td {
+    padding: 4px 8px;           /* horizontal padding for spacing */
     border-bottom: 1px solid #f0f0f0;
 }
 
-.l-time { width: 55px; color: #64748b; }
-.l-tag { width: 70px; }
-.l-sender { width: 85px; font-weight: 900; }
+/* Column widths with extra right padding */
+.l-time {
+    width: 55px;
+    color: #64748b;
+    padding-right: 12px;
+}
+.l-tag {
+    width: 70px;
+    padding-right: 12px;
+}
+.l-sender {
+    width: 85px;
+    font-weight: 900;
+    padding-right: 12px;
+}
+.l-msg {
+    width: auto;
+}
+
+/* Row colors */
 .log-row.alrt { color: #FF0000; }
 .log-row.maint { color: #0072CE; }
 .log-row.sys { color: #E67E22; }
@@ -348,7 +365,7 @@
         overflow: visible;
         flex: none;
         padding-bottom: 15px;
-        margin-bottom: 60px;  /* ← ADDED: extra bottom space to push past footer */
+        margin-bottom: 60px;
     }
 
     .form-row {

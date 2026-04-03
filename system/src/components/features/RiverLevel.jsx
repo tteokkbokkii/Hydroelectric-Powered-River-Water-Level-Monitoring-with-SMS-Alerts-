@@ -1,68 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
-import mqtt from 'mqtt';
 
-function RiverLevel({ currentLevel: propLevel, predictedLevel: propPredicted }) {
-  const [mqttLevel, setMqttLevel] = useState(0);
-  const [mqttPredicted, setMqttPredicted] = useState(0);
-  const [thresholds, setThresholds] = useState(() => {
-    const saved = localStorage.getItem('riverlevel_thresholds');
-    return saved ? JSON.parse(saved) : { normal: 6.5, attention: 8.0, critical: 9.5 };
-  });
-
+function RiverLevel({ currentLevel, predictedLevel }) {
   // Calibration settings
   const minLevel = 5;
   const maxLevel = 12;
 
-  // Save thresholds to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem('riverlevel_thresholds', JSON.stringify(thresholds));
-  }, [thresholds]);
+  const statusLevels = [
+    { label: "NORMAL THRESHOLD", min: 0, color: "#0072CE" },
+    { label: "NEEDS ATTENTION", min: 9.0, color: "#FFA500" },
+    { label: "HIGHLY CRITICAL", min: 10.5, color: "#FF4500" },
+    { label: "EXTREMELY CRITICAL", min: 11.5, color: "#FF0000" }
+  ];
 
-  // Subscribe to MQTT for sensor readings and settings
-  useEffect(() => {
-    const client = mqtt.connect('ws://172.20.10.5:9001');
+  const displayLevel = currentLevel || 0;
+  const displayPredicted = predictedLevel || 0;
 
-    client.on('connect', () => {
-      console.log('RiverLevel MQTT connected');
-      client.subscribe('sensor/hulo/reading');
-      client.subscribe('system/settings');
-    });
-
-    client.on('message', (topic, message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        if (topic === 'sensor/hulo/reading') {
-          setMqttLevel(data.distance);
-          setMqttPredicted(data.predicted);
-        } else if (topic === 'system/settings') {
-          setThresholds({
-            normal: data.threshold_normal,
-            attention: data.threshold_attention,
-            critical: data.threshold_critical
-          });
-        }
-      } catch (e) {
-        console.error('MQTT parse error:', e);
-      }
-    });
-
-    return () => {
-      if (client) client.end();
-    };
-  }, []);
-
-  // Priority: live MQTT data over props
-  const displayLevel = mqttLevel > 0 ? mqttLevel : propLevel;
-  const displayPredicted = mqttPredicted > 0 ? mqttPredicted : propPredicted;
-
-  // Determine status based on thresholds (using the same logic as announcement bar)
+  // Determine status based on thresholds (using default thresholds for now, or you could load from localStorage)
   let statusLabel = 'NORMAL THRESHOLD';
   let statusColor = '#0072CE';
-  if (displayLevel >= thresholds.critical) {
+  if (displayLevel >= 10.5) {
     statusLabel = 'HIGHLY CRITICAL';
     statusColor = '#FF4500';
-  } else if (displayLevel >= thresholds.attention) {
+  } else if (displayLevel >= 9.0) {
     statusLabel = 'NEEDS ATTENTION';
     statusColor = '#FFA500';
   } else {

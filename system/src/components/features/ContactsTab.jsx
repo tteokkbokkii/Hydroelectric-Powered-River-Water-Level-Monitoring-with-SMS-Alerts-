@@ -6,8 +6,10 @@ import mqtt from 'mqtt';
 const MQTT_BROKER = 'ws://172.20.10.5:9001';
 const CONTACTS_LIST_TOPIC = 'contacts/list';
 const CONTACTS_UPDATE_TOPIC = 'contacts/update';
+const SMS_COMMAND_TOPIC = 'sms/command';
+const SMS_LOG_TOPIC = 'sms/log';
 
-// ---------- Generic Popup Component (using Portal) ----------
+// ---------- Popup Component (unchanged) ----------
 const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null }] }) => {
   useEffect(() => {
     const handleEscape = (e) => {
@@ -78,12 +80,28 @@ const ContactsTab = () => {
     { label: 'CRITICAL', value: 'CRITICAL' }
   ];
 
+  // ---------- Load contacts and logs from localStorage on mount ----------
+  useEffect(() => {
+    const savedLogs = localStorage.getItem('smsLogs');
+    if (savedLogs) {
+      try {
+        setSmsLogs(JSON.parse(savedLogs));
+      } catch (e) {}
+    }
+  }, []);
+
+  // Save logs to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('smsLogs', JSON.stringify(smsLogs));
+  }, [smsLogs]);
+
   // ---------- MQTT Connection ----------
   useEffect(() => {
     const client = mqtt.connect(MQTT_BROKER);
     client.on('connect', () => {
       console.log('ContactsTab: MQTT connected');
       client.subscribe(CONTACTS_LIST_TOPIC);
+      client.subscribe(SMS_LOG_TOPIC);
     });
     client.on('message', (topic, message) => {
       if (topic === CONTACTS_LIST_TOPIC) {
@@ -94,22 +112,21 @@ const ContactsTab = () => {
         } catch (e) {
           console.error('Failed to parse contacts list', e);
         }
+      } else if (topic === SMS_LOG_TOPIC) {
+        try {
+          const log = JSON.parse(message.toString());
+          // Add to logs (prepend)
+          setSmsLogs(prev => [log, ...prev].slice(0, 50));
+          console.log('SMS log received:', log);
+        } catch (e) {
+          console.error('Failed to parse SMS log', e);
+        }
       }
     });
     setMqttClient(client);
     return () => {
       if (client) client.end();
     };
-  }, []);
-
-  // ---------- Load SMS logs (dummy) ----------
-  useEffect(() => {
-    const dummyLogs = [
-      { time: '16:45', recipient: '+639123456789', message: 'Water level reached CRITICAL levels', type: 'alert', color: 'alrt' },
-      { time: '14:30', recipient: '+639987654321', message: 'Test message from admin', type: 'manual', color: 'maint' },
-      { time: '12:15', recipient: '+639112233445', message: 'Water level reached WARNING levels', type: 'alert', color: 'alrt' },
-    ];
-    setSmsLogs(dummyLogs);
   }, []);
 
   // ---------- Publish contacts to MQTT ----------
@@ -122,7 +139,7 @@ const ContactsTab = () => {
     }
   };
 
-  // ---------- Contact Handlers ----------
+  // ---------- Contact Handlers (same as before) ----------
   const handleEdit = (index) => {
     if (isSaving) return;
     setEditingIndex(index);
@@ -214,7 +231,7 @@ const ContactsTab = () => {
     ]);
   };
 
-  // ---------- Manual SMS sending (local simulation) ----------
+  // ---------- Manual SMS sending ----------
   const handleSend = () => {
     if (!selectedRecipient) {
       showPopup('Please select a recipient', 'error');
@@ -230,32 +247,26 @@ const ContactsTab = () => {
       return;
     }
 
+    // Confirmation popup
     showPopup(`Send message to "${contact.name}"?`, 'info', [
       {
         label: 'YES',
         onClick: () => {
-          setTimeout(() => {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).slice(0,5);
-            const newLog = {
-              time: timeStr,
-              recipient: contact.phone,
-              message: customMessage,
-              type: 'manual',
-              color: 'maint'
-            };
-            setSmsLogs(prev => [newLog, ...prev].slice(0, 50));
-            showPopup(`Message for "${contact.name}" issued.`, 'success');
-          }, 50);
+          if (mqttClient && mqttClient.connected) {
+            const payload = JSON.stringify({
+              phone: contact.phone,
+              message: customMessage
+            });
+            mqttClient.publish(SMS_COMMAND_TOPIC, payload);
+            showPopup('SMS command sent to ESP32', 'success');
+          } else {
+            showPopup('MQTT not connected, cannot send SMS', 'error');
+          }
         }
       },
       {
         label: 'NO',
-        onClick: () => {
-          setTimeout(() => {
-            showPopup('Sending of message is cancelled.', 'info');
-          }, 50);
-        }
+        onClick: () => {}
       }
     ]);
   };
@@ -275,12 +286,12 @@ const ContactsTab = () => {
     setEditForm({ ...editForm, [field]: value });
   };
 
-  // ---------- Render ----------
   const recipientOptions = contacts.map(c => ({ label: c.name, value: c.name }));
 
+  // ---------- Render ----------
   return (
     <div className="tab-layout">
-      {/* LEFT PANEL – CONTACTS */}
+      {/* LEFT PANEL – CONTACTS (unchanged) */}
       <div className="card-panel" id='contacts-panel'>
         <div className="panel-header-row">
           <h2 className="panel-title">CONTACTS</h2>
@@ -289,9 +300,9 @@ const ContactsTab = () => {
           </button>
         </div>
 
-        {/* TABLE WRAPPER */}
         <div className="table-fixed-container">
           <table className="modern-table">
+            {/* ... same table structure as before ... */}
             <thead>
               <tr>
                 <th style={{ width: '30%' }}>RECIPIENT NAME</th>
@@ -303,9 +314,9 @@ const ContactsTab = () => {
             <tbody>
               {editingIndex === 'new' && (
                 <tr className="fixed-row adding-mode">
-                   <td><input autoFocus className="table-input" placeholder="Name..." value={editForm.name} onChange={(e) => handleEditChange('name', e.target.value)} disabled={isSaving} /></td>
-                   <td><input className="table-input" value={editForm.phone} onChange={(e) => handleEditChange('phone', e.target.value)} disabled={isSaving} /></td>
-                   <td><Dropdown className="table-dropdown" value={editForm.alertLevel} options={alertLevelOptions} onChange={(e) => handleEditChange('alertLevel', e.value)} disabled={isSaving} /></td>
+                  <td><input autoFocus className="table-input" placeholder="Name..." value={editForm.name} onChange={(e) => handleEditChange('name', e.target.value)} disabled={isSaving} /></td>
+                  <td><input className="table-input" value={editForm.phone} onChange={(e) => handleEditChange('phone', e.target.value)} disabled={isSaving} /></td>
+                  <td><Dropdown className="table-dropdown" value={editForm.alertLevel} options={alertLevelOptions} onChange={(e) => handleEditChange('alertLevel', e.value)} disabled={isSaving} /></td>
                   <td className="action-cell">
                     <button className="icon-only-btn save" onClick={handleSaveEdit} disabled={isSaving}>
                       {isSaving ? <i className="pi pi-spin pi-spinner" /> : '✓'}
@@ -314,7 +325,6 @@ const ContactsTab = () => {
                   </td>
                 </tr>
               )}
-
               {contacts.map((contact, index) => (
                 <tr key={contact.id} className={editingIndex === index ? "fixed-row adding-mode" : "fixed-row"}>
                   {editingIndex === index ? (
@@ -386,9 +396,9 @@ const ContactsTab = () => {
             <table className="logs-table">
               <tbody>
                 {smsLogs.map((log, idx) => (
-                  <tr key={idx} className={`log-row ${log.color}`}>
-                    <td className="l-time">{log.time}</td>
-                    <td className="l-tag">[{log.type === 'alert' ? 'ALRT' : 'MANUAL'}]</td>
+                  <tr key={idx} className={`log-row ${log.type === 'alert' ? 'alrt' : 'maint'}`}>
+                    <td className="l-time">{log.time || "--:--"}</td>
+                    <td className="l-tag">[{log.type === 'alert' ? 'ALERT' : 'MANUAL'}]</td>
                     <td className="l-sender">{log.recipient}:</td>
                     <td className="l-msg">{log.message}</td>
                   </tr>
