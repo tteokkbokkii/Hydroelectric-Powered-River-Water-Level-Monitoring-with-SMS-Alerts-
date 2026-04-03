@@ -20,13 +20,22 @@
     align-items: center;
 }
 
-.system-status p {
-    margin: 0;
-    font-size: 1rem;
+.status-badge {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    border: 1.5px solid;
+    white-space: nowrap;
+}
+
+.status-label {
     font-weight: 500;
 }
 
-.system-status span {
+.status-value {
     font-weight: bold;
 }
 
@@ -42,15 +51,37 @@
     display: flex;
     align-items: flex-end;
     gap: 2px;
-    height: 20px;
+    height: 24px;
 }
 
 .signal-bar {
     width: 4px;
     background-color: #a0a0a0;
     transition: background-color 0.2s;
+    border-radius: 2px;
 }
 
 .signal-bar.active {
     background-color: #0072CE;
+}
+
+@media (max-width: 768px) {
+    .system-status {
+        padding-left: 0.8em;
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        gap: 4px;
+    }
+    .signal-container {
+        padding-right: 0.8em;
+    }
+}
+
+@media (max-width: 480px) {
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
 }

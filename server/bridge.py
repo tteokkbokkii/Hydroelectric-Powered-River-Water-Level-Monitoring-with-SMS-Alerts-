@@ -5,21 +5,23 @@ import time
 import threading
 import subprocess
 import re
+import os
 
 # Configuration
 MQTT_TOPIC = "sensor/hulo/reading"
 STATUS_TOPIC = "system/status"
 SETTINGS_TOPIC = "system/settings"
+CONTACTS_UPDATE_TOPIC = "contacts/update"
+CONTACTS_LIST_TOPIC = "contacts/list"
 MQTT_SERVER = "127.0.0.1"
 DB_PATH = "river_monitor.db"
 SETTINGS_FILE = "settings.json"
-SENSOR_STATUS_TOPIC = "sensor/hulo/status"
-sensor_health = "OK"
-esp32_health = {"online": False, "ultrasonic": "OK", "float": "OK"}
+CONTACTS_FILE = "contacts.json"
 
 # Global state
 last_esp_contact = 0
 START_TIME = time.time()
+esp32_health = {"online": False, "ultrasonic": "OK", "float": "OK"}
 
 def get_settings():
     try:
@@ -78,25 +80,9 @@ def get_uptime_string():
     minutes, seconds = divmod(seconds, 60)
     return f"{days:02d}d {hours:02d}h {minutes:02d}m"
 
-def get_gsm_status():
-    try:
-        # Replace '/dev/ttyUSB0' or '/dev/ttyAMA0' with your actual GSM port
-        # and set the correct baudrate (usually 9600 or 115200)
-        with serial.Serial('/dev/ttyUSB0', 9600, timeout=1) as ser:
-            ser.write(b'AT\r')
-            line = ser.readline().decode().strip()
-            if "OK" in line:
-                return "READY"
-            return "ERROR"
-    except Exception:
-        return "DISCONNECTED"
-    
 def broadcast_status(client):
     global last_esp_contact, esp32_health
-    
-    is_alive = (time.time() - last_esp_contact) < 10 
-    gsm_state = get_gsm_status()
-    
+    is_alive = (time.time() - last_esp_contact) < 10
     status_payload = {
         "uptime": get_uptime_string(),
         "signal_quality": get_wifi_rssi(),
@@ -105,11 +91,8 @@ def broadcast_status(client):
         "esp_connected": is_alive,
         "ultrasonic_active": is_alive and esp32_health.get("ultrasonic") == "OK",
         "float_ready": is_alive and esp32_health.get("float") == "OK",
-        
-        # FIX: RTC can only be synced if the ESP32 is actually alive
-        "rtc_synced": is_alive, 
-        
-        "gsm_status": gsm_state
+        "rtc_synced": is_alive,
+        "gsm_status": "READY"
     }
     client.publish(STATUS_TOPIC, json.dumps(status_payload), retain=True)
 
@@ -117,32 +100,15 @@ def heartbeat_loop(client):
     while True:
         broadcast_status(client)
         publish_settings(client)
-        time.sleep(2) # Faster updates (2-5 seconds) for a better UI experience
+        time.sleep(2)
 
 def on_message(client, userdata, msg):
-    global last_esp_contact, sensor_health, esp32_health # Ensure all three are here
-
-    if msg.topic == "system/status/esp32":
-        last_esp_contact = time.time()
-        try:
-            data = json.loads(msg.payload.decode())
-            esp32_health["online"] = True
-            esp32_health["ultrasonic"] = data.get("ultrasonic", "OK")
-            esp32_health["float"] = data.get("float", "OK")
-        except Exception as e:
-            print(f"Error parsing ESP32 status: {e}")
-    
-    if msg.topic == SENSOR_STATUS_TOPIC:
-        last_esp_contact = time.time() # Still counts as contact!
-        sensor_health = msg.payload.decode()
-
+    global last_esp_contact, esp32_health
     if msg.topic == MQTT_TOPIC:
         last_esp_contact = time.time()
         esp32_health = {"online": True, "ultrasonic": "OK", "float": "OK"}
-        sensor_health = "OK"
         try:
             data = json.loads(msg.payload.decode())
-            print(f"Inserting: {data}")   # debug
             distance_ft = data.get("distance")
             predicted_ft = data.get("predicted")
             status = data.get("range")
@@ -157,25 +123,53 @@ def on_message(client, userdata, msg):
             conn.close()
             print(f"Inserted: {distance_ft} ft, status {status}, time {rtc_time}")
         except Exception as e:
-            print(f"Error processing message: {e}")
+            print(f"Error processing sensor message: {e}")
+    elif msg.topic == CONTACTS_UPDATE_TOPIC:
+        try:
+            contacts = json.loads(msg.payload.decode())
+            with open(CONTACTS_FILE, 'w') as f:
+                json.dump(contacts, f, indent=2)
+            client.publish(CONTACTS_LIST_TOPIC, json.dumps(contacts), retain=True)
+            print("Contacts updated and saved")
+        except Exception as e:
+            print(f"Error saving contacts: {e}")
+    elif msg.topic == "system/status/esp32":
+        try:
+            data = json.loads(msg.payload.decode())
+            esp32_health["online"] = data.get("online", False)
+            esp32_health["ultrasonic"] = data.get("ultrasonic", "OK")
+            esp32_health["float"] = data.get("float", "OK")
+        except Exception as e:
+            print(f"Error parsing ESP32 status: {e}")
 
-# Use the new callback API version
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.on_message = on_message
-client.will_set(STATUS_TOPIC, json.dumps({
-    "esp_connected": False,
-    "rpi_online": False,
-    "ultrasonic_active": False,
-    "float_ready": False
-}), retain=True)
+client.will_set(STATUS_TOPIC, json.dumps({"esp_connected": False}), retain=True)
 
 try:
     client.connect(MQTT_SERVER, 1883)
     client.subscribe(MQTT_TOPIC)
-    client.subscribe("system/status/esp32")  # ADD THIS
-    client.subscribe(SENSOR_STATUS_TOPIC)    # ADD THIS
-    
+    client.subscribe("system/status/esp32")
+    client.subscribe(CONTACTS_UPDATE_TOPIC)
+    # Publish existing contacts if any
+    try:
+        with open(CONTACTS_FILE, 'r') as f:
+            contacts = json.load(f)
+            client.publish(CONTACTS_LIST_TOPIC, json.dumps(contacts), retain=True)
+    except FileNotFoundError:
+        # Create default contacts
+        default_contacts = [
+            {"id": 1, "name": "John Doe", "phone": "+639123456789", "alertLevel": "ALL"},
+            {"id": 2, "name": "Jane Smith", "phone": "+639987654321", "alertLevel": "WARNING"},
+            {"id": 3, "name": "Emergency Contact", "phone": "+639112233445", "alertLevel": "CRITICAL"}
+        ]
+        with open(CONTACTS_FILE, 'w') as f:
+            json.dump(default_contacts, f, indent=2)
+        client.publish(CONTACTS_LIST_TOPIC, json.dumps(default_contacts), retain=True)
+        print("Created default contacts")
+    # Start heartbeat
     threading.Thread(target=heartbeat_loop, args=(client,), daemon=True).start()
+    print("Bridge active. Monitoring ESP32 and System Health...")
     client.loop_forever()
 except Exception as e:
     print(f"Connection failed: {e}")

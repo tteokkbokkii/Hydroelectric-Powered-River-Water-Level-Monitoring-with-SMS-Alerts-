@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import mqtt from 'mqtt';
 
-const MQTT_BROKER = 'ws://192.168.43.154:9001';
+const MQTT_BROKER = 'ws://172.20.10.5:9001'; // adjust to your Pi IP
 
 const Footer = () => {
   const [signalBars, setSignalBars] = useState(0);
@@ -52,8 +52,8 @@ const Footer = () => {
     };
   }, []);
 
-  // Render signal bars (blue active, gray inactive)
   const renderBars = () => {
+    const heights = [6, 12, 18, 24];
     const bars = [];
     for (let i = 0; i < 4; i++) {
       const isActive = i < signalBars;
@@ -63,10 +63,11 @@ const Footer = () => {
           className={`signal-bar ${isActive ? 'active' : ''}`}
           style={{
             width: '4px',
-            height: `${6 + i * 2}px`,
+            height: `${heights[i]}px`,
             marginLeft: '2px',
             backgroundColor: isActive ? '#0072CE' : '#a0a0a0',
             transition: 'background-color 0.2s',
+            borderRadius: '2px',
           }}
         />
       );
@@ -74,10 +75,18 @@ const Footer = () => {
     return bars;
   };
 
+  const isNormal = systemStatus === 'NORMAL';
+  const badgeBg = isNormal ? '#e6f2ff' : '#ffe6e6';
+  const badgeBorder = isNormal ? '#0072CE' : '#ED2100';
+  const badgeTextColor = isNormal ? '#0072CE' : '#ED2100';
+
   return (
     <footer className='footer-container'>
       <div className='system-status'>
-        <p>SYSTEM STATUS: <span style={{ color: statusColor, fontWeight: 'bold' }}>{systemStatus}</span></p>
+        <div className='status-badge' style={{ backgroundColor: badgeBg, borderColor: badgeBorder }}>
+          <span className='status-label' style={{ color: badgeTextColor }}>CONNECTIONS:</span>
+          <span className='status-value' style={{ color: badgeTextColor, fontWeight: 'bold' }}>{systemStatus}</span>
+        </div>
       </div>
       <div className='signal-container'>
         <div className="signal-bars-container">

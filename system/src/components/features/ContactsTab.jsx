@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Dropdown } from 'primereact/dropdown';
+import mqtt from 'mqtt';
+
+const MQTT_BROKER = 'ws://172.20.10.5:9001';
+const CONTACTS_LIST_TOPIC = 'contacts/list';
+const CONTACTS_UPDATE_TOPIC = 'contacts/update';
 
 // ---------- Generic Popup Component (using Portal) ----------
 const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null }] }) => {
@@ -55,6 +60,7 @@ const ContactsTab = () => {
   const [customMessage, setCustomMessage] = useState("Test ID: 001 Status: GSM Link Verification...");
   const [smsLogs, setSmsLogs] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [mqttClient, setMqttClient] = useState(null);
 
   // Popup state
   const [popup, setPopup] = useState({ visible: false, message: '', severity: '', buttons: [] });
@@ -62,7 +68,6 @@ const ContactsTab = () => {
   const showPopup = (message, severity, buttons = [{ label: 'OK', onClick: null }]) => {
     setPopup({ visible: true, message, severity, buttons });
   };
-
   const closePopup = () => {
     setPopup({ visible: false, message: '', severity: '', buttons: [] });
   };
@@ -73,27 +78,31 @@ const ContactsTab = () => {
     { label: 'CRITICAL', value: 'CRITICAL' }
   ];
 
-  // ---------- LOAD CONTACTS FROM LOCALSTORAGE ----------
+  // ---------- MQTT Connection ----------
   useEffect(() => {
-    const saved = localStorage.getItem('contacts_test');
-    if (saved) {
-      try {
-        setContacts(JSON.parse(saved));
-      } catch (e) {
-        console.error('Error parsing saved contacts', e);
+    const client = mqtt.connect(MQTT_BROKER);
+    client.on('connect', () => {
+      console.log('ContactsTab: MQTT connected');
+      client.subscribe(CONTACTS_LIST_TOPIC);
+    });
+    client.on('message', (topic, message) => {
+      if (topic === CONTACTS_LIST_TOPIC) {
+        try {
+          const data = JSON.parse(message.toString());
+          setContacts(data);
+          console.log('Contacts loaded from MQTT');
+        } catch (e) {
+          console.error('Failed to parse contacts list', e);
+        }
       }
-    } else {
-      const defaultContacts = [
-        { id: 1, name: 'John Doe', phone: '+639123456789', alertLevel: 'ALL' },
-        { id: 2, name: 'Jane Smith', phone: '+639987654321', alertLevel: 'WARNING' },
-        { id: 3, name: 'Emergency Contact', phone: '+639112233445', alertLevel: 'CRITICAL' },
-      ];
-      setContacts(defaultContacts);
-      localStorage.setItem('contacts_test', JSON.stringify(defaultContacts));
-    }
+    });
+    setMqttClient(client);
+    return () => {
+      if (client) client.end();
+    };
   }, []);
 
-  // ---------- LOAD SMS LOGS (dummy) ----------
+  // ---------- Load SMS logs (dummy) ----------
   useEffect(() => {
     const dummyLogs = [
       { time: '16:45', recipient: '+639123456789', message: 'Water level reached CRITICAL levels', type: 'alert', color: 'alrt' },
@@ -103,7 +112,17 @@ const ContactsTab = () => {
     setSmsLogs(dummyLogs);
   }, []);
 
-  // ---------- Contact Handlers (using localStorage) ----------
+  // ---------- Publish contacts to MQTT ----------
+  const publishContacts = (updatedContacts) => {
+    if (mqttClient && mqttClient.connected) {
+      mqttClient.publish(CONTACTS_UPDATE_TOPIC, JSON.stringify(updatedContacts));
+      console.log('Contacts published to MQTT');
+    } else {
+      console.warn('MQTT not connected, contacts not saved');
+    }
+  };
+
+  // ---------- Contact Handlers ----------
   const handleEdit = (index) => {
     if (isSaving) return;
     setEditingIndex(index);
@@ -145,7 +164,7 @@ const ContactsTab = () => {
         showPopup('Contact updated successfully!', 'success');
       }
       setContacts(updatedContacts);
-      localStorage.setItem('contacts_test', JSON.stringify(updatedContacts));
+      publishContacts(updatedContacts);
       setEditingIndex(-1);
     } catch (err) {
       console.error(err);
@@ -164,7 +183,6 @@ const ContactsTab = () => {
   const handleDelete = (index) => {
     if (isSaving) return;
     const contactName = contacts[index].name;
-    // Confirmation popup
     showPopup(`Delete contact "${contactName}"?`, 'info', [
       {
         label: 'YES',
@@ -174,7 +192,7 @@ const ContactsTab = () => {
             try {
               const updatedContacts = contacts.filter((_, i) => i !== index);
               setContacts(updatedContacts);
-              localStorage.setItem('contacts_test', JSON.stringify(updatedContacts));
+              publishContacts(updatedContacts);
               showPopup(`Contact "${contactName}" deleted.`, 'success');
             } catch (err) {
               console.error(err);
@@ -212,7 +230,6 @@ const ContactsTab = () => {
       return;
     }
 
-    // Confirmation popup
     showPopup(`Send message to "${contact.name}"?`, 'info', [
       {
         label: 'YES',

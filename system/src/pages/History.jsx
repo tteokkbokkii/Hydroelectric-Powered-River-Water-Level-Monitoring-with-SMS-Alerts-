@@ -8,7 +8,7 @@ function History(){
       <>
         <Header/>
         <Announcement/>
-        <div className="history-page-wrapper">
+        <div className="history-page-wrapper" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
           <HistoryTab/>
         </div>
         <Footer/>
