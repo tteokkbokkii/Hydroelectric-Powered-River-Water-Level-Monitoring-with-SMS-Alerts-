@@ -8,7 +8,9 @@ function History(){
       <>
         <Header/>
         <Announcement/>
-        <HistoryTab/>
+        <div className="history-page-wrapper">
+          <HistoryTab/>
+        </div>
         <Footer/>
       </>
     )

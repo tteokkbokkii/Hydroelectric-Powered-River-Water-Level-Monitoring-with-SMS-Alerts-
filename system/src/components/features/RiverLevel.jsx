@@ -21,7 +21,7 @@ function RiverLevel({ currentLevel: propLevel, predictedLevel: propPredicted }) 
 
   // Subscribe to MQTT for sensor readings and settings
   useEffect(() => {
-    const client = mqtt.connect('ws://192.168.43.154:9001');
+    const client = mqtt.connect('ws://172.20.10.5:9001');
 
     client.on('connect', () => {
       console.log('RiverLevel MQTT connected');

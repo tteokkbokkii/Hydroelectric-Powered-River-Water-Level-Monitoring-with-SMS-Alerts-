@@ -131,15 +131,15 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
   );
 };
 
-const API_BASE = 'http://192.168.43.154:5000/api';
-const MQTT_BROKER = 'ws://192.168.43.154:9001';
+const API_BASE = 'http://172.20.10.5:5000/api';
+const MQTT_BROKER = 'ws://172.20.10.5:9001';
 
 const SystemTab = () => {
   const [activeTab, setActiveTab] = useState('ABOUT');
   
   // Live status (ABOUT tab)
   const [liveStatus, setLiveStatus] = useState({
-    serverIp: '192.168.43.154',
+    serverIp: '172.20.10.5',
     mqttPort: '9001',
     systemUp: '00d 00h 00m',
     signal: '--',

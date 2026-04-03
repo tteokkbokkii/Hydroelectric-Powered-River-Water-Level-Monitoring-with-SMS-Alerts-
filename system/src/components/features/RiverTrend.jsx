@@ -22,11 +22,11 @@ function RiverTrend({ history }) {
   // 2. MQTT Logic for real-time updates
   useEffect(() => {
     // Aligned with Raspberry Pi Hotspot IP and WebSocket port
-    const client = mqtt.connect('ws://192.168.43.154:9001');
+    const client = mqtt.connect('ws://172.20.10.5:9001');
 
     client.on('connect', () => {
       client.subscribe('sensor/hulo/reading');
-      console.log("Trend Component: MQTT Connected to 192.168.4.1");
+      console.log("Trend Component: MQTT Connected to 172.20.10.5");
     });
 
     client.on('message', (topic, message) => {

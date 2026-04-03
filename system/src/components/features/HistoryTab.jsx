@@ -14,7 +14,8 @@ import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 
-const API_BASE = 'http://192.168.43.154:5000/api';
+const API_BASE = 'http://172.20.10.5:5000/api';
+const POLL_INTERVAL = 30000; // 30 seconds
 
 const HistoryTab = () => {
   const [activeTab, setActiveTab] = useState('ACTUAL');
@@ -25,8 +26,9 @@ const HistoryTab = () => {
 
   const actualChartRef = useRef(null);
   const predictedChartRef = useRef(null);
+  const scrollPositionRef = useRef(0);
+  const tableWrapperRef = useRef(null);
 
-  // Helper to get local date string (YYYY-MM-DD)
   const getLocalDateStr = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -34,32 +36,56 @@ const HistoryTab = () => {
     return `${year}-${month}-${day}`;
   };
 
-  // Fetch history from Flask API
-  useEffect(() => {
-    const fetchHistory = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const dateStr = getLocalDateStr(selectedDate);
-        console.log(`Fetching history for date: ${dateStr}`);
-        const response = await fetch(`${API_BASE}/history?date=${dateStr}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const result = await response.json();
-        console.log("API response:", result);
-        if (Array.isArray(result)) {
-          setAllData(result);
-        } else {
-          setAllData([]);
-        }
-      } catch (err) {
-        console.error("History fetch error:", err);
-        setError(err.message);
-        setAllData([]);
-      } finally {
-        setLoading(false);
+  const saveScrollPosition = () => {
+    if (tableWrapperRef.current) {
+      const scrollableDiv = tableWrapperRef.current.querySelector('.p-datatable-scrollable-body');
+      if (scrollableDiv) {
+        scrollPositionRef.current = scrollableDiv.scrollTop;
       }
-    };
+    }
+  };
+
+  const restoreScrollPosition = () => {
+    if (tableWrapperRef.current && scrollPositionRef.current > 0) {
+      const scrollableDiv = tableWrapperRef.current.querySelector('.p-datatable-scrollable-body');
+      if (scrollableDiv) {
+        setTimeout(() => {
+          scrollableDiv.scrollTop = scrollPositionRef.current;
+        }, 50);
+      }
+    }
+  };
+
+  const fetchHistory = async () => {
+    const dateStr = getLocalDateStr(selectedDate);
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE}/history?date=${dateStr}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      if (Array.isArray(result)) {
+        setAllData(result);
+      } else {
+        setAllData([]);
+      }
+    } catch (err) {
+      console.error("History fetch error:", err);
+      setError(err.message);
+      setAllData([]);
+    } finally {
+      setLoading(false);
+      restoreScrollPosition();
+    }
+  };
+
+  useEffect(() => {
     fetchHistory();
+    const interval = setInterval(() => {
+      saveScrollPosition();
+      fetchHistory();
+    }, POLL_INTERVAL);
+    return () => clearInterval(interval);
   }, [selectedDate]);
 
   const filteredData = useMemo(() => {
@@ -105,7 +131,7 @@ const HistoryTab = () => {
   };
 
   return (
-    <div className="main-content">
+    <div className="history-page-wrapper">
       <div className="card-wrapper" id="main-profile-card">
         <h1 className="card-heading">HISTORICAL DATA ARCHIVE</h1>
 
@@ -120,8 +146,8 @@ const HistoryTab = () => {
             <Button label="EXPORT PDF" icon="pi pi-file-pdf" onClick={handleExportPDF} disabled={filteredData.length === 0} />
           </div>
 
-          <div className="columns-container" style={{ display: 'flex', gap: '20px', height: '400px' }}>
-            <div style={{ flex: 1, border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden' }}>
+          <div className="columns-container">
+            <div className="content-column" id="history-column1" ref={tableWrapperRef}>
               {loading && <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>}
               {error && <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>Error: {error}</div>}
               {!loading && !error && (
@@ -133,16 +159,38 @@ const HistoryTab = () => {
               )}
             </div>
 
-            <div style={{ flex: 1.5, background: '#f9f9f9', padding: '10px', borderRadius: '8px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={filteredData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="time" tick={{ fontSize: 10 }} />
-                  <YAxis domain={[5, 13]} tick={{ fontSize: 10 }} />
-                  <Tooltip formatter={(val) => `${(Number(val) || 0).toFixed(2)} ft.`} />
-                  <Line type="monotone" dataKey={activeTab === 'ACTUAL' ? "distance" : "predicted"} stroke={activeTab === 'ACTUAL' ? "#FFB800" : "#0072CE"} strokeWidth={3} dot={true} isAnimationActive={false} />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="content-column" id="history-column2">
+              <div className='chart-wrapper'>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={filteredData} margin={{ top: 15, right: 30, left: 25, bottom: 35 }}>
+                    <CartesianGrid stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="time" 
+                      tick={{ fontSize: 8 }} 
+                      ticks={["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "24:00"]}
+                      label={{ value: 'time (t)', position: 'insideBottom', offset: -15, style: { fontStyle: 'italic', fontSize: '10px' } }}
+                    />
+                    <YAxis 
+                      domain={[2, 13]} 
+                      ticks={[2, 4, 6, 8, 10, 12]} 
+                      tick={{ fontSize: 10 }} 
+                      tickFormatter={(v) => `${v} ft.`}
+                      label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontStyle: 'italic', fontSize: '10px' } }}
+                    />
+                    <Tooltip cursor={{ stroke: '#ccc', strokeWidth: 1 }} labelFormatter={(value) => `time: ${value}`} formatter={(value) => [`${(Number(value) || 0).toFixed(2)} ft.`, "level"]} />
+                    <Line 
+                      type="monotone" 
+                      dataKey={activeTab === 'ACTUAL' ? "distance" : "predicted"} 
+                      stroke={activeTab === 'ACTUAL' ? "#FFB800" : "#0072CE"} 
+                      strokeWidth={2} 
+                      dot={false} 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <div className='graph-footer'>
+                {activeTab === 'ACTUAL' ? 'Actual Reading' : 'Predicted Reading'} for {selectedDate.toLocaleDateString()}
+              </div>
             </div>
           </div>
         </div>
@@ -150,25 +198,27 @@ const HistoryTab = () => {
 
       {/* Hidden PDF Capture Area */}
       <div style={{ position: 'absolute', left: '-9999px' }}>
-        <div ref={actualChartRef} style={{ width: '1000px', height: '500px', background: 'white', padding: '20px' }}>
-          <h2 style={{ textAlign: 'center', color: '#333' }}>Actual Water Levels</h2>
-          <ResponsiveContainer>
-            <LineChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" />
-              <YAxis domain={[5, 13]} />
-              <Line type="monotone" dataKey="distance" stroke="#FFB800" strokeWidth={4} dot={{ r: 6 }} />
+        <div ref={actualChartRef} style={{ width: '800px', height: '400px', background: 'white', padding: '20px' }}>
+          <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>Actual Reading - {selectedDate?.toLocaleDateString()}</h3>
+          <ResponsiveContainer width="100%" height="90%">
+            <LineChart data={filteredData} margin={{ top: 15, right: 30, left: 25, bottom: 35 }}>
+              <CartesianGrid stroke="#f0f0f0" />
+              <XAxis dataKey="time" tick={{ fontSize:10 }} ticks={["00:00","04:00","08:00","12:00","16:00","20:00","24:00"]} label={{ value: 'time (t)', position: 'insideBottom', offset: -10 }} />
+              <YAxis domain={[2,13]} ticks={[2,4,6,8,10,12]} tick={{ fontSize:10 }} tickFormatter={(v)=>`${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }} />
+              <Tooltip />
+              <Line type="monotone" dataKey="distance" stroke="#FFB800" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <div ref={predictedChartRef} style={{ width: '1000px', height: '500px', background: 'white', padding: '20px' }}>
-          <h2 style={{ textAlign: 'center', color: '#333' }}>Predicted Water Levels</h2>
-          <ResponsiveContainer>
-            <LineChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" />
-              <YAxis domain={[5, 13]} />
-              <Line type="monotone" dataKey="predicted" stroke="#0072CE" strokeWidth={4} dot={{ r: 6 }} />
+        <div ref={predictedChartRef} style={{ width: '800px', height: '400px', background: 'white', padding: '20px', marginTop: '20px' }}>
+          <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>Predicted Reading - {selectedDate?.toLocaleDateString()}</h3>
+          <ResponsiveContainer width="100%" height="90%">
+            <LineChart data={filteredData} margin={{ top: 15, right: 30, left: 25, bottom: 35 }}>
+              <CartesianGrid stroke="#f0f0f0" />
+              <XAxis dataKey="time" tick={{ fontSize:10 }} ticks={["00:00","04:00","08:00","12:00","16:00","20:00","24:00"]} label={{ value: 'time (t)', position: 'insideBottom', offset: -10 }} />
+              <YAxis domain={[2,13]} ticks={[2,4,6,8,10,12]} tick={{ fontSize:10 }} tickFormatter={(v)=>`${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }} />
+              <Tooltip />
+              <Line type="monotone" dataKey="predicted" stroke="#0072CE" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
