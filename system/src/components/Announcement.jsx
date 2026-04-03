@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import mqtt from 'mqtt';
 
-const MQTT_BROKER = 'ws://172.20.10.5:9001';
+const MQTT_BROKER = 'ws://192.168.43.154:9001';
 
 const Announcement = () => {
   // Load saved water level and thresholds from localStorage

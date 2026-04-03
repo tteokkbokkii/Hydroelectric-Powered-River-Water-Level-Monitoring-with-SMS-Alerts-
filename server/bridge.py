@@ -13,6 +13,9 @@ SETTINGS_TOPIC = "system/settings"
 MQTT_SERVER = "127.0.0.1"
 DB_PATH = "river_monitor.db"
 SETTINGS_FILE = "settings.json"
+SENSOR_STATUS_TOPIC = "sensor/hulo/status"
+sensor_health = "UNKNOWN" # Global variable
+esp32_health = {"online": False, "ultrasonic": "OK", "float": "OK"}
 
 # Global state
 last_esp_contact = 0
@@ -77,10 +80,13 @@ def get_uptime_string():
 
 def broadcast_status(client):
     global last_esp_contact
-    esp_online = (time.time() - last_esp_contact) < 30
+    esp32_health = {"online": True, "ultrasonic": "OK", "float": "OK"}
     status_payload = {
         "uptime": get_uptime_string(),
         "signal_quality": get_wifi_rssi(),
+        "esp_connected": is_alive,
+        "ultrasonic_active": is_alive and esp32_health["ultrasonic"] == "OK",
+        "float_ready": is_alive and esp32_health["float"] == "OK",
         "network_type": "WIFI",
         "rpi_online": True,
         "esp_connected": esp_online,
@@ -98,9 +104,23 @@ def heartbeat_loop(client):
         time.sleep(30)
 
 def on_message(client, userdata, msg):
-    global last_esp_contact
+    global last_esp_contact,  sensor_health
+
+    if msg.topic == "system/status/esp32":
+        last_esp_contact = time.time()
+        data = json.loads(msg.payload.decode())
+        esp32_health["online"] = True
+        esp32_health["ultrasonic"] = data.get("ultrasonic", "OK")
+        esp32_health["float"] = data.get("float", "OK")
+    
+    if msg.topic == SENSOR_STATUS_TOPIC:
+        last_esp_contact = time.time() # Still counts as contact!
+        sensor_health = msg.payload.decode()
+
     if msg.topic == MQTT_TOPIC:
         last_esp_contact = time.time()
+        esp32_health = {"online": True, "ultrasonic": "OK", "float": "OK"}
+        sensor_health = "OK"
         try:
             data = json.loads(msg.payload.decode())
             print(f"Inserting: {data}")   # debug

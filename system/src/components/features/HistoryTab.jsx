@@ -14,7 +14,7 @@ import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 
-const API_BASE = 'http://172.20.10.5:5000/api';
+const API_BASE = 'http://192.168.43.154:5000/api';
 
 const HistoryTab = () => {
   const [activeTab, setActiveTab] = useState('ACTUAL');
