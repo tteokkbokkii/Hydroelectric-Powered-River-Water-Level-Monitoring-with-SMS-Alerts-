@@ -94,8 +94,8 @@ def get_gsm_status():
 def broadcast_status(client):
     global last_esp_contact, esp32_health
     
-    is_alive = (time.time() - last_esp_contact) < 10 # Shortened to 10s for faster UI
-    gsm_state = get_gsm_status() # Real-time check
+    is_alive = (time.time() - last_esp_contact) < 10 
+    gsm_state = get_gsm_status()
     
     status_payload = {
         "uptime": get_uptime_string(),
@@ -105,8 +105,11 @@ def broadcast_status(client):
         "esp_connected": is_alive,
         "ultrasonic_active": is_alive and esp32_health.get("ultrasonic") == "OK",
         "float_ready": is_alive and esp32_health.get("float") == "OK",
-        "rtc_synced": True,
-        "gsm_status": gsm_state # Now dynamic!
+        
+        # FIX: RTC can only be synced if the ESP32 is actually alive
+        "rtc_synced": is_alive, 
+        
+        "gsm_status": gsm_state
     }
     client.publish(STATUS_TOPIC, json.dumps(status_payload), retain=True)
 

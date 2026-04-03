@@ -394,11 +394,11 @@ const SystemTab = () => {
                 <div className="content-group mt-20">
                   <h3 className="SysTab-title">SYSTEM</h3>
                   <div className="data-row">
-                    <span>System Up:</span>
+                    <span>Pi Uptime:</span>
                     <span className="status-pill">{liveStatus.systemUp}</span>
                   </div>
                   <div className="data-row">
-                    <span>Signal:</span>
+                    <span>Wi-Fi Signal:</span>
                     <span className="status-pill">{liveStatus.signal}</span>
                   </div>
                   <div className="data-row">
