@@ -14,7 +14,7 @@ MQTT_SERVER = "127.0.0.1"
 DB_PATH = "river_monitor.db"
 SETTINGS_FILE = "settings.json"
 SENSOR_STATUS_TOPIC = "sensor/hulo/status"
-sensor_health = "UNKNOWN" # Global variable
+sensor_health = "OK"
 esp32_health = {"online": False, "ultrasonic": "OK", "float": "OK"}
 
 # Global state
@@ -80,6 +80,7 @@ def get_uptime_string():
 
 def broadcast_status(client):
     global last_esp_contact, esp32_health
+    
     is_alive = (time.time() - last_esp_contact) < 30
     
     status_payload = {
@@ -89,11 +90,10 @@ def broadcast_status(client):
         "rpi_online": True,
         "esp_connected": is_alive,
         "ultrasonic_active": is_alive and esp32_health.get("ultrasonic") == "OK",
-        "float_ready": is_alive and esp32_health.get("float") == "OK",
+        "float_ready": is_alive and esp32_heacdlth.get("float") == "OK",
         "rtc_synced": True,
         "gsm_status": "READY"
     }
-    
     client.publish(STATUS_TOPIC, json.dumps(status_payload))
 
 def heartbeat_loop(client):
@@ -103,14 +103,17 @@ def heartbeat_loop(client):
         time.sleep(30)
 
 def on_message(client, userdata, msg):
-    global last_esp_contact,  sensor_health
+    global last_esp_contact, sensor_health, esp32_health # Ensure all three are here
 
     if msg.topic == "system/status/esp32":
         last_esp_contact = time.time()
-        data = json.loads(msg.payload.decode())
-        esp32_health["online"] = True
-        esp32_health["ultrasonic"] = data.get("ultrasonic", "OK")
-        esp32_health["float"] = data.get("float", "OK")
+        try:
+            data = json.loads(msg.payload.decode())
+            esp32_health["online"] = True
+            esp32_health["ultrasonic"] = data.get("ultrasonic", "OK")
+            esp32_health["float"] = data.get("float", "OK")
+        except Exception as e:
+            print(f"Error parsing ESP32 status: {e}")
     
     if msg.topic == SENSOR_STATUS_TOPIC:
         last_esp_contact = time.time() # Still counts as contact!
