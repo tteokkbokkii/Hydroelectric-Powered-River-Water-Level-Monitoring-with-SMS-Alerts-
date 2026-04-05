@@ -320,10 +320,6 @@ const SystemTab = () => {
     showPopup('Settings have been reset to defaults. Click SAVE CHANGES to apply.', 'info');
   };
 
-  const handleReboot = () => {
-    showPopup('Reboot request sent', 'info');
-  };
-
   // ---------- Render ----------
   return (
     <div className="main-content">
@@ -436,9 +432,6 @@ const SystemTab = () => {
                     <span>GSM Module:</span>
                     <span className="status-pill">{liveStatus.gsm}</span>
                   </div>
-                </div>
-                <div className="reboot-container">
-                  <button className="reboot-button" onClick={handleReboot}>REBOOT</button>
                 </div>
               </div>
             </div>

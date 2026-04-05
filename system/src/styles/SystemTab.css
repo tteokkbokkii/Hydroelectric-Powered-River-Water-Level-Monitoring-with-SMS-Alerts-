@@ -88,28 +88,6 @@
     font-size: 0.75rem;
 }
 
-.reboot-container {
-    margin-top: 40px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.reboot-button {
-    background-color: #0072bc;
-    color: white;
-    border: none;
-    padding: 10px 30px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s;
-    font-family: InterMedium;
-}
-
-.reboot-button:hover {
-    background-color: #005a96;
-}
-
 .SysTab-title {
     font-family: InterMedium;
 }
@@ -333,14 +311,6 @@ input:checked + .slider:before {
     .data-row {
         justify-content: flex-start;
         gap: 1rem;
-    }
-
-    /* REBOOT button alignment (left) */
-    .reboot-container {
-        display: flex;
-        width: 100%;
-        justify-content: flex-start;
-        margin-top: 20px;
     }
 
     /* Right-align values for ABOUT tab */

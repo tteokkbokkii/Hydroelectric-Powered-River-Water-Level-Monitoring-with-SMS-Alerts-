@@ -116,7 +116,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.8rem; 
-    overflow-y: auto; 
+    overflow-y: auto;
 }
 
 #recentlogs-contents p {
@@ -197,6 +197,10 @@
   /* Move predicted/current boxes to align with left edge of colored bar */
   .live-expected, .live-current {
     left: 8%;          /* adjust as needed */
+  }
+
+  #recentlogs-contents {
+    max-height: 350px; 
   }
 }
 
