@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import mqtt from 'mqtt';
 
-const MQTT_BROKER = 'ws://172.20.10.5:9001';
+const currentIP = window.location.hostname || 'hulo.local';
+const MQTT_BROKER = `ws://${currentIP}:9001`;
 
 const Announcement = () => {
   // Load saved water level and thresholds from localStorage

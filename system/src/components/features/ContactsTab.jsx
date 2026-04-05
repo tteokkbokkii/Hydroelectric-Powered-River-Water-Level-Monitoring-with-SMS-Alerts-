@@ -3,14 +3,15 @@ import ReactDOM from 'react-dom';
 import { Dropdown } from 'primereact/dropdown';
 import mqtt from 'mqtt';
 
-const MQTT_BROKER = 'ws://172.20.10.5:9001';
+const currentIP = window.location.hostname || 'hulo.local';
+const MQTT_BROKER = `ws://${currentIP}:9001`;
 const CONTACTS_LIST_TOPIC = 'contacts/list';
 const CONTACTS_UPDATE_TOPIC = 'contacts/update';
 const SMS_COMMAND_TOPIC = 'sms/command';
 const SMS_LOG_TOPIC = 'sms/log';
 
-// ---------- Popup Component (unchanged) ----------
-const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null }] }) => {
+// ---------- Popup Component (supports autoClose per button) ----------
+const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null, autoClose: true }] }) => {
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') onClose();
@@ -21,7 +22,7 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
 
   const handleButtonClick = (btn) => {
     if (btn.onClick) btn.onClick();
-    onClose();
+    if (btn.autoClose !== false) onClose();
   };
 
   const isSingleButton = buttons.length === 1;
@@ -115,7 +116,6 @@ const ContactsTab = () => {
       } else if (topic === SMS_LOG_TOPIC) {
         try {
           const log = JSON.parse(message.toString());
-          // Add to logs (prepend)
           setSmsLogs(prev => [log, ...prev].slice(0, 50));
           console.log('SMS log received:', log);
         } catch (e) {
@@ -139,7 +139,7 @@ const ContactsTab = () => {
     }
   };
 
-  // ---------- Contact Handlers (same as before) ----------
+  // ---------- Contact Handlers ----------
   const handleEdit = (index) => {
     if (isSaving) return;
     setEditingIndex(index);
@@ -231,7 +231,7 @@ const ContactsTab = () => {
     ]);
   };
 
-  // ---------- Manual SMS sending ----------
+  // ---------- Manual SMS sending (FIXED with autoClose: false) ----------
   const handleSend = () => {
     if (!selectedRecipient) {
       showPopup('Please select a recipient', 'error');
@@ -251,7 +251,9 @@ const ContactsTab = () => {
     showPopup(`Send message to "${contact.name}"?`, 'info', [
       {
         label: 'YES',
+        autoClose: false,        // 🔧 CRITICAL: prevents automatic close after onClick
         onClick: () => {
+          closePopup();          // manually close confirmation
           if (mqttClient && mqttClient.connected) {
             const payload = JSON.stringify({
               phone: contact.phone,
@@ -291,7 +293,7 @@ const ContactsTab = () => {
   // ---------- Render ----------
   return (
     <div className="tab-layout">
-      {/* LEFT PANEL – CONTACTS (unchanged) */}
+      {/* LEFT PANEL – CONTACTS */}
       <div className="card-panel" id='contacts-panel'>
         <div className="panel-header-row">
           <h2 className="panel-title">CONTACTS</h2>
@@ -302,7 +304,6 @@ const ContactsTab = () => {
 
         <div className="table-fixed-container">
           <table className="modern-table">
-            {/* ... same table structure as before ... */}
             <thead>
               <tr>
                 <th style={{ width: '30%' }}>RECIPIENT NAME</th>
@@ -322,8 +323,8 @@ const ContactsTab = () => {
                       {isSaving ? <i className="pi pi-spin pi-spinner" /> : '✓'}
                     </button>
                     <button className="icon-only-btn cancel" onClick={handleCancel} disabled={isSaving}>✕</button>
-                  </td>
-                </tr>
+                   </td>
+                 </tr>
               )}
               {contacts.map((contact, index) => (
                 <tr key={contact.id} className={editingIndex === index ? "fixed-row adding-mode" : "fixed-row"}>

@@ -1,3 +1,14 @@
+/* --- Base Layout for History Page --- */
+.history-page-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 50px; /* Matches the 50px height of the fixed footer */
+}
+
 .card-heading {
     color: #0072bc;
     font-size: 1.6rem;
@@ -128,6 +139,7 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        padding-bottom: 50px;
     }
 
     .history-page-wrapper .card-wrapper {
@@ -206,51 +218,88 @@
     }
 }
 
-/* ========== MOBILE (≤1024px): page scrolls, table full height, chart below ========== */
+/* ========== MOBILE (≤1024px) ========== */
 @media (max-width: 1024px) {
-    .columns-container {
-        flex-direction: column;
-        gap: 20px;
-    }
-    .content-column {
-        flex: none;
-        width: 100%;
-        overflow: visible;
-    }
-    .chart-wrapper {
-        height: 300px;
-    }
-
-    /* Allow page to scroll */
     .history-page-wrapper {
-        flex: 1;
+        display: block; /* Switch from flex to block to allow natural scrolling */
         overflow-y: auto;
         height: auto;
+        padding-bottom: 80px; /* Extra space for the fixed footer on small screens */
     }
+
     .history-page-wrapper .card-wrapper {
-        margin: 1rem;
+        margin: 10px;
+        height: auto; /* Let content dictate height */
         overflow: visible;
-        max-height: none;
     }
 
-    /* Table should not scroll internally – show all rows */
-    .p-datatable-scrollable-body {
-        overflow-y: visible !important;
-        max-height: none !important;
+    .tab-nav {
+        flex-wrap: wrap; /* Allow buttons to wrap if they are too wide */
     }
+
+    .nav-item {
+        flex: 1; /* Buttons grow to fill width */
+        padding: 10px 5px;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    .tab-panel {
+        padding: 15px 10px;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .columns-container {
+        flex-direction: column; /* Stack Table and Chart vertically */
+        height: auto;
+        gap: 30px;
+        display: flex;
+    }
+
+    .content-column {
+        width: 100%;
+        height: auto;
+        overflow: visible;
+        border: none; /* Cleaner look for mobile */
+        padding: 0;
+    }
+
+    /* Table Mobile Fixes */
+    #history-column1 {
+        min-height: 400px; /* Give the table a base area */
+    }
+
     .p-datatable-wrapper {
-        height: auto !important;
-    }
-    .p-datatable-scrollable-view {
-        height: auto !important;
+        overflow-x: auto; /* Allow horizontal swiping of table columns */
     }
 
-    /* Ensure chart is visible below table */
+    /* Chart Mobile Fixes */
     #history-column2 {
-        overflow: visible;
         margin-top: 20px;
+        flex: none; /* Prevent flex-grow from collapsing it */
+        height: 400px; /* Force a height for the chart column */
+        width: 100%;
+        display: block;
     }
-    #history-column2 .chart-wrapper {
-        height: 300px;
+
+    .chart-wrapper {
+        height: 100%; /* Now it will take the 400px from the parent */
+        width: 100%;
+        min-height: 350px; /* Safety fallback */
+        position: relative;
+    }
+
+    #history-panel {
+        flex-direction: column; /* Stack the Date Picker and Export button */
+        gap: 15px;
+        align-items: stretch;
+    }
+
+    .calendar-history {
+        justify-content: center;
+    }
+
+    .export-bttn {
+        width: 100%; /* Easy-to-tap full-width button */
     }
 }

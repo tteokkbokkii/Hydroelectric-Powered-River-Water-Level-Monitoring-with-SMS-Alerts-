@@ -6,7 +6,8 @@ import RiverLevel from "../components/features/RiverLevel.jsx";
 import RiverTrend from '../components/features/RiverTrend.jsx'
 import RecentLogs from '../components/features/RecentLogs.jsx'
 
-const API_BASE = 'http://172.20.10.5:5000/api';
+const currentIP = window.location.hostname || 'hulo.local';
+const API_BASE = `http://${currentIP}:5000/api`;
 const POLL_INTERVAL = 2000; // 2 seconds
 
 function Dashboard() {

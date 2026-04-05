@@ -131,15 +131,16 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
   );
 };
 
-const API_BASE = 'http://172.20.10.5:5000/api';
-const MQTT_BROKER = 'ws://172.20.10.5:9001';
+const currentIP = window.location.hostname || 'hulo.local';
+const API_BASE = `http://${currentIP}:5000/api`;
+const MQTT_BROKER = `ws://${currentIP}:9001`;
 
 const SystemTab = () => {
   const [activeTab, setActiveTab] = useState('ABOUT');
   
   // Live status (ABOUT tab)
   const [liveStatus, setLiveStatus] = useState({
-    serverIp: '172.20.10.5',
+    serverIp: currentIP,
     mqttPort: '9001',
     systemUp: '00d 00h 00m',
     signal: '--',
