@@ -1,7 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Calendar } from 'primereact/calendar';
@@ -16,7 +14,7 @@ import "primeicons/primeicons.css";
 
 const currentIP = window.location.hostname || 'hulo.local';
 const API_BASE = `http://${currentIP}:5000/api`;
-const POLL_INTERVAL = 30000; // 30 seconds
+const POLL_INTERVAL = 30000;
 
 const HistoryTab = () => {
   const [activeTab, setActiveTab] = useState('ACTUAL');
@@ -24,8 +22,7 @@ const HistoryTab = () => {
   const [allData, setAllData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
-  // Settings State to compute predicted times and status
+
   const [settings, setSettings] = useState({
     normal: 6.5, attention: 8.0, critical: 9.5, predicting_interval: 60
   });
@@ -35,7 +32,6 @@ const HistoryTab = () => {
   const scrollPositionRef = useRef(0);
   const tableWrapperRef = useRef(null);
 
-  // ---------- Fetch Settings ----------
   useEffect(() => {
     fetch(`${API_BASE}/settings`)
       .then(res => res.json())
@@ -44,7 +40,7 @@ const HistoryTab = () => {
           normal: data.threshold_normal,
           attention: data.threshold_attention,
           critical: data.threshold_critical,
-          predicting_interval: data.predicting_interval
+          predicting_interval: 60 // Fixed to 60 as requested
         });
       })
       .catch(err => console.error("Error fetching settings:", err));
@@ -109,7 +105,6 @@ const HistoryTab = () => {
     return () => clearInterval(interval);
   }, [selectedDate]);
 
-  // ---------- Dynamic Data Processing ----------
   const { actualData, predictedData } = useMemo(() => {
     const sorted = [...allData].sort((a, b) => a.time.localeCompare(b.time));
     
@@ -117,7 +112,6 @@ const HistoryTab = () => {
     const predicteds = [];
 
     sorted.forEach(row => {
-      // 1. Map Actual Data
       actuals.push({
         ...row,
         displayTime: row.time,
@@ -125,13 +119,12 @@ const HistoryTab = () => {
         displayStatus: row.range
       });
 
-      // 2. Map Predicted Data
       let predTimeStr = "--:--";
       if (row.time) {
         const [hours, minutes, seconds] = row.time.split(':').map(Number);
         const d = new Date();
         d.setHours(hours, minutes, seconds || 0);
-        d.setMinutes(d.getMinutes() + settings.predicting_interval); // Add the system interval
+        d.setMinutes(d.getMinutes() + settings.predicting_interval);
         predTimeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds() || 0).padStart(2, '0')}`;
       }
       
@@ -151,44 +144,68 @@ const HistoryTab = () => {
     return { actualData: actuals, predictedData: predicteds };
   }, [allData, settings]);
 
-  // Determine which dataset to show based on the active tab
   const activeDisplayData = activeTab === 'ACTUAL' ? actualData : predictedData;
 
-  const tableDataForPdf = activeDisplayData.map(row => [
-    row.displayTime,
-    `${(Number(row.displayValue) || 0).toFixed(2)} ft.`,
-    row.displayStatus
-  ]);
-
   const handleExportPDF = async () => {
-    if (!selectedDate || activeDisplayData.length === 0) return;
+    if (!selectedDate || allData.length === 0) return;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const dateTitle = selectedDate.toLocaleDateString();
 
+    // 1. Actual Table
+    const actualTableForPdf = actualData.map(row => [
+        row.displayTime,
+        `${(Number(row.displayValue) || 0).toFixed(2)} ft.`,
+        row.displayStatus
+    ]);
     pdf.setFontSize(16);
-    pdf.text('Historical Water Level Data - Hulo Ferry Station', 14, 15);
+    pdf.text(`Historical Water Level Data - Hulo Ferry Station`, 14, 15);
     pdf.setFontSize(12);
-    pdf.text(`Report Date: ${dateTitle}`, 14, 22);
-
+    pdf.text(`Actual Readings Table - ${dateTitle}`, 14, 22);
     autoTable(pdf, {
       head: [['TIMESTAMP', 'ELEVATION', 'STATUS']],
-      body: tableDataForPdf,
+      body: actualTableForPdf,
       startY: 30,
       theme: 'grid',
       headStyles: { fillColor: [0, 114, 206] }
     });
 
-    const addChart = async (ref, title) => {
-      if (!ref.current) return;
-      const canvas = await html2canvas(ref.current, { scale: 2 });
-      const img = canvas.toDataURL('image/png');
-      pdf.addPage();
-      pdf.text(title, 14, 15);
-      pdf.addImage(img, 'PNG', 10, 25, 270, 130);
-    };
+    // 2. Actual Chart
+    if (actualChartRef.current) {
+        const actualCanvas = await html2canvas(actualChartRef.current, { scale: 2 });
+        const actualImg = actualCanvas.toDataURL('image/png');
+        pdf.addPage();
+        pdf.setFontSize(16);
+        pdf.text(`Actual Readings Chart - ${dateTitle}`, 14, 15);
+        pdf.addImage(actualImg, 'PNG', 10, 25, 270, 130);
+    }
 
-    await addChart(actualChartRef, `Actual Readings - ${dateTitle}`);
-    await addChart(predictedChartRef, `Predicted Readings - ${dateTitle}`);
+    // 3. Predicted Table
+    const predictedTableForPdf = predictedData.map(row => [
+        row.displayTime,
+        `${(Number(row.displayValue) || 0).toFixed(2)} ft.`,
+        row.displayStatus
+    ]);
+    pdf.addPage();
+    pdf.setFontSize(16);
+    pdf.text(`Predicted Readings Table - ${dateTitle}`, 14, 15);
+    autoTable(pdf, {
+      head: [['TIMESTAMP', 'ELEVATION', 'STATUS']],
+      body: predictedTableForPdf,
+      startY: 25,
+      theme: 'grid',
+      headStyles: { fillColor: [0, 114, 206] }
+    });
+
+    // 4. Predicted Chart
+    if (predictedChartRef.current) {
+        const predictedCanvas = await html2canvas(predictedChartRef.current, { scale: 2 });
+        const predictedImg = predictedCanvas.toDataURL('image/png');
+        pdf.addPage();
+        pdf.setFontSize(16);
+        pdf.text(`Predicted Readings Chart - ${dateTitle}`, 14, 15);
+        pdf.addImage(predictedImg, 'PNG', 10, 25, 270, 130);
+    }
+
     pdf.save(`Hulo_History_${dateTitle.replace(/\//g, '-')}.pdf`);
   };
 
@@ -205,7 +222,7 @@ const HistoryTab = () => {
         <div className="tab-panel content-padding">
           <div id='history-panel' style={{ display: 'flex', gap: '20px', marginBottom: '20px', alignItems: 'center' }}>
             <Calendar value={selectedDate} onChange={(e) => setSelectedDate(e.value)} dateFormat="mm/dd/yy" showIcon />
-            <Button label="EXPORT PDF" icon="pi pi-file-pdf" onClick={handleExportPDF} disabled={activeDisplayData.length === 0} />
+            <Button label="EXPORT PDF" icon="pi pi-file-pdf" onClick={handleExportPDF} disabled={allData.length === 0} />
           </div>
 
           <div className="columns-container">
@@ -227,26 +244,15 @@ const HistoryTab = () => {
                   <LineChart data={activeDisplayData} margin={{ top: 15, right: 30, left: 25, bottom: 35 }}>
                     <CartesianGrid stroke="#f0f0f0" />
                     <XAxis 
-                      dataKey="displayTime" 
-                      tick={{ fontSize: 8 }} 
-                      ticks={["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "24:00"]}
-                      label={{ value: 'time (t)', position: 'insideBottom', offset: -15, style: { fontStyle: 'italic', fontSize: '10px' } }}
+                        dataKey="displayTime" 
+                        minTickGap={30} 
+                        interval="preserveStartEnd"
+                        tick={{ fontSize: 10 }} 
+                        label={{ value: 'time (t)', position: 'insideBottom', offset: -15, style: { fontStyle: 'italic', fontSize: '10px' } }} 
                     />
-                    <YAxis 
-                      domain={[2, 13]} 
-                      ticks={[2, 4, 6, 8, 10, 12]} 
-                      tick={{ fontSize: 10 }} 
-                      tickFormatter={(v) => `${v} ft.`}
-                      label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontStyle: 'italic', fontSize: '10px' } }}
-                    />
+                    <YAxis domain={[0, 13]} ticks={[0, 2, 4, 6, 8, 10, 12]} tick={{ fontSize: 10 }} tickFormatter={(v) => `${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontStyle: 'italic', fontSize: '10px' } }} />
                     <Tooltip cursor={{ stroke: '#ccc', strokeWidth: 1 }} labelFormatter={(value) => `time: ${value}`} formatter={(value) => [`${(Number(value) || 0).toFixed(2)} ft.`, "level"]} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="displayValue" 
-                      stroke={activeTab === 'ACTUAL' ? "#FFB800" : "#0072CE"} 
-                      strokeWidth={2} 
-                      dot={false} 
-                    />
+                    <Line type="monotone" dataKey="displayValue" stroke={activeTab === 'ACTUAL' ? "#FFB800" : "#0072CE"} strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -258,37 +264,31 @@ const HistoryTab = () => {
         </div>
       </div>
 
-      {/* Hidden PDF Capture Area */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
-        
-        {/* Actual Graph Capture */}
-        <div ref={actualChartRef} style={{ width: '800px', height: '400px', background: 'white', padding: '20px' }}>
-          <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>Actual Reading - {selectedDate?.toLocaleDateString()}</h3>
-          <ResponsiveContainer width="100%" height="90%">
+      {/* Hidden Off-Screen Charts explicitly mapped for PDF Extraction */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <div ref={actualChartRef} style={{ width: '1000px', height: '400px', background: 'white', padding: '20px' }}>
+          <ResponsiveContainer width="100%" height="100%">
             <LineChart data={actualData} margin={{ top: 15, right: 30, left: 25, bottom: 35 }}>
               <CartesianGrid stroke="#f0f0f0" />
-              <XAxis dataKey="displayTime" tick={{ fontSize:10 }} ticks={["00:00","04:00","08:00","12:00","16:00","20:00","24:00"]} label={{ value: 'time (t)', position: 'insideBottom', offset: -10 }} />
-              <YAxis domain={[2,13]} ticks={[2,4,6,8,10,12]} tick={{ fontSize:10 }} tickFormatter={(v)=>`${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }} />
+              <XAxis dataKey="displayTime" minTickGap={30} interval="preserveStartEnd" tick={{ fontSize: 10 }} label={{ value: 'time (t)', position: 'insideBottom', offset: -10 }} />
+              <YAxis domain={[0,13]} ticks={[0,2,4,6,8,10,12]} tick={{ fontSize:10 }} tickFormatter={(v)=>`${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }} />
               <Tooltip />
               <Line type="monotone" dataKey="displayValue" stroke="#FFB800" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
-        
-        {/* Predicted Graph Capture */}
-        <div ref={predictedChartRef} style={{ width: '800px', height: '400px', background: 'white', padding: '20px', marginTop: '20px' }}>
-          <h3 style={{ textAlign: 'center', marginBottom: '10px' }}>Predicted Reading - {selectedDate?.toLocaleDateString()}</h3>
-          <ResponsiveContainer width="100%" height="90%">
+
+        <div ref={predictedChartRef} style={{ width: '1000px', height: '400px', background: 'white', padding: '20px' }}>
+          <ResponsiveContainer width="100%" height="100%">
             <LineChart data={predictedData} margin={{ top: 15, right: 30, left: 25, bottom: 35 }}>
               <CartesianGrid stroke="#f0f0f0" />
-              <XAxis dataKey="displayTime" tick={{ fontSize:10 }} ticks={["00:00","04:00","08:00","12:00","16:00","20:00","24:00"]} label={{ value: 'time (t)', position: 'insideBottom', offset: -10 }} />
-              <YAxis domain={[2,13]} ticks={[2,4,6,8,10,12]} tick={{ fontSize:10 }} tickFormatter={(v)=>`${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }} />
+              <XAxis dataKey="displayTime" minTickGap={30} interval="preserveStartEnd" tick={{ fontSize: 10 }} label={{ value: 'time (t)', position: 'insideBottom', offset: -10 }} />
+              <YAxis domain={[0,13]} ticks={[0,2,4,6,8,10,12]} tick={{ fontSize:10 }} tickFormatter={(v)=>`${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }} />
               <Tooltip />
               <Line type="monotone" dataKey="displayValue" stroke="#0072CE" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
-
       </div>
     </div>
   );

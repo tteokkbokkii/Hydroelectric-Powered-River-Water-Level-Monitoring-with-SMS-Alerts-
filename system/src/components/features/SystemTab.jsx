@@ -161,7 +161,7 @@ const SystemTab = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [mqttClient, setMqttClient] = useState(null);
-  const mqttClientRef = useRef(null);  // to access latest client without triggering effects
+  const mqttClientRef = useRef(null);
   const toast = useRef(null);
   const lastRange = useRef(null);
   const [popup, setPopup] = useState({ visible: false, message: '', severity: '', buttons: [] });
@@ -173,7 +173,6 @@ const SystemTab = () => {
     setPopup({ visible: false, message: '', severity: '', buttons: [] });
   };
 
-  // ---------- Load settings from API once (on mount) ----------
   useEffect(() => {
     fetch(`${API_BASE}/settings`)
       .then(res => res.json())
@@ -185,32 +184,28 @@ const SystemTab = () => {
         });
         setIntervals({
           reading: data.reading_interval,
-          predicting: data.predicting_interval
+          predicting: data.predicting_interval || 60
         });
-        // Publish to MQTT so other components get the initial settings
+        
         if (mqttClientRef.current && mqttClientRef.current.connected) {
           const payload = {
             threshold_normal: data.threshold_normal,
             threshold_attention: data.threshold_attention,
             threshold_critical: data.threshold_critical,
-            reading_interval: data.reading_interval,
-            predicting_interval: data.predicting_interval
+            reading_interval: data.reading_interval
           };
           mqttClientRef.current.publish('system/settings', JSON.stringify(payload));
         }
       })
       .catch(err => console.error('Error fetching settings:', err));
-  }, []); // runs once
+  }, []);
 
-  // ---------- MQTT connection ----------
-// ---------- MQTT connection ----------
   useEffect(() => {
     const client = mqtt.connect(MQTT_BROKER);
     mqttClientRef.current = client;
     setMqttClient(client);
     
     client.on('connect', () => {
-      console.log("SystemTab connected to MQTT");
       client.subscribe('sensor/hulo/reading');
       client.subscribe('system/status');
     });
@@ -218,11 +213,9 @@ const SystemTab = () => {
     client.on('message', (topic, message) => {
       const payloadString = message.toString();
       
-      // 1. Handle Sensor Readings (Popups/Alerts)
       if (topic === 'sensor/hulo/reading') {
         try {
           const data = JSON.parse(payloadString);
-          const level = data.distance;
           let currentRange = data.range || '';
 
           if (lastRange.current !== currentRange) {
@@ -243,10 +236,9 @@ const SystemTab = () => {
             if (msg) showPopup(msg, severity);
             lastRange.current = currentRange;
           }
-        } catch (e) { console.error('Error parsing sensor reading:', e); }
+        } catch (e) { }
       } 
 
-      // 2. Handle System Status (The "About" Pills)
       if (topic === 'system/status') {
         try {
           const status = JSON.parse(payloadString);
@@ -262,16 +254,32 @@ const SystemTab = () => {
             rtc: status.rtc_synced ? 'SYNCED' : 'UNSYNCED',
             gsm: status.gsm_status || prev.gsm
           }));
-        } catch (e) { console.error('Error parsing status JSON:', e); }
+        } catch (e) { }
       }
     });
 
     return () => { if (client) client.end(); };
-  }, [notifications]); // Only re-run if notifications settings change
+  }, [notifications]);
   
   // ---------- Handlers ----------
   const handleThresholdChange = (key, value) => {
-    setThresholds(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
+    setThresholds(prev => {
+      let num = parseFloat(value) || 0;
+      let newValues = { ...prev };
+
+      // Boundary Defense Logic
+      if (key === 'normal' && num >= prev.attention) {
+        num = prev.attention - 0.01;
+      } else if (key === 'attention') {
+        if (num <= prev.normal) num = prev.normal + 0.01;
+        if (num >= prev.critical) num = prev.critical - 0.01;
+      } else if (key === 'critical' && num <= prev.attention) {
+        num = prev.attention + 0.01;
+      }
+
+      newValues[key] = parseFloat(num.toFixed(2));
+      return newValues;
+    });
   };
 
   const handleIntervalChange = (key, value) => {
@@ -289,8 +297,7 @@ const SystemTab = () => {
         threshold_normal: thresholds.normal,
         threshold_attention: thresholds.attention,
         threshold_critical: thresholds.critical,
-        reading_interval: intervals.reading,
-        predicting_interval: intervals.predicting
+        reading_interval: intervals.reading
       };
       const response = await fetch(`${API_BASE}/settings`, {
         method: 'POST',
@@ -298,13 +305,12 @@ const SystemTab = () => {
         body: JSON.stringify(payload)
       });
       if (!response.ok) throw new Error('Failed to save settings');
-      // Publish to MQTT using the ref
+      
       if (mqttClientRef.current && mqttClientRef.current.connected) {
         mqttClientRef.current.publish('system/settings', JSON.stringify(payload));
       }
       showPopup('Settings saved successfully!', 'success');
     } catch (err) {
-      console.error(err);
       showPopup('Could not save settings. Please try again.', 'error');
     } finally {
       setIsLoading(false);
@@ -320,7 +326,6 @@ const SystemTab = () => {
     showPopup('Settings have been reset to defaults. Click SAVE CHANGES to apply.', 'info');
   };
 
-  // ---------- Render ----------
   return (
     <div className="main-content">
       <Toast ref={toast} />
@@ -444,15 +449,36 @@ const SystemTab = () => {
                   <h3 className="SysTab-title">SENSOR THRESHOLDS</h3>
                   <div className="settings-row">
                     <span>Normal Thresholds :</span>
-                    <NumberInput value={thresholds.normal} onChange={(val) => handleThresholdChange('normal', val)} step={0.01} min={0} max={12} unit="ft." />
+                    <NumberInput 
+                      value={thresholds.normal} 
+                      onChange={(val) => handleThresholdChange('normal', val)} 
+                      step={0.01} 
+                      min={0} 
+                      max={thresholds.attention - 0.01} 
+                      unit="ft." 
+                    />
                   </div>
                   <div className="settings-row">
                     <span>Needs Attention :</span>
-                    <NumberInput value={thresholds.attention} onChange={(val) => handleThresholdChange('attention', val)} step={0.01} min={0} max={12} unit="ft." />
+                    <NumberInput 
+                      value={thresholds.attention} 
+                      onChange={(val) => handleThresholdChange('attention', val)} 
+                      step={0.01} 
+                      min={thresholds.normal + 0.01} 
+                      max={thresholds.critical - 0.01} 
+                      unit="ft." 
+                    />
                   </div>
                   <div className="settings-row">
                     <span>Highly Critical :</span>
-                    <NumberInput value={thresholds.critical} onChange={(val) => handleThresholdChange('critical', val)} step={0.01} min={0} max={12} unit="ft." />
+                    <NumberInput 
+                      value={thresholds.critical} 
+                      onChange={(val) => handleThresholdChange('critical', val)} 
+                      step={0.01} 
+                      min={thresholds.attention + 0.01} 
+                      max={12} 
+                      unit="ft." 
+                    />
                   </div>
                 </div>
                 <div className="content-group mt-20">
@@ -460,10 +486,6 @@ const SystemTab = () => {
                   <div className="settings-row">
                     <span>Reading Intervals :</span>
                     <NumberInput value={intervals.reading} onChange={(val) => handleIntervalChange('reading', val)} step={1} min={1} max={10} unit="mins." decimalPlaces={0} />
-                  </div>
-                  <div className="settings-row">
-                    <span>Predicting Intervals :</span>
-                    <NumberInput value={intervals.predicting} onChange={(val) => handleIntervalChange('predicting', val)} step={1} min={5} max={60} unit="mins." decimalPlaces={0} />
                   </div>
                 </div>
               </div>
