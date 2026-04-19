@@ -173,32 +173,25 @@ const SystemTab = () => {
     setPopup({ visible: false, message: '', severity: '', buttons: [] });
   };
 
-  useEffect(() => {
-    fetch(`${API_BASE}/settings`)
-      .then(res => res.json())
-      .then(data => {
-        setThresholds({
-          normal: data.threshold_normal,
-          attention: data.threshold_attention,
-          critical: data.threshold_critical
-        });
-        setIntervals({
-          reading: data.reading_interval,
-          predicting: data.predicting_interval || 60
-        });
-        
-        if (mqttClientRef.current && mqttClientRef.current.connected) {
-          const payload = {
-            threshold_normal: data.threshold_normal,
-            threshold_attention: data.threshold_attention,
-            threshold_critical: data.threshold_critical,
-            reading_interval: data.reading_interval
-          };
-          mqttClientRef.current.publish('system/settings', JSON.stringify(payload));
-        }
-      })
-      .catch(err => console.error('Error fetching settings:', err));
-  }, []);
+useEffect(() => {
+  fetch(`${API_BASE}/settings`)
+    .then(res => res.json())
+    .then(data => {
+      setThresholds({
+        normal: data.threshold_normal,
+        attention: data.threshold_attention,
+        critical: data.threshold_critical
+      });
+      setIntervals({
+        reading: data.reading_interval,
+        predicting: data.predicting_interval || 60
+      });
+      
+      // REMOVE OR COMMENT OUT THE MQTT PUBLISH LINE HERE.
+      // It should ONLY exist inside the 'saveChanges' function.
+    })
+    .catch(err => console.error('Error fetching settings:', err));
+}, []); 
 
   useEffect(() => {
     const client = mqtt.connect(MQTT_BROKER);
