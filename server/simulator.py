@@ -116,4 +116,4 @@ while True:
     
     print(f"📡 {reading_payload['time']} | Level: {reading_payload['distance']} ft. | Prediction: {prediction} ft. | Status: {status_range}")
     
-    time.sleep(5)
+    time.sleep(1)
