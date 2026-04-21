@@ -43,7 +43,7 @@ def calculate_prediction(new_level):
     intercept = (sum_y - slope * sum_x) / n
     
     # Predict value 300 seconds (5 mins) into the future
-    prediction = slope * (time.time() + 300) + intercept
+    prediction = slope * (time.time() + 500) + intercept
     return round(max(0, prediction), 2)
 
 # --- CONNECT TO BROKER ---
