@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard'
 import History from './pages/History'
 import System from './pages/System'
 import HandshakeCheck from './components/HandshakeCheck.jsx';
+import TestPage from './pages/testpage.jsx';
 
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
                     <Route path='/Contacts' element={<Contacts/>}/>
                     <Route path='/History' element={<History/>}/>
                     <Route path='/System' element={<System/>}/>
+                    <Route path='/TestPage' element={<TestPage/>}/>
                 </Routes>
             </Router>
             {
