@@ -52,7 +52,7 @@ html, body {
 
 .card-title {
     font-family: InterBlack;
-    color: #0072CE;
+    color: #002D5A;
     font-size: 1.48rem;
     margin: 0 0 0.5rem 0;
     text-align: left;
@@ -77,6 +77,70 @@ html, body {
     box-sizing: border-box;
     overflow: hidden;
 }
+
+/* Target every action button found: Add, Send, Save, and Reset */
+.add-btn,
+.send-btn,
+.save-btn,
+.reset-btn,
+.action-button,
+.p-button {
+    background-color: #002D5A !important; /* Cohesive Navy Base */
+    color: white !important;
+    border: none !important;
+    font-weight: 700 !important; /* Bold for outdoor visibility */
+    transition: all 0.2s ease-in-out !important;
+    cursor: pointer !important;
+    padding: 0.75rem 1.5rem !important; /* Ensures consistent sizing */
+    border-radius: 4px !important;
+}
+
+/* Hover Effect: The Success Blue for everything */
+.add-btn:hover,
+.send-btn:hover,
+.save-btn:hover,
+.reset-btn:hover,
+.action-button:hover,
+.p-button:hover {
+    background-color: #0056b3 !important; /* Your Modal 'OK' Blue */
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Active State for physical feedback */
+.add-btn:active,
+.send-btn:active,
+.save-btn:active,
+.reset-btn:active,
+.action-button:active,
+.p-button:active {
+    background-color: #003d82 !important;
+    transform: translateY(0) !important;
+}
+
+/* Special fix for buttons that only have an icon (like the Calendar) */
+.p-button.p-button-icon-only {
+    padding: 0 !important; /* Removes the extra space that pushed the icon out */
+    width: 3rem !important; /* Keeps the button square */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Ensure the icon itself is white and visible */
+.p-button.p-button-icon-only .p-button-icon {
+    color: #ffffff !important;
+    font-size: 1.2rem !important;
+}
+
+/* Fix the Menu Hover Color specifically */
+.navigation-container .contents a:hover {
+    background-color: #0056b3 !important; /* Your Success Blue from the OK button */
+    color: #ffffff !important;
+    padding-left: 32px !important; /* Keep that smooth "nudge" effect */
+    transition: all 0.3s ease !important;
+}
+
 
 /* --- Responsiveness --- */
 @media (max-width: 768px) {

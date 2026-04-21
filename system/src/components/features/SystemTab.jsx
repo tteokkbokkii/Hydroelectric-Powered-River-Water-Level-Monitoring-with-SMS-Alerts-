@@ -337,7 +337,7 @@ useEffect(() => {
         .custom-number-input .unit-label { margin-left: 4px; font-size: 14px; color: #555; }
         .custom-number-input .number-buttons { display: flex; flex-direction: column; margin-left: 6px; }
         .custom-number-input .number-btn { background: none; border: none; font-size: 10px; cursor: pointer; padding: 2px 4px; line-height: 1; color: #666; }
-        .custom-number-input .number-btn:hover { color: #0072CE; }
+        .custom-number-input .number-btn:hover { color: #002D5A; }
         .custom-number-input .settings-input { -moz-appearance: textfield; }
         .custom-number-input .settings-input::-webkit-inner-spin-button,
         .custom-number-input .settings-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -352,11 +352,11 @@ useEffect(() => {
         .notification-header h3 { margin: 0; font-size: 1.2rem; font-weight: bold; font-family: InterBlack, sans-serif; text-transform: uppercase; }
         .notification-card.error .notification-header h3 { color: #dc2626; }
         .notification-card.warn .notification-header h3 { color: #f59e0b; }
-        .notification-card.info .notification-header h3 { color: #0072CE; }
+        .notification-card.info .notification-header h3 { color: #002D5A; }
         .notification-card.success .notification-header h3 { color: #10b981; }
         .notification-body { padding: 20px; text-align: center; font-size: 1rem; line-height: 1.5; color: #333; font-family: InterMedium, sans-serif; }
         .notification-footer { padding: 0 20px 20px 20px; display: flex; justify-content: flex-end; gap: 10px; }
-        .notification-primary-btn, .notification-secondary-btn { background-color: #0072CE; color: white; border: none; border-radius: 6px; padding: 8px 24px; font-weight: bold; cursor: pointer; font-family: InterMedium, sans-serif; transition: background 0.2s; }
+        .notification-primary-btn, .notification-secondary-btn { background-color: #002D5A; color: white; border: none; border-radius: 6px; padding: 8px 24px; font-weight: bold; cursor: pointer; font-family: InterMedium, sans-serif; transition: background 0.2s; }
         .notification-primary-btn:hover { background-color: #005bb5; }
         .notification-secondary-btn { background-color: #e9ecef; color: #333; }
         .notification-secondary-btn:hover { background-color: #d0d5db; }

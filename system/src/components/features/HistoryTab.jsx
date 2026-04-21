@@ -252,7 +252,7 @@ const HistoryTab = () => {
                     />
                     <YAxis domain={[0, 13]} ticks={[0, 2, 4, 6, 8, 10, 12]} tick={{ fontSize: 10 }} tickFormatter={(v) => `${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontStyle: 'italic', fontSize: '10px' } }} />
                     <Tooltip cursor={{ stroke: '#ccc', strokeWidth: 1 }} labelFormatter={(value) => `time: ${value}`} formatter={(value) => [`${(Number(value) || 0).toFixed(2)} ft.`, "level"]} />
-                    <Line type="monotone" dataKey="displayValue" stroke={activeTab === 'ACTUAL' ? "#FFB800" : "#0072CE"} strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="displayValue" stroke={activeTab === 'ACTUAL' ? "#ff8f00" : "#002D5A"} strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -273,7 +273,7 @@ const HistoryTab = () => {
               <XAxis dataKey="displayTime" minTickGap={30} interval="preserveStartEnd" tick={{ fontSize: 10 }} label={{ value: 'time (t)', position: 'insideBottom', offset: -10 }} />
               <YAxis domain={[0,13]} ticks={[0,2,4,6,8,10,12]} tick={{ fontSize:10 }} tickFormatter={(v)=>`${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }} />
               <Tooltip />
-              <Line type="monotone" dataKey="displayValue" stroke="#FFB800" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="displayValue" stroke="#ff8f00" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -285,7 +285,7 @@ const HistoryTab = () => {
               <XAxis dataKey="displayTime" minTickGap={30} interval="preserveStartEnd" tick={{ fontSize: 10 }} label={{ value: 'time (t)', position: 'insideBottom', offset: -10 }} />
               <YAxis domain={[0,13]} ticks={[0,2,4,6,8,10,12]} tick={{ fontSize:10 }} tickFormatter={(v)=>`${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }} />
               <Tooltip />
-              <Line type="monotone" dataKey="displayValue" stroke="#0072CE" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="displayValue" stroke="#002D5A" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

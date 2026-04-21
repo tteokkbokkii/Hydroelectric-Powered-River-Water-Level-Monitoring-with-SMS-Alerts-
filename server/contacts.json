@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "John Doe",
+    "phone": "+639123456789",
+    "alertLevel": "ALL"
+  },
+  {
+    "id": 2,
+    "name": "Jane Smith",
+    "phone": "+639987654321",
+    "alertLevel": "WARNING"
+  },
+  {
+    "id": 3,
+    "name": "Emergency Contact",
+    "phone": "+639112233445",
+    "alertLevel": "CRITICAL"
+  }
+]

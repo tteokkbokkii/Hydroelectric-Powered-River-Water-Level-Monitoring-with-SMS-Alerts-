@@ -89,9 +89,9 @@ function RiverTrend({ history }) {
               name="predicted"
               type="monotone"
               dataKey="predicted"
-              stroke="#0072CE"
+              stroke="#002D5A"
               strokeWidth={2}
-              dot={{ r: 3, fill: '#fff', stroke: '#0072CE', strokeWidth: 2 }}
+              dot={{ r: 3, fill: '#fff', stroke: '#002D5A', strokeWidth: 2 }}
               isAnimationActive={false}
               connectNulls={true}
             />
@@ -99,9 +99,9 @@ function RiverTrend({ history }) {
               name="current"
               type="monotone"
               dataKey="current"
-              stroke="#FFB800"
+              stroke="#ff8f00"
               strokeWidth={2}
-              dot={{ r: 3, fill: '#fff', stroke: '#FFB800', strokeWidth: 2 }}
+              dot={{ r: 3, fill: '#fff', stroke: '#ff8f00', strokeWidth: 2 }}
               isAnimationActive={false}
               connectNulls={false}
             />

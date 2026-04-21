@@ -1,6 +1,6 @@
 /* --- Header Layout --- */
 .header-container {
-    background-color: #0072CE;
+    background-color: #002D5A;
     display: flex;
     align-items: center;
     height: 100px;
@@ -60,7 +60,7 @@
 
 /* --- Navigation & Dropdown --- */
 .navigation-container {
-    background-color: #0072CE;
+    background-color: #002D5A;
     display: flex;
     align-items: center;
     height: 100%;

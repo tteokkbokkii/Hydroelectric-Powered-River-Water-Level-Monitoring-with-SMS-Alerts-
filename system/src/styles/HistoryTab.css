@@ -10,7 +10,7 @@
 }
 
 .card-heading {
-    color: #0072bc;
+    color: #002D5A;
     font-size: 1.6rem;
     letter-spacing: 0.05em;
     margin-bottom: 20px;
@@ -30,7 +30,7 @@
     border: none;
     cursor: pointer;
     background-color: #d9d9d9;
-    color: #6b7280;
+    color: #404247;
     font-weight: 700;
     border-radius: 12px 12px 0 0;
     font-family: InterMedium;
@@ -38,8 +38,8 @@
 
 .nav-item.is-active {
     background-color: #ffffff;
-    color: #0072bc;
-    border-top: 5px solid #0072bc;
+    color: #002D5A;
+    border-top: 5px solid #002D5A;
     margin-top: -5px;
 }
 
@@ -124,11 +124,11 @@
 }
 
 .export-bttn {
-    background-color: #0072CE;
+    background-color: #002D5A;
 }
 
 .p-datepicker-trigger {
-    background-color: #0072CE;
+    background-color: #002D5A;
 }
 
 /* ========== DESKTOP (≥1025px): fixed, no outer scroll ========== */

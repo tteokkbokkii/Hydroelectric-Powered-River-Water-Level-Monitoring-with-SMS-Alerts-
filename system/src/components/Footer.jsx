@@ -7,7 +7,7 @@ const MQTT_BROKER = `ws://${currentIP}:9001`;
 const Footer = () => {
   const [signalBars, setSignalBars] = useState(0);
   const [systemStatus, setSystemStatus] = useState('NORMAL');
-  const [statusColor, setStatusColor] = useState('#0072CE');
+  const [statusColor, setStatusColor] = useState('#002D5A');
 
   useEffect(() => {
     const client = mqtt.connect(MQTT_BROKER);
@@ -34,7 +34,7 @@ const Footer = () => {
           if (!status.ultrasonic_connected || !status.float_connected) issues.push('SENSOR DISCONNECT');
 
           let displayText = 'NORMAL';
-          let color = '#0072CE';
+          let color = '#002D5A';
           if (issues.length > 0) {
             displayText = issues.join(' | ');
             color = '#ED2100';
@@ -66,7 +66,7 @@ const Footer = () => {
             width: '4px',
             height: `${heights[i]}px`,
             marginLeft: '2px',
-            backgroundColor: isActive ? '#0072CE' : '#a0a0a0',
+            backgroundColor: isActive ? '#002D5A' : '#a0a0a0',
             transition: 'background-color 0.2s',
             borderRadius: '2px',
           }}
@@ -78,8 +78,8 @@ const Footer = () => {
 
   const isNormal = systemStatus === 'NORMAL';
   const badgeBg = isNormal ? '#e6f2ff' : '#ffe6e6';
-  const badgeBorder = isNormal ? '#0072CE' : '#ED2100';
-  const badgeTextColor = isNormal ? '#0072CE' : '#ED2100';
+  const badgeBorder = isNormal ? '#002D5A' : '#ED2100';
+  const badgeTextColor = isNormal ? '#002D5A' : '#ED2100';
 
   return (
     <footer className='footer-container'>
