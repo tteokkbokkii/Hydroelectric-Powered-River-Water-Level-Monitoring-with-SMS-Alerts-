@@ -12,7 +12,7 @@ import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 
-const currentIP = window.location.hostname || 'hulo.local';
+const currentIP = window.location.hostname || 'rivermonitoring.local';
 const API_BASE = `http://${currentIP}:5000/api`;
 const POLL_INTERVAL = 30000;
 

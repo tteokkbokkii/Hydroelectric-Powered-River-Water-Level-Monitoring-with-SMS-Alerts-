@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import mqtt from 'mqtt';
 
-const currentIP = window.location.hostname || 'hulo.local';
+const currentIP = window.location.hostname || 'rivermonitoring.local';
 const MQTT_BROKER = `ws://${currentIP}:9001`;
 
 const Footer = () => {

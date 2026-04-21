@@ -131,7 +131,7 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
   );
 };
 
-const currentIP = window.location.hostname || 'hulo.local';
+const currentIP = window.location.hostname || 'rivermonitoring.local';
 const API_BASE = `http://${currentIP}:5000/api`;
 const MQTT_BROKER = `ws://${currentIP}:9001`;
 

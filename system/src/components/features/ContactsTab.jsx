@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { Dropdown } from 'primereact/dropdown';
 import mqtt from 'mqtt';
 
-const currentIP = window.location.hostname || 'hulo.local';
+const currentIP = window.location.hostname || 'rivermonitoring.local';
 const MQTT_BROKER = `ws://${currentIP}:9001`;
 const CONTACTS_LIST_TOPIC = 'contacts/list';
 const CONTACTS_UPDATE_TOPIC = 'contacts/update';
