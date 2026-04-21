@@ -38,9 +38,9 @@ const Announcement = () => {
 
     let newColor = '#ABD9FF';
     if (range === 'HIGHLY CRITICAL') {
-      newColor = '#ED2100';
+      newColor = '#ff7676';
     } else if (range === 'NEEDS ATTENTION') {
-      newColor = '#fffd74';
+      newColor = '#ffc074';
     } else {
       newColor = '#ABD9FF';
     }

@@ -10,7 +10,7 @@ const CONTACTS_UPDATE_TOPIC = 'contacts/update';
 const SMS_COMMAND_TOPIC = 'sms/command';
 const SMS_LOG_TOPIC = 'sms/log';
 
-// ---------- Popup Component (supports autoClose per button) ----------
+// ---------- Popup Component ----------
 const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null, autoClose: true }] }) => {
   useEffect(() => {
     const handleEscape = (e) => {
@@ -60,7 +60,14 @@ const ContactsTab = () => {
   const [editingIndex, setEditingIndex] = useState(-1);
   const [editForm, setEditForm] = useState({ name: '', phone: '+63', alertLevel: 'ALL' });
   const [selectedRecipient, setSelectedRecipient] = useState(null);
-  const [customMessage, setCustomMessage] = useState("Test ID: 001 Status: GSM Link Verification...");
+
+  // --- NEW: Incremental ID State ---
+  const [testCounter, setTestCounter] = useState(() => {
+    const saved = localStorage.getItem('sms_test_counter');
+    return saved ? parseInt(saved, 10) : 1;
+  });
+  const [customMessage, setCustomMessage] = useState("");
+
   const [smsLogs, setSmsLogs] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [mqttClient, setMqttClient] = useState(null);
@@ -81,7 +88,14 @@ const ContactsTab = () => {
     { label: 'CRITICAL', value: 'CRITICAL' }
   ];
 
-  // ---------- Load contacts and logs from localStorage on mount ----------
+  // --- Effect to update message when counter changes ---
+  useEffect(() => {
+    const paddedId = String(testCounter).padStart(3, '0');
+    setCustomMessage(`Test ID: ${paddedId} Status: GSM Link Verification.`);
+    localStorage.setItem('sms_test_counter', testCounter);
+  }, [testCounter]);
+
+  // ---------- Load logs from localStorage ----------
   useEffect(() => {
     const savedLogs = localStorage.getItem('smsLogs');
     if (savedLogs) {
@@ -91,7 +105,6 @@ const ContactsTab = () => {
     }
   }, []);
 
-  // Save logs to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('smsLogs', JSON.stringify(smsLogs));
   }, [smsLogs]);
@@ -109,7 +122,6 @@ const ContactsTab = () => {
         try {
           const data = JSON.parse(message.toString());
           setContacts(data);
-          console.log('Contacts loaded from MQTT');
         } catch (e) {
           console.error('Failed to parse contacts list', e);
         }
@@ -117,7 +129,6 @@ const ContactsTab = () => {
         try {
           const log = JSON.parse(message.toString());
           setSmsLogs(prev => [log, ...prev].slice(0, 50));
-          console.log('SMS log received:', log);
         } catch (e) {
           console.error('Failed to parse SMS log', e);
         }
@@ -129,13 +140,9 @@ const ContactsTab = () => {
     };
   }, []);
 
-  // ---------- Publish contacts to MQTT ----------
   const publishContacts = (updatedContacts) => {
     if (mqttClient && mqttClient.connected) {
       mqttClient.publish(CONTACTS_UPDATE_TOPIC, JSON.stringify(updatedContacts));
-      console.log('Contacts published to MQTT');
-    } else {
-      console.warn('MQTT not connected, contacts not saved');
     }
   };
 
@@ -171,8 +178,7 @@ const ContactsTab = () => {
     try {
       let updatedContacts;
       if (editingIndex === 'new') {
-        const newId = Date.now();
-        const newContact = { ...editForm, id: newId };
+        const newContact = { ...editForm, id: Date.now() };
         updatedContacts = [...contacts, newContact];
         showPopup('Contact added successfully!', 'success');
       } else {
@@ -184,8 +190,7 @@ const ContactsTab = () => {
       publishContacts(updatedContacts);
       setEditingIndex(-1);
     } catch (err) {
-      console.error(err);
-      showPopup('Error saving contact. Please try again.', 'error');
+      showPopup('Error saving contact.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -194,7 +199,6 @@ const ContactsTab = () => {
   const handleCancel = () => {
     if (isSaving) return;
     setEditingIndex(-1);
-    setEditForm({ name: '', phone: '+63', alertLevel: 'ALL' });
   };
 
   const handleDelete = (index) => {
@@ -204,76 +208,53 @@ const ContactsTab = () => {
       {
         label: 'YES',
         onClick: () => {
-          setTimeout(() => {
-            setIsSaving(true);
-            try {
-              const updatedContacts = contacts.filter((_, i) => i !== index);
-              setContacts(updatedContacts);
-              publishContacts(updatedContacts);
-              showPopup(`Contact "${contactName}" deleted.`, 'success');
-            } catch (err) {
-              console.error(err);
-              showPopup('Error deleting contact. Please try again.', 'error');
-            } finally {
-              setIsSaving(false);
-            }
-          }, 50);
+          setIsSaving(true);
+          const updatedContacts = contacts.filter((_, i) => i !== index);
+          setContacts(updatedContacts);
+          publishContacts(updatedContacts);
+          showPopup(`Contact deleted.`, 'success');
+          setIsSaving(false);
         }
       },
-      {
-        label: 'NO',
-        onClick: () => {
-          setTimeout(() => {
-            showPopup('Contact deletion cancelled.', 'info');
-          }, 50);
-        }
-      }
+      { label: 'NO', onClick: () => {} }
     ]);
   };
 
-  // ---------- Manual SMS sending (FIXED with autoClose: false) ----------
+  // ---------- Manual SMS sending (NOW INCREMENTAL) ----------
   const handleSend = () => {
     if (!selectedRecipient) {
       showPopup('Please select a recipient', 'error');
       return;
     }
     const contact = contacts.find(c => c.name === selectedRecipient);
-    if (!contact) {
-      showPopup('Contact not found', 'error');
-      return;
-    }
-    if (!customMessage.trim()) {
-      showPopup('Please enter a message', 'error');
-      return;
-    }
+    if (!contact) return;
 
-    // Confirmation popup
     showPopup(`Send message to "${contact.name}"?`, 'info', [
       {
         label: 'YES',
-        autoClose: false,        // 🔧 CRITICAL: prevents automatic close after onClick
+        autoClose: false,
         onClick: () => {
-          closePopup();          // manually close confirmation
+          closePopup();
           if (mqttClient && mqttClient.connected) {
             const payload = JSON.stringify({
               phone: contact.phone,
               message: customMessage
             });
             mqttClient.publish(SMS_COMMAND_TOPIC, payload);
+            
+            // --- BUMP COUNTER ---
+            setTestCounter(prev => prev + 1);
+            
             showPopup('SMS command sent to ESP32', 'success');
           } else {
-            showPopup('MQTT not connected, cannot send SMS', 'error');
+            showPopup('MQTT not connected', 'error');
           }
         }
       },
-      {
-        label: 'NO',
-        onClick: () => {}
-      }
+      { label: 'NO', onClick: () => {} }
     ]);
   };
 
-  // ---------- Phone formatting ----------
   const formatPhone = (input) => {
     const digits = input.replace(/\D/g, '');
     let normalized = digits.startsWith('63') ? digits : '63' + digits;
@@ -282,18 +263,14 @@ const ContactsTab = () => {
   };
 
   const handleEditChange = (field, value) => {
-    if (field === 'phone') {
-      value = formatPhone(value);
-    }
+    if (field === 'phone') value = formatPhone(value);
     setEditForm({ ...editForm, [field]: value });
   };
 
   const recipientOptions = contacts.map(c => ({ label: c.name, value: c.name }));
 
-  // ---------- Render ----------
   return (
     <div className="tab-layout">
-      {/* LEFT PANEL – CONTACTS */}
       <div className="card-panel" id='contacts-panel'>
         <div className="panel-header-row">
           <h2 className="panel-title">CONTACTS</h2>
@@ -319,12 +296,10 @@ const ContactsTab = () => {
                   <td><input className="table-input" value={editForm.phone} onChange={(e) => handleEditChange('phone', e.target.value)} disabled={isSaving} /></td>
                   <td><Dropdown className="table-dropdown" value={editForm.alertLevel} options={alertLevelOptions} onChange={(e) => handleEditChange('alertLevel', e.value)} disabled={isSaving} /></td>
                   <td className="action-cell">
-                    <button className="icon-only-btn save" onClick={handleSaveEdit} disabled={isSaving}>
-                      {isSaving ? <i className="pi pi-spin pi-spinner" /> : '✓'}
-                    </button>
+                    <button className="icon-only-btn save" onClick={handleSaveEdit} disabled={isSaving}>✓</button>
                     <button className="icon-only-btn cancel" onClick={handleCancel} disabled={isSaving}>✕</button>
-                   </td>
-                 </tr>
+                  </td>
+                </tr>
               )}
               {contacts.map((contact, index) => (
                 <tr key={contact.id} className={editingIndex === index ? "fixed-row adding-mode" : "fixed-row"}>
@@ -334,9 +309,7 @@ const ContactsTab = () => {
                       <td><input className="table-input" value={editForm.phone} onChange={(e) => handleEditChange('phone', e.target.value)} disabled={isSaving} /></td>
                       <td><Dropdown className="table-dropdown" value={editForm.alertLevel} options={alertLevelOptions} onChange={(e) => handleEditChange('alertLevel', e.value)} disabled={isSaving} /></td>
                       <td className="action-cell">
-                        <button className="icon-only-btn save" onClick={handleSaveEdit} disabled={isSaving}>
-                          {isSaving ? <i className="pi pi-spin pi-spinner" /> : '✓'}
-                        </button>
+                        <button className="icon-only-btn save" onClick={handleSaveEdit} disabled={isSaving}>✓</button>
                         <button className="icon-only-btn cancel" onClick={handleCancel} disabled={isSaving}>✕</button>
                       </td>
                     </>
@@ -387,7 +360,6 @@ const ContactsTab = () => {
         </div>
       </div>
 
-      {/* RIGHT PANEL – SMS LOGS */}
       <div className="card-panel right-flex">
         <div className="panel-header-row">
           <h2 className="panel-title">SMS LOGS</h2>
@@ -410,14 +382,8 @@ const ContactsTab = () => {
         </div>
       </div>
 
-      {/* Popup */}
       {popup.visible && (
-        <Popup
-          message={popup.message}
-          severity={popup.severity}
-          buttons={popup.buttons}
-          onClose={closePopup}
-        />
+        <Popup message={popup.message} severity={popup.severity} buttons={popup.buttons} onClose={closePopup} />
       )}
     </div>
   );

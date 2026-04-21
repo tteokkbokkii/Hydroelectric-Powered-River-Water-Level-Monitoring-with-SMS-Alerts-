@@ -53,7 +53,7 @@ function RiverLevel({ currentLevel, predictedLevel }) {
 
       <div className="innercard-container" id='riverlevel-contents'>         
         <div className='live-expected'>
-          <p>PREDICTED (5-MIN)</p>
+          <p>PREDICTED</p>
           <h1>{displayPredicted.toFixed(2)} ft.</h1>
         </div>
         <div className='live-current'>
