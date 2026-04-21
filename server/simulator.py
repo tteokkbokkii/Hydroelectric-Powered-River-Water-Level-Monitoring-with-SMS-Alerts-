@@ -106,13 +106,13 @@ while True:
 
     # 6. PUBLISH TO MQTT
     # Publish reading
-    client.publish(MQTT_TOPIC, json.dumps(reading_payload))
+    client.publish(MQTT_TOPIC, json.dumps(reading_payload), retain=True)
     
     # Publish status (Every loop to ensure Footer stays Green/Normal)
-    client.publish(STATUS_TOPIC, json.dumps(status_msg))
+    client.publish(STATUS_TOPIC, json.dumps(status_msg), retain=True)
     
     # Publish signal bars
-    client.publish(SIGNAL_TOPIC, json.dumps(signal_payload))
+    client.publish(SIGNAL_TOPIC, json.dumps(signal_payload), retain=True)
     
     print(f"📡 {reading_payload['time']} | Level: {reading_payload['distance']} ft. | Prediction: {prediction} ft. | Status: {status_range}")
     
