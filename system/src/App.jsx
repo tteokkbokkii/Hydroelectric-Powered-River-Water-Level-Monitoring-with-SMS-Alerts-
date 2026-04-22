@@ -12,7 +12,7 @@ import Dashboard from './pages/Dashboard'
 import History from './pages/History'
 import System from './pages/System'
 import HandshakeCheck from './components/HandshakeCheck.jsx';
-import TestPage from './pages/Testpage.jsx';
+import TestPage from './pages/TestPage.jsx';
 
 
 function App() {
