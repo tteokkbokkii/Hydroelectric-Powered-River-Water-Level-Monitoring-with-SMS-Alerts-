@@ -55,13 +55,13 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
         <div className='live-expected'>
           <p>PREDICTED</p>
           <h1 style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
-            {displayPredicted.toFixed(2)} ft.
+            {(Number(displayPredicted) || 0).toFixed(2)} ft.
           </h1>
         </div>
         <div className='live-current'>
           <p>CURRENT</p>
           <h1 style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
-            {displayLevel.toFixed(2)} ft.
+            {(Number(displayLevel) || 0).toFixed(2)} ft.
           </h1>
         </div>
 
