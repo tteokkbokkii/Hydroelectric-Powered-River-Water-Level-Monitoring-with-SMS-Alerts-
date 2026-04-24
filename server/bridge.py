@@ -95,11 +95,22 @@ def broadcast_status(client):
         "gsm_status": "READY"
     }
     client.publish(STATUS_TOPIC, json.dumps(status_payload), retain=True)
-
+#//////////////////////////////////////////////////////
+def publish_contacts(client):
+    try:
+        with open(CONTACTS_FILE, 'r') as f:
+            contacts = json.load(f)
+            client.publish(CONTACTS_LIST_TOPIC, json.dumps(contacts), retain=True)
+    except FileNotFoundError:
+        pass # The init block at the bottom will handle creating the file
+#/////////////////////////////////////////////////////
 def heartbeat_loop(client):
     while True:
         broadcast_status(client)
         publish_settings(client)
+        #//////////////////////
+        publish_contacts(client)
+        #//////////////////////
         time.sleep(2)
 
 def on_message(client, userdata, msg):
