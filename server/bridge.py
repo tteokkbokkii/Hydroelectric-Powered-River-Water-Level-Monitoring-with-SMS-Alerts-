@@ -82,7 +82,14 @@ def get_uptime_string():
 
 def broadcast_status(client):
     global last_esp_contact, esp32_health
-    is_alive = (time.time() - last_esp_contact) < 10
+    
+    # --- INTEGRATED DYNAMIC TIMEOUT ---
+    current_settings = get_settings()
+    interval_minutes = current_settings.get("reading_interval", 5)
+    timeout_seconds = (interval_minutes * 60) + 60 
+    is_alive = (time.time() - last_esp_contact) < timeout_seconds
+    # ----------------------------------
+    
     status_payload = {
         "uptime": get_uptime_string(),
         "signal_quality": get_wifi_rssi(),
@@ -95,6 +102,7 @@ def broadcast_status(client):
         "gsm_status": "READY"
     }
     client.publish(STATUS_TOPIC, json.dumps(status_payload), retain=True)
+
 #//////////////////////////////////////////////////////
 def publish_contacts(client):
     try:
@@ -104,6 +112,7 @@ def publish_contacts(client):
     except FileNotFoundError:
         pass # The init block at the bottom will handle creating the file
 #/////////////////////////////////////////////////////
+
 def heartbeat_loop(client):
     while True:
         broadcast_status(client)
@@ -120,10 +129,17 @@ def on_message(client, userdata, msg):
         esp32_health = {"online": True, "ultrasonic": "OK", "float": "OK"}
         try:
             data = json.loads(msg.payload.decode())
+            
+            # --- INTEGRATED ELEVATION FALLBACK ---
             distance_ft = data.get("distance")
+            if distance_ft is None:
+                distance_ft = data.get("elevation")
+            # -------------------------------------
+            
             predicted_ft = data.get("predicted")
             status = data.get("range")
             rtc_time = f"{data.get('date')} {data.get('time')}"
+            
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
             c.execute('''
@@ -135,6 +151,7 @@ def on_message(client, userdata, msg):
             print(f"Inserted: {distance_ft} ft, status {status}, time {rtc_time}")
         except Exception as e:
             print(f"Error processing sensor message: {e}")
+            
     elif msg.topic == CONTACTS_UPDATE_TOPIC:
         try:
             contacts = json.loads(msg.payload.decode())
@@ -144,6 +161,7 @@ def on_message(client, userdata, msg):
             print("Contacts updated and saved")
         except Exception as e:
             print(f"Error saving contacts: {e}")
+            
     elif msg.topic == "system/status/esp32":
         try:
             data = json.loads(msg.payload.decode())
@@ -162,6 +180,7 @@ try:
     client.subscribe(MQTT_TOPIC)
     client.subscribe("system/status/esp32")
     client.subscribe(CONTACTS_UPDATE_TOPIC)
+    
     # Publish existing contacts if any
     try:
         with open(CONTACTS_FILE, 'r') as f:
@@ -178,6 +197,7 @@ try:
             json.dump(default_contacts, f, indent=2)
         client.publish(CONTACTS_LIST_TOPIC, json.dumps(default_contacts), retain=True)
         print("Created default contacts")
+        
     # Start heartbeat
     threading.Thread(target=heartbeat_loop, args=(client,), daemon=True).start()
     print("Bridge active. Monitoring ESP32 and System Health...")
