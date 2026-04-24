@@ -18,7 +18,7 @@ function RiverTrend({ history }) {
     // Take the last 19 readings (newest)
     const last19 = sorted.slice(-19);
     const formatted = last19.map(item => ({
-      time: item.time,
+      time: item.rtc_time ? item.rtc_time.split(' ')[1] : item.time
       current: Number(item.distance) || 0,
       predicted: Number(item.predicted) || 0
     }));
