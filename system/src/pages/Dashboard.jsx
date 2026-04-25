@@ -14,8 +14,8 @@ function Dashboard() {
   const [waterData, setWaterData] = useState([]);
   const [latestReading, setLatestReading] = useState(null);
   
-  // 1. ADD A "MEMORY" TO TRACK THE PREVIOUS RANGE
-  const previousRangeRef = useRef("SAFE");
+  // 1. Initialize as null so it doesn't trigger on the very first page load
+  const previousRangeRef = useRef(null);
 
   const fetchData = async () => {
     try {
@@ -25,7 +25,6 @@ function Dashboard() {
         setWaterData(data);
         if (data.length > 0) {
           setLatestReading(data[0]); // newest first
-          console.log("Latest reading:", data[0]);
         }
       }
     } catch (error) {
@@ -39,33 +38,38 @@ function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // 2. ADD THE POPUP LOGIC TO WATCH FOR CHANGES
+  // 2. POPUP LOGIC: Only trigger on actual escalations while the page is open
   useEffect(() => {
-    // Make sure we actually have data before checking
     if (latestReading && latestReading.range) {
       const currentRange = latestReading.range;
+
+      // If this is the very first time the page loads, just set the baseline and stop.
+      if (previousRangeRef.current === null) {
+        previousRangeRef.current = currentRange;
+        return; 
+      }
+
       const previousRange = previousRangeRef.current;
 
-      // Only trigger if the state actually changed
+      // Check if the range has changed
       if (currentRange !== previousRange) {
         
-        // Reminder: The ESP32 sends "WARNING", not "NEEDS ATTENTION"
-        if (currentRange === "WARNING") {
-          window.alert("⚠️ ALERT: Water level NEEDS ATTENTION!");
+        // --- STRICT ESCALATION CHECK ---
+        
+        // Escalation 1: Safe to Warning
+        if (previousRange === "SAFE" && currentRange === "WARNING") {
+          window.alert("⚠️ ALERT: Water level escalated to WARNING!");
         } 
-        else if (currentRange === "CRITICAL") {
-          window.alert("🚨 CRITICAL: Evacuation or immediate action required!");
-        } 
-        else if (currentRange === "SAFE" && previousRange !== "SAFE") {
-          // Optional: Tell them when it goes back down to safe
-          window.alert("✅ CLEAR: Water level has returned to SAFE.");
+        // Escalation 2: Warning to Critical (or directly Safe to Critical)
+        else if ((previousRange === "WARNING" || previousRange === "SAFE") && currentRange === "CRITICAL") {
+          window.alert("🚨 CRITICAL: Water level escalated to CRITICAL! Immediate action required!");
         }
 
-        // Update the memory so it doesn't spam you every 2 seconds
+        // Update the baseline memory to the new current range
         previousRangeRef.current = currentRange;
       }
     }
-  }, [latestReading]); // This effect runs every time a new reading comes in
+  }, [latestReading]);
 
   return (
     <>
