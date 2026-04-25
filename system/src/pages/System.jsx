@@ -1,9 +1,9 @@
-import SystemTab from '../components/features/SystemTab.jsx'
+import SystemTab from '../components/features/SystemTab.jsx';
 
 function System() {
-    return (
-        <SystemTab />
-    );
+  return (
+    <SystemTab />
+  );
 }
 
 export default System;

@@ -19,16 +19,16 @@ const HandshakeCheck = () => {
     });
 
     client.on('message', (topic, message) => {
-  try {
-    const rawMessage = message.toString().trim(); // Trim extra spaces
-    const parsed = JSON.parse(rawMessage);
-    setData(parsed);
-    setStatus("Connected"); // Keep status green when data arrives
-  } catch (e) {
-    console.error("Payload error:", message.toString());
-    // If it fails, try to see if it's just a simple string issue
-  }
-});
+      try {
+        const rawMessage = message.toString().trim(); // Trim extra spaces
+        const parsed = JSON.parse(rawMessage);
+        setData(parsed);
+        setStatus("Connected"); // Keep status green when data arrives
+      } catch (e) {
+        console.error("Payload error:", message.toString());
+        // If it fails, try to see if it's just a simple string issue
+      }
+    });
 
     return () => {
       client.end();
@@ -98,53 +98,161 @@ const HandshakeCheck = () => {
 
 const FloatStatus = ({ id, active }) => (
   <div style={floatCard(active)}>
-    <div style={{fontSize: '0.85rem', fontWeight: '900', letterSpacing: '0.05em'}}>FLOAT {id}</div>
-    <div style={{fontSize: '1.4rem', fontWeight: '800'}}>{active ? 'SUBMERGED' : 'DRY'}</div>
+    <div
+      style={{
+        fontSize: '0.85rem',
+        fontWeight: '900',
+        letterSpacing: '0.05em',
+      }}
+    >
+      FLOAT {id}
+    </div>
+    <div
+      style={{
+        fontSize: '1.4rem',
+        fontWeight: '800',
+      }}
+    >
+      {active ? 'SUBMERGED' : 'DRY'}
+    </div>
   </div>
 );
 
 const containerStyle = {
-  display: 'flex', justifyContent: 'center', alignItems: 'center', 
-  minHeight: '100vh', backgroundColor: '#e2e8f0', padding: '20px'
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  minHeight: '100vh',
+  backgroundColor: '#e2e8f0',
+  padding: '20px',
 };
 
 const cardStyle = {
-  width: '100%', maxWidth: '650px', maxHeight:'700px', backgroundColor: '#fff', 
-  borderRadius: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-  padding: '40px', border: '2px solid #cbd5e1'
+  width: '100%',
+  maxWidth: '650px',
+  maxHeight: '700px',
+  backgroundColor: '#fff',
+  borderRadius: '24px',
+  boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+  padding: '40px',
+  border: '2px solid #cbd5e1',
 };
 
-const headerStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' };
-const titleStyle = { margin: 0, fontSize: '2rem', color: '#0f172a', fontWeight: '900' };
-const subtitleStyle = { margin: '4px 0 0 0', color: '#334155', fontSize: '1.1rem', fontWeight: '500' };
+const headerStyle = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: '30px',
+};
+const titleStyle = {
+  margin: 0,
+  fontSize: '2rem',
+  color: '#0f172a',
+  fontWeight: '900',
+};
+const subtitleStyle = {
+  margin: '4px 0 0 0',
+  color: '#334155',
+  fontSize: '1.1rem',
+  fontWeight: '500',
+};
 const badgeStyle = (s) => ({
-  padding: '10px 20px', borderRadius: '12px', fontWeight: '900', fontSize: '0.9rem',
+  padding: '10px 20px',
+  borderRadius: '12px',
+  fontWeight: '900',
+  fontSize: '0.9rem',
   backgroundColor: s === "Connected" ? "#dcfce7" : "#fee2e2",
   color: s === "Connected" ? "#166534" : "#991b1b",
-  border: `2px solid ${s === "Connected" ? "#22c55e" : "#ef4444"}`
+  border: `2px solid ${s === "Connected" ? "#22c55e" : "#ef4444"}`,
 });
 
-const timeComparisonGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' };
-const timeBox = { padding: '24px', borderRadius: '16px', border: '2px solid #e2e8f0', textAlign: 'center' };
-const timeValue = { fontSize: '2.4rem', fontWeight: '800', color: '#0f172a', fontFamily: 'monospace' };
-const dateValue = { fontSize: '1rem', color: '#475569', fontWeight: '600', marginTop: '5px' };
+const timeComparisonGrid = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: '20px',
+  marginBottom: '30px',
+};
+const timeBox = {
+  padding: '24px',
+  borderRadius: '16px',
+  border: '2px solid #e2e8f0',
+  textAlign: 'center',
+};
+const timeValue = {
+  fontSize: '2.4rem',
+  fontWeight: '800',
+  color: '#0f172a',
+  fontFamily: 'monospace',
+};
+const dateValue = {
+  fontSize: '1rem',
+  color: '#475569',
+  fontWeight: '600',
+  marginTop: '5px',
+};
 
-const metricsGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' };
-const metricCard = { padding: '24px', backgroundColor: '#f1f5f9', borderRadius: '16px', textAlign: 'center', border: '1px solid #e2e8f0' };
-const labelStyle = { display: 'block', fontSize: '0.8rem', fontWeight: '900', color: '#334155', letterSpacing: '0.1em', marginBottom: '8px' };
-const largeVal = { fontSize: '2.5rem', fontWeight: '900', color: '#0f172a' };
-const unitStyle = { fontSize: '1.1rem', color: '#475569', fontWeight: '600' };
+const metricsGrid = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr 1fr',
+  gap: '20px',
+};
+const metricCard = {
+  padding: '24px',
+  backgroundColor: '#f1f5f9',
+  borderRadius: '16px',
+  textAlign: 'center',
+  border: '1px solid #e2e8f0',
+};
+const labelStyle = {
+  display: 'block',
+  fontSize: '0.8rem',
+  fontWeight: '900',
+  color: '#334155',
+  letterSpacing: '0.1em',
+  marginBottom: '8px',
+};
+const largeVal = {
+  fontSize: '2.5rem',
+  fontWeight: '900',
+  color: '#0f172a',
+};
+const unitStyle = {
+  fontSize: '1.1rem',
+  color: '#475569',
+  fontWeight: '600',
+};
 
-const sectionLabel = { fontSize: '0.9rem', fontWeight: '900', color: '#0f172a', margin: '40px 0 16px 0', textAlign: 'center', letterSpacing: '0.1em' };
-const floatGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' };
+const sectionLabel = {
+  fontSize: '0.9rem',
+  fontWeight: '900',
+  color: '#0f172a',
+  margin: '40px 0 16px 0',
+  textAlign: 'center',
+  letterSpacing: '0.1em',
+};
+const floatGrid = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr 1fr',
+  gap: '15px',
+};
 const floatCard = (active) => ({
-  padding: '20px', borderRadius: '16px', textAlign: 'center',
+  padding: '20px',
+  borderRadius: '16px',
+  textAlign: 'center',
   backgroundColor: active ? '#1d4ed8' : '#f8fafc',
   color: active ? '#fff' : '#1e293b',
   border: active ? '2px solid #1e40af' : '2px solid #e2e8f0',
-  boxShadow: active ? '0 10px 15px -3px rgba(37,99,235,0.4)' : 'none'
+  boxShadow: active ? '0 10px 15px -3px rgba(37,99,235,0.4)' : 'none',
 });
 
-const footer = { display: 'flex', justifyContent: 'space-between', marginTop: '40px', fontSize: '0.85rem', color: '#475569', borderTop: '2px solid #f1f5f9', paddingTop: '20px' };
+const footer = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  marginTop: '40px',
+  fontSize: '0.85rem',
+  color: '#475569',
+  borderTop: '2px solid #f1f5f9',
+  paddingTop: '20px',
+};
 
 export default HandshakeCheck;

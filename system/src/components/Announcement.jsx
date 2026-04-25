@@ -177,11 +177,18 @@ const Announcement = () => {
   }, [message, isScrolling]);
 
   return (
-    <div className="announcement-bar" style={{ backgroundColor: color }}>
+    <div
+      className="announcement-bar"
+      style={{ backgroundColor: color }}
+    >
       <div
         className="announcement-text-container"
         ref={containerRef}
-        style={{ position: 'relative', overflow: 'hidden', whiteSpace: 'nowrap' }}
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+        }}
       >
         <p
           ref={textRef}

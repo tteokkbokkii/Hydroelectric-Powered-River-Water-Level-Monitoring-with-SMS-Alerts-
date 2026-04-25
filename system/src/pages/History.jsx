@@ -1,9 +1,9 @@
-import HistoryTab from '../components/features/HistoryTab.jsx'
+import HistoryTab from '../components/features/HistoryTab.jsx';
 
 function History() {
-    return (
-        <HistoryTab />
-    );
+  return (
+    <HistoryTab />
+  );
 }
 
 export default History;

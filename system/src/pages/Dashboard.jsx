@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import RiverLevel from "../components/features/RiverLevel.jsx";
+import RiverLevel from '../components/features/RiverLevel.jsx';
 import RiverTrend from '../components/features/RiverTrend.jsx';
 import RecentLogs from '../components/features/RecentLogs.jsx';
 
@@ -35,7 +35,7 @@ function Dashboard() {
   }, []);
 
   return (
-    <div className='dashboard-grid'>
+    <div className="dashboard-grid">
       <RiverLevel
         currentLevel={latestReading?.distance || 0}
         predictedLevel={latestReading?.predicted || 0}

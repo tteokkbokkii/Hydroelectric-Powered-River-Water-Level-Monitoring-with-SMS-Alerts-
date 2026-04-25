@@ -1,14 +1,12 @@
 
-function Card(){
-    return(
-        <div className='card-container'>
-            <h2 className='card-title'>CARD TITLE</h2>
+function Card() {
+  return (
+    <div className="card-container">
+      <h2 className="card-title">CARD TITLE</h2>
 
-            <div className='innercard-container'>
-            
-            </div>
-        </div>
-    );
+      <div className="innercard-container" />
+    </div>
+  );
 }
 
-export default Card
+export default Card;
