@@ -80,6 +80,7 @@ echo -e "${YELLOW}🚀 Launching System Services...${NC}"
 BASE_DIR="/home/admin/thesis"
 
 # 1. Start Bridge (MQTT -> DB)
+
 cd "$BASE_DIR/server"
 source venv/bin/activate
 python3 bridge.py > ~/bridge.log 2>&1 &

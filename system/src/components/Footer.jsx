@@ -31,7 +31,7 @@ const Footer = () => {
           const issues = [];
 
           if (status.reset_reason === 'POWER_ON') issues.push('POWER LOSS');
-          if (!status.ultrasonic_connected || !status.float_connected) issues.push('SENSOR DISCONNECT');
+          if (!status.ultrasonic_active || !status.float_ready) issues.push('SENSOR DISCONNECT');
 
           let displayText = 'NORMAL';
           let color = '#002D5A';

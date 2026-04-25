@@ -3,6 +3,7 @@ import mqtt from 'mqtt';
 
 const currentIP = window.location.hostname || 'rivermonitoring.local';
 const MQTT_BROKER = `ws://${currentIP}:9001`;
+const API_BASE = `http://${currentIP}:5000/api`; // Added API Base
 
 const Announcement = () => {
   // Load saved water level and thresholds from localStorage
@@ -25,6 +26,27 @@ const Announcement = () => {
   const directionRef = useRef(1);
   const maxOffsetRef = useRef(0);
 
+  // --- NEW: Instant API Fetch on Load ---
+  // This ensures the announcement bar doesn't have to wait for the next MQTT ping to show the correct data
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/data`);
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const newest = data[0]; // Newest reading based on your database sorting
+          if (newest && newest.distance !== undefined) {
+            setWaterLevel(newest.distance);
+          }
+        }
+      } catch (error) {
+        console.error('Announcement API fetch error:', error);
+      }
+    };
+    fetchInitialData();
+  }, []);
+  // --------------------------------------
+
   // Helper to update the announcement text and color
   const updateAnnouncement = () => {
     let range = 'NORMAL';
@@ -33,7 +55,7 @@ const Announcement = () => {
     } else if (waterLevel >= thresholds.attention) {
       range = 'NEEDS ATTENTION';
     }
-    const mainText = `RIVER ELEVATION AT ${waterLevel.toFixed(2)} FT. | ${range}`;
+    const mainText = `RIVER ELEVATION AT ${(parseFloat(waterLevel) || 0).toFixed(2)} FT. | ${range}`;
     setMessage(mainText.toUpperCase());
 
     let newColor = '#ABD9FF';
@@ -60,7 +82,7 @@ const Announcement = () => {
     updateAnnouncement();
   }, [waterLevel, thresholds]);
 
-  // MQTT subscription
+  // MQTT subscription for live real-time updates
   useEffect(() => {
     let mqttClient = null;
     let mounted = true;

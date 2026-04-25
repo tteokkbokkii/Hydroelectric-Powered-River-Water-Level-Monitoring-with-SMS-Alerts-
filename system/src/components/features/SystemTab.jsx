@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom';
 import { Toast } from 'primereact/toast';
 import mqtt from 'mqtt';
 
@@ -89,48 +88,6 @@ const NumberInput = ({ value, onChange, step = 0.1, min, max, unit, decimalPlace
   );
 };
 
-// ---------- Generic Popup Component (using Portal) ----------
-const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null }] }) => {
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
-
-  const handleButtonClick = (btn) => {
-    if (btn.onClick) btn.onClick();
-    onClose();
-  };
-
-  return ReactDOM.createPortal(
-    <div className="notification-overlay" onClick={onClose}>
-      <div className={`notification-card ${severity}`} onClick={(e) => e.stopPropagation()}>
-        <button className="notification-close-x" onClick={onClose}>×</button>
-        <div className="notification-header">
-          <h3>{severity === 'error' ? '⚠️ ERROR' : severity === 'success' ? '✓ SUCCESS' : 'ℹ️ INFORMATION'}</h3>
-        </div>
-        <div className="notification-body">
-          <p>{message}</p>
-        </div>
-        <div className="notification-footer">
-          {buttons.map((btn, idx) => (
-            <button
-              key={idx}
-              className={idx === 0 ? "notification-primary-btn" : "notification-secondary-btn"}
-              onClick={() => handleButtonClick(btn)}
-            >
-              {btn.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-};
-
 const currentIP = window.location.hostname || 'rivermonitoring.local';
 const API_BASE = `http://${currentIP}:5000/api`;
 const MQTT_BROKER = `ws://${currentIP}:9001`;
@@ -159,82 +116,44 @@ const SystemTab = () => {
   const [notifications, setNotifications] = useState({
     normal: true, attention: true, critical: true, powerLoss: true, sensorDisconnect: true
   });
+  
   const [isLoading, setIsLoading] = useState(false);
-  const [mqttClient, setMqttClient] = useState(null);
   const mqttClientRef = useRef(null);
   const toast = useRef(null);
-  const lastRange = useRef(null);
-  const [popup, setPopup] = useState({ visible: false, message: '', severity: '', buttons: [] });
 
-  const showPopup = (message, severity, buttons = [{ label: 'OK', onClick: null }]) => {
-    setPopup({ visible: true, message, severity, buttons });
-  };
-  const closePopup = () => {
-    setPopup({ visible: false, message: '', severity: '', buttons: [] });
-  };
+  // Fetch initial settings
+  useEffect(() => {
+    fetch(`${API_BASE}/settings`)
+      .then(res => res.json())
+      .then(data => {
+        setThresholds({
+          normal: parseFloat(data.threshold_normal) || 6.5,
+          attention: parseFloat(data.threshold_attention) || 8.0,
+          critical: parseFloat(data.threshold_critical) || 9.5
+        });
+        setIntervals({
+          reading: data.reading_interval,
+          predicting: data.predicting_interval || 60
+        });
+      })
+      .catch(err => console.error('Error fetching settings:', err));
+  }, []); 
 
-useEffect(() => {
-  fetch(`${API_BASE}/settings`)
-    .then(res => res.json())
-    .then(data => {
-      setThresholds({
-        normal: data.threshold_normal,
-        attention: data.threshold_attention,
-        critical: data.threshold_critical
-      });
-      setIntervals({
-        reading: data.reading_interval,
-        predicting: data.predicting_interval || 60
-      });
-      
-      // REMOVE OR COMMENT OUT THE MQTT PUBLISH LINE HERE.
-      // It should ONLY exist inside the 'saveChanges' function.
-    })
-    .catch(err => console.error('Error fetching settings:', err));
-}, []); 
-
+  // MQTT Connection for Live Hardware Status
   useEffect(() => {
     const client = mqtt.connect(MQTT_BROKER);
     mqttClientRef.current = client;
-    setMqttClient(client);
     
     client.on('connect', () => {
-      client.subscribe('sensor/hulo/reading');
+      // We only subscribe to system/status here. 
+      // sensor/hulo/reading is handled by GlobalLayout for emergency alerts.
       client.subscribe('system/status');
     });
 
     client.on('message', (topic, message) => {
-      const payloadString = message.toString();
-      
-      if (topic === 'sensor/hulo/reading') {
-        try {
-          const data = JSON.parse(payloadString);
-          let currentRange = data.range || '';
-
-          if (lastRange.current !== currentRange) {
-            let msg = '';
-            let severity = '';
-            if (currentRange === 'CRITICAL' && notifications.critical) { 
-              msg = 'The water level reached critical levels.'; 
-              severity = 'error'; 
-            }
-            else if (currentRange === 'WARNING' && notifications.attention) { 
-              msg = 'The water level needs Coast Guard judgment.'; 
-              severity = 'warn'; 
-            }
-            else if (currentRange === 'SAFE' && notifications.normal) { 
-              msg = 'The water level is currently normal.'; 
-              severity = 'info'; 
-            }
-            if (msg) showPopup(msg, severity);
-            lastRange.current = currentRange;
-          }
-        } catch (e) { }
-      } 
-
       if (topic === 'system/status') {
         try {
-          const status = JSON.parse(payloadString);
+          const status = JSON.parse(message.toString());
           setLiveStatus(prev => ({
             ...prev,
             systemUp: status.uptime || prev.systemUp,
@@ -247,12 +166,12 @@ useEffect(() => {
             rtc: status.rtc_synced ? 'SYNCED' : 'UNSYNCED',
             gsm: status.gsm_status || prev.gsm
           }));
-        } catch (e) { }
+        } catch (e) { console.error("Error parsing system status", e); }
       }
     });
 
     return () => { if (client) client.end(); };
-  }, [notifications]);
+  }, []);
   
   // ---------- Handlers ----------
   const handleThresholdChange = (key, value) => {
@@ -260,14 +179,17 @@ useEffect(() => {
       let num = parseFloat(value) || 0;
       let newValues = { ...prev };
 
-      // Boundary Defense Logic
-      if (key === 'normal' && num >= prev.attention) {
-        num = prev.attention - 0.01;
+      const safeNormal = parseFloat(prev.normal);
+      const safeAttention = parseFloat(prev.attention);
+      const safeCritical = parseFloat(prev.critical);
+
+      if (key === 'normal' && num >= safeAttention) {
+        num = safeAttention - 0.01;
       } else if (key === 'attention') {
-        if (num <= prev.normal) num = prev.normal + 0.01;
-        if (num >= prev.critical) num = prev.critical - 0.01;
-      } else if (key === 'critical' && num <= prev.attention) {
-        num = prev.attention + 0.01;
+        if (num <= safeNormal) num = safeNormal + 0.01;
+        if (num >= safeCritical) num = safeCritical - 0.01;
+      } else if (key === 'critical' && num <= safeAttention) {
+        num = safeAttention + 0.01;
       }
 
       newValues[key] = parseFloat(num.toFixed(2));
@@ -292,19 +214,22 @@ useEffect(() => {
         threshold_critical: thresholds.critical,
         reading_interval: intervals.reading
       };
+      
       const response = await fetch(`${API_BASE}/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      
       if (!response.ok) throw new Error('Failed to save settings');
       
       if (mqttClientRef.current && mqttClientRef.current.connected) {
         mqttClientRef.current.publish('system/settings', JSON.stringify(payload));
       }
-      showPopup('Settings saved successfully!', 'success');
+      
+      toast.current.show({ severity: 'success', summary: 'Success', detail: 'Settings saved successfully!', life: 3000 });
     } catch (err) {
-      showPopup('Could not save settings. Please try again.', 'error');
+      toast.current.show({ severity: 'error', summary: 'Error', detail: 'Could not save settings. Please try again.', life: 3000 });
     } finally {
       setIsLoading(false);
     }
@@ -316,7 +241,7 @@ useEffect(() => {
     setNotifications({
       normal: true, attention: true, critical: true, powerLoss: true, sensorDisconnect: true
     });
-    showPopup('Settings have been reset to defaults. Click SAVE CHANGES to apply.', 'info');
+    toast.current.show({ severity: 'info', summary: 'Reset', detail: 'Settings reset to defaults. Click SAVE CHANGES to apply.', life: 4000 });
   };
 
   return (
@@ -341,25 +266,6 @@ useEffect(() => {
         .custom-number-input .settings-input { -moz-appearance: textfield; }
         .custom-number-input .settings-input::-webkit-inner-spin-button,
         .custom-number-input .settings-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-
-        .notification-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 9999; animation: fadeIn 0.2s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .notification-card { position: relative; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 90%; max-width: 400px; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .notification-close-x { position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666; line-height: 1; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s; }
-        .notification-close-x:hover { background: #f0f0f0; color: #333; }
-        .notification-header { padding: 20px 20px 0 20px; border-bottom: 1px solid #eef2f6; }
-        .notification-header h3 { margin: 0; font-size: 1.2rem; font-weight: bold; font-family: InterBlack, sans-serif; text-transform: uppercase; }
-        .notification-card.error .notification-header h3 { color: #dc2626; }
-        .notification-card.warn .notification-header h3 { color: #f59e0b; }
-        .notification-card.info .notification-header h3 { color: #002D5A; }
-        .notification-card.success .notification-header h3 { color: #10b981; }
-        .notification-body { padding: 20px; text-align: center; font-size: 1rem; line-height: 1.5; color: #333; font-family: InterMedium, sans-serif; }
-        .notification-footer { padding: 0 20px 20px 20px; display: flex; justify-content: flex-end; gap: 10px; }
-        .notification-primary-btn, .notification-secondary-btn { background-color: #002D5A; color: white; border: none; border-radius: 6px; padding: 8px 24px; font-weight: bold; cursor: pointer; font-family: InterMedium, sans-serif; transition: background 0.2s; }
-        .notification-primary-btn:hover { background-color: #005bb5; }
-        .notification-secondary-btn { background-color: #e9ecef; color: #333; }
-        .notification-secondary-btn:hover { background-color: #d0d5db; }
       `}</style>
 
       <div className="card-wrapper" id="main-profile-card">
@@ -518,10 +424,6 @@ useEffect(() => {
           )}
         </div>
       </div>
-
-      {popup.visible && (
-        <Popup message={popup.message} severity={popup.severity} buttons={popup.buttons} onClose={closePopup} />
-      )}
     </div>
   );
 };

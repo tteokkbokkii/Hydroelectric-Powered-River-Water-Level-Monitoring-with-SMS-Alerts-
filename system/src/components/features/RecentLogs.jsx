@@ -20,7 +20,7 @@ function RecentLogs({ logs }) {
             <p key={log.id || index} className={`log-entry ${status.toLowerCase()}`}>
               <span className="log-time">[{time}]</span> - 
               <span className="log-status"> [{status}]</span> 
-              <span className="log-value"> WATER ELEVATION: {value.toFixed(2)} FT.</span>
+              <span className="log-value"> WATER ELEVATION: {(parseFloat(value) || 0).toFixed(2)} FT.</span>
             </p>
           );
         })}
