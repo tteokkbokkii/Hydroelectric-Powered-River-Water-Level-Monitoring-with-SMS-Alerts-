@@ -117,14 +117,14 @@ function Dashboard() {
         // 1. ESCALATION: Safe to Warning
         if (previousRange === "SAFE" && currentRange === "WARNING") {
           showPopup(
-            "Water has reached the WARNING threshold! Middle floater switch triggered. Please prepare.", 
+            "Water has reached the WARNING threshold! Please prepare.", 
             "warn"
           );
         } 
         // 2. ESCALATION: Safe or Warning escalating to Critical
         else if ((previousRange === "SAFE" || previousRange === "WARNING") && currentRange === "CRITICAL") {
           showPopup(
-            "Water has reached the CRITICAL threshold! Top floater switch triggered. Immediate evacuation/action required!", 
+            "Water has reached the CRITICAL threshold, Immediate evacuation/action required!", 
             "error"
           );
         }
