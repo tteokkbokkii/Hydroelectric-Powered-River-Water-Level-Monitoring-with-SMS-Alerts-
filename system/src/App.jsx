@@ -14,7 +14,6 @@ import System from './pages/System'
 import HandshakeCheck from './components/HandshakeCheck.jsx';
 import TestPage from './pages/TestPage.jsx';
 
-
 function App() {
     return (
         <>

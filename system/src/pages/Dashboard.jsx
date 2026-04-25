@@ -78,12 +78,12 @@ function Dashboard() {
       if (Array.isArray(data)) {
         setWaterData(data);
         if (data.length > 0) {
-          const newest = data[data.length - 1]; 
+          const newest = data[0];  
           setLatestReading(newest); 
         }
       }
     } catch (error) {
-      console.error("Dashboard fetch error:", error);
+      console.log(`Live Data Check -> Elevation: ${newest.elevation}, Range: ${newest.range}`);
     }
   };
 
@@ -100,6 +100,7 @@ function Dashboard() {
 
       if (previousRangeRef.current === null) {
         previousRangeRef.current = currentRange;
+        console.log("Initial Dashboard Baseline set to:", currentRange);
         return; 
       }
 
@@ -107,19 +108,20 @@ function Dashboard() {
 
       // Only evaluate if the range actually changed
       if (currentRange !== previousRange) {
+        console.log(`State Changed! Escaped from ${previousRange} to ${currentRange}`);
         
         // 1. ESCALATION: Safe to Warning
         if (previousRange === "SAFE" && currentRange === "WARNING") {
           showPopup(
-            "Water has reached the WARNING threshold! Middle floater switch triggered. Please prepare.", 
+            "Water has reached the WARNING threshold! Please prepare.",
             "warn"
           );
         } 
         // 2. ESCALATION: Safe or Warning escalating to Critical
         else if ((previousRange === "SAFE" || previousRange === "WARNING") && currentRange === "CRITICAL") {
           showPopup(
-            "Water has reached the CRITICAL threshold! Top floater switch triggered. Immediate evacuation/action required!", 
-            "error"
+            "Water has reached the CRITICAL threshold, Immediate evacuation/action required!", 
+            "warn"
           );
         }
 

@@ -45,7 +45,6 @@ const Announcement = () => {
     };
     fetchInitialData();
   }, []);
-  // --------------------------------------
 
   // Helper to update the announcement text and color
   const updateAnnouncement = () => {

@@ -12,37 +12,61 @@ function RiverTrend({ history }) {
       return;
     }
 
-    // Sort history by time (ascending) so oldest first, newest last
-    const sorted = [...history].sort((a, b) => a.time.localeCompare(b.time));
+    // 1. Sort safely, providing a fallback if time is missing
+    const sorted = [...history].sort((a, b) => {
+      const timeA = a.time || "";
+      const timeB = b.time || "";
+      return timeA.localeCompare(timeB);
+    });
     
-    // Take the last 19 readings (newest)
+    // 2. Take the last 19 readings (newest)
     const last19 = sorted.slice(-19);
-    const formatted = last19.map(item => ({
-      time: item.rtc_time ? item.rtc_time.split(' ')[1] : item.time,
-      current: Number(item.distance) || 0,
-      predicted: Number(item.predicted) || 0
-    }));
-
-    // Add a future point using the latest reading (the last element in sorted)
-    const latest = sorted[sorted.length - 1];
-    if (latest && latest.predicted) {
-      // Compute future time (+5 minutes)
-      let futureTime = latest.time;
-      if (latest.time) {
-        const [hour, minute] = latest.time.split(':').map(Number);
-        let newHour = hour;
-        let newMinute = minute + 5;
-        if (newMinute >= 60) {
-          newHour += 1;
-          newMinute -= 60;
-        }
-        if (newHour >= 24) newHour = 0;
-        futureTime = `${newHour.toString().padStart(2,'0')}:${newMinute.toString().padStart(2,'0')}`;
+    const formatted = last19.map(item => {
+      // Safely extract time, ignoring Python's literal "None" string
+      let displayTime = item.time;
+      if (item.rtc_time && item.rtc_time !== "None") {
+        displayTime = item.rtc_time.split(' ')[1] || item.time;
       }
+      if (!displayTime || displayTime === "None") {
+        displayTime = "--:--"; 
+      }
+
+      // Instead of forcing 0 on invalid numbers, return null.
+      // Recharts will use connectNulls={true} to bridge the gap instead of diving to 0.
+      const currentVal = (item.distance && item.distance !== "None") ? Number(item.distance) : null;
+      const predictedVal = (item.predicted && item.predicted !== "None") ? Number(item.predicted) : null;
+
+      return {
+        time: displayTime,
+        current: currentVal,
+        predicted: predictedVal
+      };
+    });
+
+    // 3. Add a future point safely using the latest reading
+    const latest = formatted[formatted.length - 1];
+    if (latest && latest.predicted !== null) {
+      let futureTime = latest.time;
+      
+      // Only attempt to split and add minutes if it's a valid time string
+      if (futureTime && futureTime.includes(':')) {
+        const [hour, minute] = futureTime.split(':').map(Number);
+        if (!isNaN(hour) && !isNaN(minute)) {
+          let newHour = hour;
+          let newMinute = minute + 5;
+          if (newMinute >= 60) {
+            newHour += 1;
+            newMinute -= 60;
+          }
+          if (newHour >= 24) newHour = 0;
+          futureTime = `${newHour.toString().padStart(2,'0')}:${newMinute.toString().padStart(2,'0')}`;
+        }
+      }
+      
       formatted.push({
         time: futureTime,
-        current: null,
-        predicted: Number(latest.predicted)
+        current: null, 
+        predicted: latest.predicted 
       });
     }
 

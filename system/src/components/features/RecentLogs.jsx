@@ -18,7 +18,7 @@ function RecentLogs({ logs }) {
           
           return (
             <p key={log.id || index} className={`log-entry ${status.toLowerCase()}`}>
-              <span className="log-time">[{time}]</span> - 
+              const time = (log.time && log.time !== "None") ? log.time : '--:--';
               <span className="log-status"> [{status}]</span> 
               <span className="log-value"> WATER ELEVATION: {(parseFloat(value) || 0).toFixed(2)} FT.</span>
             </p>
