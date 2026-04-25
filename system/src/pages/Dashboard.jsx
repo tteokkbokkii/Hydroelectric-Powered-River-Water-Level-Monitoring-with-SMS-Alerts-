@@ -14,7 +14,6 @@ function Dashboard() {
   const [waterData, setWaterData] = useState([]);
   const [latestReading, setLatestReading] = useState(null);
   
-  // 1. Initialize as null so it doesn't trigger on the very first page load
   const previousRangeRef = useRef(null);
 
   const fetchData = async () => {
@@ -24,7 +23,9 @@ function Dashboard() {
       if (Array.isArray(data)) {
         setWaterData(data);
         if (data.length > 0) {
-          setLatestReading(data[0]); // newest first
+          // FIX: Grab the LAST item in the array, which is the newest reading!
+          const newest = data[data.length - 1]; 
+          setLatestReading(newest); 
         }
       }
     } catch (error) {
@@ -38,34 +39,29 @@ function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // 2. POPUP LOGIC: Only trigger on actual escalations while the page is open
   useEffect(() => {
     if (latestReading && latestReading.range) {
       const currentRange = latestReading.range;
 
-      // If this is the very first time the page loads, just set the baseline and stop.
       if (previousRangeRef.current === null) {
+        console.log("Dashboard Loaded. Baseline set to:", currentRange);
         previousRangeRef.current = currentRange;
         return; 
       }
 
       const previousRange = previousRangeRef.current;
 
-      // Check if the range has changed
       if (currentRange !== previousRange) {
+        console.log(`State Changed! Previous: ${previousRange} | Current: ${currentRange}`);
         
         // --- STRICT ESCALATION CHECK ---
-        
-        // Escalation 1: Safe to Warning
         if (previousRange === "SAFE" && currentRange === "WARNING") {
           window.alert("⚠️ ALERT: Water level escalated to WARNING!");
         } 
-        // Escalation 2: Warning to Critical (or directly Safe to Critical)
         else if ((previousRange === "WARNING" || previousRange === "SAFE") && currentRange === "CRITICAL") {
           window.alert("🚨 CRITICAL: Water level escalated to CRITICAL! Immediate action required!");
         }
 
-        // Update the baseline memory to the new current range
         previousRangeRef.current = currentRange;
       }
     }
