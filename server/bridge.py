@@ -38,8 +38,8 @@ def get_settings():
 
 def publish_settings(client):
     settings = get_settings()
-    client.publish(SETTINGS_TOPIC, json.dumps(settings))
-    print("Published settings to MQTT")
+    client.publish(SETTINGS_TOPIC, json.dumps(settings), retain=True)
+    print("Published settings to MQTT (Retained)")
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
