@@ -18,7 +18,7 @@ function RecentLogs({ logs }) {
         {logs.map((log, index) => {
           // Mapping variables to the unified keys from Flask API
           const value = log.distance || 0;
-          const time = log.time || '--:--';
+          const time = (log.time && log.time !== "None") ? log.time : '--:--';
           const status = log.range || 'UNKNOWN';
 
           return (
