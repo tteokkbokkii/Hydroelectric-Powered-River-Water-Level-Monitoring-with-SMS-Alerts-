@@ -5,7 +5,7 @@ import HistoryTab from "../components/features/HistoryTab.jsx";
 
 const TestPage = () => {
   return (
-    <div style={{ padding: '40px', backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
+    <div style={{ padding: '40px' }}>
       <h1 style={{ color: '#002d5a', marginBottom: '10px' }}>UI Reusability Test Page</h1>
       <p style={{ color: '#666' }}>Confirming components render correctly in a new section with zero logic changes.</p>
       <hr style={{ border: '0.5px solid #ccc', margin: '20px 0' }} />

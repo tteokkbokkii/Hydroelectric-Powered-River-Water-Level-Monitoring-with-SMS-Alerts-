@@ -1,19 +1,11 @@
-  import Header from '../components/Header.jsx'
-  import Footer from '../components/Footer.jsx'
-  import Announcement from '../components/Announcement.jsx'
-  import ContactsTab from '../components/features/ContactsTab.jsx'
+import ContactsTab from '../components/features/ContactsTab.jsx'
 
-  function Contacts(){
-      return(
-        <>
-          <Header/>
-          <Announcement/>
-          <div className="main-content contacts-main-content">
-            <ContactsTab/>
-          </div>
-          <Footer/>
-        </>
-      )
-  }
+function Contacts() {
+    return (
+        <div className="contacts-main-content">
+            <ContactsTab />
+        </div>
+    );
+}
 
-  export default Contacts
+export default Contacts;
