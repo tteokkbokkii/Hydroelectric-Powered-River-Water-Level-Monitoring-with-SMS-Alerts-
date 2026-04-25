@@ -173,25 +173,25 @@ const SystemTab = () => {
     setPopup({ visible: false, message: '', severity: '', buttons: [] });
   };
 
-useEffect(() => {
-  fetch(`${API_BASE}/settings`)
-    .then(res => res.json())
-    .then(data => {
-      setThresholds({
-        normal: data.threshold_normal,
-        attention: data.threshold_attention,
-        critical: data.threshold_critical
-      });
-      setIntervals({
-        reading: data.reading_interval,
-        predicting: data.predicting_interval || 60
-      });
-      
-      // REMOVE OR COMMENT OUT THE MQTT PUBLISH LINE HERE.
-      // It should ONLY exist inside the 'saveChanges' function.
-    })
-    .catch(err => console.error('Error fetching settings:', err));
-}, []); 
+  useEffect(() => {
+    fetch(`${API_BASE}/settings`)
+      .then(res => res.json())
+      .then(data => {
+        setThresholds({
+          normal: parseFloat(data.threshold_normal) || 6.5,
+          attention: parseFloat(data.threshold_attention) || 8.0,
+          critical: parseFloat(data.threshold_critical) || 9.5
+        });
+        setIntervals({
+          reading: data.reading_interval,
+          predicting: data.predicting_interval || 60
+        });
+        
+        // REMOVE OR COMMENT OUT THE MQTT PUBLISH LINE HERE.
+        // It should ONLY exist inside the 'saveChanges' function.
+      })
+      .catch(err => console.error('Error fetching settings:', err));
+  }, []); 
 
   useEffect(() => {
     const client = mqtt.connect(MQTT_BROKER);
@@ -260,14 +260,19 @@ useEffect(() => {
       let num = parseFloat(value) || 0;
       let newValues = { ...prev };
 
+      // Convert state values to numbers safely before math operations
+      const safeNormal = parseFloat(prev.normal);
+      const safeAttention = parseFloat(prev.attention);
+      const safeCritical = parseFloat(prev.critical);
+
       // Boundary Defense Logic
-      if (key === 'normal' && num >= prev.attention) {
-        num = prev.attention - 0.01;
+      if (key === 'normal' && num >= safeAttention) {
+        num = safeAttention - 0.01;
       } else if (key === 'attention') {
-        if (num <= prev.normal) num = prev.normal + 0.01;
-        if (num >= prev.critical) num = prev.critical - 0.01;
-      } else if (key === 'critical' && num <= prev.attention) {
-        num = prev.attention + 0.01;
+        if (num <= safeNormal) num = safeNormal + 0.01;
+        if (num >= safeCritical) num = safeCritical - 0.01;
+      } else if (key === 'critical' && num <= safeAttention) {
+        num = safeAttention + 0.01;
       }
 
       newValues[key] = parseFloat(num.toFixed(2));
