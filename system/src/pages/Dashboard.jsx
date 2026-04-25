@@ -14,7 +14,7 @@ function Dashboard() {
   const [waterData, setWaterData] = useState([]);
   const [latestReading, setLatestReading] = useState(null);
   
-  // 1. Initialize as null so it doesn't trigger on the very first page load
+  // Memory to track the previous state so we only popup when it CHANGES
   const previousRangeRef = useRef(null);
 
   const fetchData = async () => {
@@ -24,7 +24,9 @@ function Dashboard() {
       if (Array.isArray(data)) {
         setWaterData(data);
         if (data.length > 0) {
-          setLatestReading(data[0]); // newest first
+          // Grab the LAST item in the array (the newest reading from your database)
+          const newest = data[data.length - 1]; 
+          setLatestReading(newest); 
         }
       }
     } catch (error) {
@@ -38,34 +40,35 @@ function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // 2. POPUP LOGIC: Only trigger on actual escalations while the page is open
+  // --- STRICT ESCALATION POPUP LOGIC ---
   useEffect(() => {
     if (latestReading && latestReading.range) {
       const currentRange = latestReading.range;
 
-      // If this is the very first time the page loads, just set the baseline and stop.
+      // On first load, quietly learn the current state without spamming a popup
       if (previousRangeRef.current === null) {
+        console.log("Dashboard Loaded. Baseline set to:", currentRange);
         previousRangeRef.current = currentRange;
         return; 
       }
 
       const previousRange = previousRangeRef.current;
 
-      // Check if the range has changed
+      // Only evaluate if the range actually changed
       if (currentRange !== previousRange) {
+        console.log(`Floater Change Detected! Previous: ${previousRange} | Current: ${currentRange}`);
         
-        // --- STRICT ESCALATION CHECK ---
-        
-        // Escalation 1: Safe to Warning
+        // 1. ESCALATION: Safe to Warning
         if (previousRange === "SAFE" && currentRange === "WARNING") {
-          window.alert("⚠️ ALERT: Water level escalated to WARNING!");
+          window.alert("⚠️ WARNING: Water has reached the WARNING threshold! Middle floater switch triggered. Please prepare.");
         } 
-        // Escalation 2: Warning to Critical (or directly Safe to Critical)
-        else if ((previousRange === "WARNING" || previousRange === "SAFE") && currentRange === "CRITICAL") {
-          window.alert("🚨 CRITICAL: Water level escalated to CRITICAL! Immediate action required!");
+        // 2. ESCALATION: Safe or Warning escalating to Critical
+        else if ((previousRange === "SAFE" || previousRange === "WARNING") && currentRange === "CRITICAL") {
+          window.alert("🚨 CRITICAL ALERT: Water has reached the CRITICAL threshold! Top floater switch triggered. Immediate evacuation/action required!");
         }
 
-        // Update the baseline memory to the new current range
+        // Always update the dashboard's memory so the new baseline is saved
+        // This ensures de-escalations (like Critical down to Safe) are remembered silently
         previousRangeRef.current = currentRange;
       }
     }
