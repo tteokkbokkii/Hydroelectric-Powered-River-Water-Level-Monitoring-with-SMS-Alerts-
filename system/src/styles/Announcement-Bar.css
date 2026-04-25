@@ -12,16 +12,15 @@
   overflow: hidden;
   white-space: nowrap;
   display: flex;
-  justify-content: center;   /* centers the inline-block when text fits */
-  align-items: center;       /* vertical centering (optional) */
+  justify-content: center; /* centers the inline-block when text fits */
+  align-items: center; /* vertical centering (optional) */
 }
 
 .announcement-bar p {
   margin: 0;
   padding: 5.5px 0;
-  font-family: InterMedium;
   display: inline-block;
   white-space: nowrap;
   transition: transform 0.05s linear;
-  text-align: center;        /* fallback, but flex overrides */
+  text-align: center; /* fallback, but flex overrides */
 }

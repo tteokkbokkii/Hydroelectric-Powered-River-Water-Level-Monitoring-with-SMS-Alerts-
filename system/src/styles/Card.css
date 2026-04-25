@@ -1,12 +1,12 @@
 /* -- River Level -- */
 #riverlevel {
-    grid-row: 1 / 3; 
+  grid-row: 1 / 3;
 }
 
-#riverlevel-contents{
-    min-width: 500px;
-    height: 100%;
-    position: relative;
+#riverlevel-contents {
+  min-width: 500px;
+  height: 100%;
+  position: relative;
 }
 
 #riverlevel-card-header {
@@ -19,117 +19,123 @@
   padding-right: 0.3em;
 }
 
-#riverlevel-title {
+/* Ensure the card title inside the riverlevel header has no default margins */
+#riverlevel-card-header .card-title {
   text-align: left;
   margin: 0;
 }
 
-.live-expected{
-    position: absolute;
-    left: 5%;
-    top: 53%;
-    z-index: 10;
-    color: #ffffff;
-    pointer-events: none;
+/* common shared properties for the predicted/current boxes */
+.live-expected,
+.live-current {
+  position: absolute;
+  left: 5%;
+  z-index: 10;
+  color: #ffffff;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* compact label/value */
+  align-items: flex-start;
+  padding: 0 !important; /* remove hidden padding */
+  height: auto;
+  min-height: 0;
 }
 
-.live-expected p{
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: bold;
-    font-family: InterMedium;
-    text-shadow: 1px 1px 4px #000000af;
+/* Give the predicted and current readings distinct vertical positions
+   and center them relative to their own height to avoid overlap. */
+.live-expected {
+  /* tuned positions: keep readings in upper half, compact spacing */
+  top: 35% !important;
+  margin-bottom: 12px !important; /* final requested spacing */
+  transform: none !important;
+  z-index: 30;
 }
 
-.live-expected h1{
-    margin: 0;
-    font-size: 2.5rem;
-    text-shadow: 1px 1px 4px #000000af;
+.live-current {
+  /* place current below predicted but still within top half */
+  top: 55% !important;
+  transform: none !important;
+  z-index: 30;
 }
 
-.live-current{
-    position: absolute;
-    left: 5%;
-    top: 70%;
-    z-index: 10;
-    color: #ffffff;
-    pointer-events: none;
+.live-expected p,
+.live-current p {
+  margin: 0 0 0 0; /* compact label and value */
+  font-size: 0.95rem; /* slightly smaller than value */
+  font-weight: 700; /* ensure bold */
+  font-family: InterMedium;
+  text-shadow: 1px 1px 4px #000000af;
 }
 
-.live-current p{
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: bold;
-    font-family: InterMedium;
-    text-shadow: 1px 1px 4px #000000af;
-}
-
-.live-current h1{
-    margin: 0;
-    font-size: 2.5rem;
-    text-shadow: 1px 1px 4px #000000af;
+.live-expected h1,
+.live-current h1 {
+  margin: -2px 0 0 0; /* pull value slightly up to tighten with label */
+  font-size: 2.5rem; /* value remains prominent */
+  text-shadow: 1px 1px 4px #000000af;
 }
 
 .thresholds {
-    position: absolute;
-    right: 5%; 
-    top: 0;
-    height: 100%;
-    width: 35%; 
-    pointer-events: none;
-    z-index: 20;
+  position: absolute;
+  right: 5%;
+  top: 0;
+  height: 100%;
+  width: 35%;
+  pointer-events: none;
+  z-index: 20;
 }
 
 .thresholds p {
-    position: absolute;
-    margin: 0;
-    font-family: InterMedium;
-    font-size: 0.7rem;
-    font-weight: bold;
-    color: #333;
-    text-transform: uppercase;
-    white-space: nowrap;
-    transform: translateY(-50%); 
+  position: absolute;
+  margin: 0;
+  font-family: InterMedium;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #333;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateY(-50%);
 }
 
-.status-indicator{
-    padding: 6px 14px;
-    border-radius: 20px;
-    color: white;
-    font-weight: bold;
-    font-size: 0.85rem;
-    box-shadow: 0 2px 4px  rgba(0,0,0,0.1) ;
-    white-space: nowrap;
-    margin-right: 1em;
+.status-indicator {
+  padding: 6px 14px;
+  border-radius: 20px;
+  color: white;
+  font-weight: bold;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  margin-right: 0;
+  align-self: center;
 }
 
 /* -- River Trend -- */
-#rivertrend-contents{
-    height: 300px;
-    width: 100%;
-    min-width: 300px;
+#rivertrend-contents {
+  height: auto;
+  width: 100%;
+  min-width: auto;
 }
 
 /* -- Recent Logs -- */
 #recentlogs-contents {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem; 
-    overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  overflow-y: auto;
 }
 
 #recentlogs-contents p {
-    margin: 0;
-    font-size: 1.1rem;
-    color: #333;
-    border-bottom: 1px solid #f0f0f0; 
-    padding-bottom: 0.5rem;
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.5rem;
 }
 
 .status-threshold {
-    font-weight: bold;
-    color: #002D5A;
+  font-weight: bold;
+  color: #002D5A;
 }
 
 /* Style the sub-heading to differentiate from card-title */
@@ -142,7 +148,8 @@
 }
 
 /* Ensure buttons and form elements fit the card's aesthetic */
-.control-btn, .table-action-btn {
+.control-btn,
+.table-action-btn {
   background: #002D5A;
   color: white;
   border: none;
@@ -151,7 +158,9 @@
   cursor: pointer;
   font-weight: bold;
 }
-.control-btn:hover, .table-action-btn:hover {
+
+.control-btn:hover,
+.table-action-btn:hover {
   background: #005bb5;
 }
 
@@ -161,21 +170,25 @@
     min-width: auto;
   }
 
-  .live-expected, .live-current {
+  .live-expected,
+  .live-current {
     left: 3%;
   }
 
-  .live-expected h1, .live-current h1 {
+  .live-expected h1,
+  .live-current h1 {
     font-size: 1.8rem;
   }
 
-  .live-expected p, .live-current p {
+  .live-expected p,
+  .live-current p {
     font-size: 0.9rem;
   }
 }
 
 @media (max-width: 768px) {
-  .live-expected h1, .live-current h1 {
+  .live-expected h1,
+  .live-current h1 {
     font-size: 1.5rem;
   }
 
@@ -183,7 +196,7 @@
     padding: 4px 10px;
     font-size: 0.7rem;
     margin-right: 0.5em;
-    margin-top: 5px;   /* space below title */
+    margin-top: 5px; /* space below title */
   }
 
   #riverlevel-card-header {
@@ -195,17 +208,12 @@
   }
 
   /* Move predicted/current boxes to align with left edge of colored bar */
-  .live-expected, .live-current {
-    left: 8%;          /* adjust as needed */
+  .live-expected,
+  .live-current {
+    left: 8%; /* adjust as needed */
   }
 
   #recentlogs-contents {
-    max-height: 350px; 
+    max-height: 350px;
   }
-}
-
-/* Ensure RiverTrend chart container is responsive */
-#rivertrend-contents {
-  height: auto;
-  min-width: auto;
 }

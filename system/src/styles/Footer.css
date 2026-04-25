@@ -69,11 +69,13 @@
     .system-status {
         padding-left: 0.8em;
     }
+
     .status-badge {
         font-size: 0.75rem;
         padding: 2px 8px;
         gap: 4px;
     }
+
     .signal-container {
         padding-right: 0.8em;
     }

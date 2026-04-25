@@ -1,4 +1,3 @@
-/* --- Base Layout for History Page --- */
 .history-page-wrapper {
     flex: 1;
     display: flex;
@@ -131,7 +130,6 @@
     background-color: #002D5A;
 }
 
-/* ========== DESKTOP (≥1025px): fixed, no outer scroll ========== */
 @media (min-width: 1025px) {
     .history-page-wrapper {
         flex: 1;
@@ -177,23 +175,27 @@
         display: flex;
         flex-direction: column;
     }
+
     .p-datatable {
         height: 100%;
         display: flex;
         flex-direction: column;
     }
+
     .p-datatable-wrapper {
         flex: 1;
         min-height: 0;
         display: flex;
         flex-direction: column;
     }
+
     .p-datatable-scrollable-view {
         flex: 1;
         min-height: 0;
         display: flex;
         flex-direction: column;
     }
+
     .p-datatable-scrollable-body {
         flex: 1;
         overflow-y: auto !important;
@@ -212,13 +214,13 @@
     #history-column2 {
         overflow-y: auto;
     }
+
     #history-column2 .chart-wrapper {
         min-height: 200px;
         height: 100%;
     }
 }
 
-/* ========== MOBILE (≤1024px) ========== */
 @media (max-width: 1024px) {
     .history-page-wrapper {
         display: block; /* Switch from flex to block to allow natural scrolling */

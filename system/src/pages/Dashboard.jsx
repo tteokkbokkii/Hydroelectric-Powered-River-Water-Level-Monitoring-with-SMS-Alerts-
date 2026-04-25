@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import Header from '../components/Header.jsx'
+// popup styles consolidated into global styles (index.css)
 import Footer from '../components/Footer.jsx'
 import Announcement from '../components/Announcement.jsx'
 import RiverLevel from "../components/features/RiverLevel.jsx";
@@ -136,25 +137,7 @@ function Dashboard() {
       <Announcement/>
       <div className="main-content">
         
-        {/* If your popup CSS isn't global yet, we inject it here just like in toast.txt */}
-        <style>{`
-          .notification-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 9999; animation: fadeIn 0.2s ease-in; }
-          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-          .notification-card { position: relative; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 90%; max-width: 400px; animation: slideUp 0.3s ease-out; }
-          @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-          .notification-close-x { position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666; line-height: 1; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s; }
-          .notification-close-x:hover { background: #f0f0f0; color: #333; }
-          .notification-header { padding: 20px 20px 0 20px; border-bottom: 1px solid #eef2f6; }
-          .notification-header h3 { margin: 0; font-size: 1.2rem; font-weight: bold; font-family: InterBlack, sans-serif; text-transform: uppercase; }
-          .notification-card.error .notification-header h3 { color: #dc2626; }
-          .notification-card.warn .notification-header h3 { color: #f59e0b; }
-          .notification-card.info .notification-header h3 { color: #002D5A; }
-          .notification-card.success .notification-header h3 { color: #10b981; }
-          .notification-body { padding: 20px; text-align: center; font-size: 1.1rem; line-height: 1.5; color: #333; font-family: InterMedium, sans-serif; }
-          .notification-footer { padding: 0 20px 20px 20px; display: flex; justify-content: center; gap: 10px; }
-          .notification-primary-btn, .notification-secondary-btn { background-color: #002D5A; color: white; border: none; border-radius: 6px; padding: 10px 24px; font-weight: bold; cursor: pointer; font-family: InterMedium, sans-serif; transition: background 0.2s; width: 100%; }
-          .notification-primary-btn:hover { background-color: #005bb5; }
-        `}</style>
+        {/* popup styles moved to ../../styles/Dashboard.css */}
 
         <div className='dashboard-grid'>
           <RiverLevel
