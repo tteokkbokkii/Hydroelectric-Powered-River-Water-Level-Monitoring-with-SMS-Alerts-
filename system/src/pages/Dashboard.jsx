@@ -7,7 +7,7 @@ import RiverLevel from "../components/features/RiverLevel.jsx";
 import RiverTrend from '../components/features/RiverTrend.jsx'
 import RecentLogs from '../components/features/RecentLogs.jsx'
 
-// --- Generic Popup Component (Imported from your System setup) ---
+// --- Generic Popup Component ---
 const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null }] }) => {
   useEffect(() => {
     const handleEscape = (e) => {
@@ -78,8 +78,12 @@ function Dashboard() {
       if (Array.isArray(data)) {
         setWaterData(data);
         if (data.length > 0) {
-          const newest = data[data.length - 1]; 
+          // FIX: Reverted back to data[0] because your database sends the newest data first!
+          const newest = data[0]; 
           setLatestReading(newest); 
+          
+          // Debugging log so you can confirm it is pulling live data
+          console.log(`Live Data Check -> Elevation: ${newest.elevation}, Range: ${newest.range}`);
         }
       }
     } catch (error) {
@@ -100,6 +104,7 @@ function Dashboard() {
 
       if (previousRangeRef.current === null) {
         previousRangeRef.current = currentRange;
+        console.log("Initial Dashboard Baseline set to:", currentRange);
         return; 
       }
 
@@ -107,6 +112,7 @@ function Dashboard() {
 
       // Only evaluate if the range actually changed
       if (currentRange !== previousRange) {
+        console.log(`State Changed! Escaped from ${previousRange} to ${currentRange}`);
         
         // 1. ESCALATION: Safe to Warning
         if (previousRange === "SAFE" && currentRange === "WARNING") {
@@ -123,6 +129,7 @@ function Dashboard() {
           );
         }
 
+        // Save the new baseline
         previousRangeRef.current = currentRange;
       }
     }
@@ -134,7 +141,6 @@ function Dashboard() {
       <Announcement/>
       <div className="main-content">
         
-        {/* If your popup CSS isn't global yet, we inject it here just like in toast.txt */}
         <style>{`
           .notification-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 9999; animation: fadeIn 0.2s ease-in; }
           @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -165,7 +171,6 @@ function Dashboard() {
       </div>
       <Footer/>
 
-      {/* Render the Popup here if it's triggered */}
       {popup.visible && (
         <Popup message={popup.message} severity={popup.severity} buttons={popup.buttons} onClose={closePopup} />
       )}
