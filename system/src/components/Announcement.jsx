@@ -33,7 +33,7 @@ const Announcement = () => {
     } else if (waterLevel >= thresholds.attention) {
       range = 'NEEDS ATTENTION';
     }
-    const mainText = `RIVER ELEVATION AT ${waterLevel.toFixed(2)} FT. | ${range}`;
+    const mainText = `RIVER ELEVATION AT ${(parseFloat(waterLevel) || 0).toFixed(2)} FT. | ${range}`;
     setMessage(mainText.toUpperCase());
 
     let newColor = '#ABD9FF';
