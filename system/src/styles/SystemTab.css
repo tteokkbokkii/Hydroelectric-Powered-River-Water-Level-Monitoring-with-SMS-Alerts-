@@ -15,7 +15,6 @@
   box-sizing: border-box;
 }
 
-/* Merged .card-wrapper block */
 .card-wrapper {
   background-color: #F4F4F4;
   flex: 1;
@@ -29,8 +28,6 @@
   box-sizing: border-box;
   overflow: hidden;
   min-height: 0;
-  height: 100%;
-  max-height: 100%;
 }
 
 .system-grid {
@@ -229,20 +226,21 @@
 /* 1. Base state for tabs */
 .nav-item {
   transition: all 0.3s ease !important;
-  border-bottom: 3px solid transparent !important;
+  border-bottom: 3px solid transparent !important; /* Prep for the underline effect */
 }
 
 /* 2. Hover Effect - Success Blue */
 .nav-item:hover {
-  background-color: #f0f7ff !important;
-  color: #0056b3 !important;
+  background-color: #f0f7ff !important; /* Very light blue tint */
+  color: #0056b3 !important; /* Your Success Blue */
   cursor: pointer;
 }
 
 /* 3. Active State - The Gold Standard Navy */
+/* This assumes your React code adds an 'is-active' class */
 .nav-item.is-active {
   background-color: #ffffff !important;
-  color: #002D5A !important;
+  color: #002D5A !important; /* Hulo Navy */
   font-weight: 800 !important;
 }
 
@@ -386,6 +384,13 @@ input:checked + .slider:before {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+}
+
+.card-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
 }
 
 .tab-panel {
