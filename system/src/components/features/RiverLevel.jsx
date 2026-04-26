@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart, 
   Bar, 
@@ -8,6 +8,9 @@ import {
   ReferenceLine 
 } from 'recharts';
 
+const currentIP = window.location.hostname || 'rivermonitoring.local';
+const API_BASE = `http://${currentIP}:5000/api`;
+
 const RiverLevel = ({ currentLevel, predictedLevel }) => {
   const minLevel = 5;
   const maxLevel = 12;
@@ -15,17 +18,28 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
   const displayLevel = currentLevel || 0;
   const displayPredicted = predictedLevel || 0;
 
+  const [thresholds, setThresholds] = useState({ attention: 8.0, critical: 9.5 });
+
+  useEffect(() => {
+    fetch(`${API_BASE}/settings`)
+      .then(res => res.json())
+      .then(data => {
+        setThresholds({
+          attention: parseFloat(data.threshold_attention) || 8.0,
+          critical: parseFloat(data.threshold_critical) || 9.5
+        });
+      })
+      .catch(err => console.error('Error fetching thresholds:', err));
+  }, []);
+
   // 1. Status Indicator Logic
   let statusLabel = 'NORMAL THRESHOLD';
   let statusColor = '#002D5A';
 
-  if (displayLevel >= 11.5) {
-    statusLabel = 'EXTREMELY CRITICAL';
-    statusColor = '#c50000';
-  } else if (displayLevel >= 10.5) {
+  if (displayLevel >= thresholds.critical) {
     statusLabel = 'HIGHLY CRITICAL';
     statusColor = '#e33d00';
-  } else if (displayLevel >= 9.0) {
+  } else if (displayLevel >= thresholds.attention) {
     statusLabel = 'NEEDS ATTENTION';
     statusColor = '#d58a00';
   }
