@@ -15,7 +15,7 @@ function RecentLogs({ logs }) {
           <p className="loading-text">Waiting for database entries...</p>
         )}
 
-        {[...logs].reverse().map((log, index) => {
+        {[...logs].map((log, index) => {
           // Mapping variables to the unified keys from Flask API
           const value = log.distance || 0;
           const time = (log.time && log.time !== "None") ? log.time : '--:--';
