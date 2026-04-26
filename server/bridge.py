@@ -126,7 +126,6 @@ def on_message(client, userdata, msg):
     global last_esp_contact, esp32_health
     if msg.topic == MQTT_TOPIC:
         last_esp_contact = time.time()
-        esp32_health = {"online": True, "ultrasonic": "OK", "float": "OK"}
         try:
             data = json.loads(msg.payload.decode())
             
@@ -163,6 +162,7 @@ def on_message(client, userdata, msg):
             print(f"Error saving contacts: {e}")
             
     elif msg.topic == "system/status/esp32":
+        last_esp_contact = time.time() # Added this to maintain the connection heartbeat
         try:
             data = json.loads(msg.payload.decode())
             esp32_health["online"] = data.get("online", False)

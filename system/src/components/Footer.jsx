@@ -31,7 +31,12 @@ const Footer = () => {
           const issues = [];
 
           if (status.reset_reason === 'POWER_ON') issues.push('POWER LOSS');
-          if (!status.ultrasonic_active || !status.float_ready) issues.push('SENSOR DISCONNECT');
+          if (status.esp_connected === false) {
+            issues.push('ESP OFFLINE');
+          } else {
+            if (status.ultrasonic_active === false) issues.push('ULTRASONIC ERROR');
+            if (status.float_ready === false) issues.push('FLOAT ERROR');
+          }
 
           let displayText = 'NORMAL';
           let color = '#002D5A';
