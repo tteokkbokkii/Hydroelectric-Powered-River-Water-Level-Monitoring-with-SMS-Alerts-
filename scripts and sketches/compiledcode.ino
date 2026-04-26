@@ -29,6 +29,7 @@ const int mqtt_port = 1883;
 const char* mqtt_topic = "sensor/hulo/reading";
 const char* settings_topic = "system/settings";
 const char* sms_command_topic = "sms/command";
+const char* esp_health_topic = "system/status/esp32"; // <-- Added Health Topic
 
 // --- MAIN ACTIVE VARIABLES ---
 float threshold_normal_ft = 6.5, threshold_attention_ft = 8.0, threshold_critical_ft = 9.5;
@@ -47,11 +48,13 @@ float temp_threshold_normal_ft = 6.5, temp_threshold_attention_ft = 8.0, temp_th
 int temp_reading_interval_min = 5;
 bool newSettingsAvailable = false;
 String pending_settings_msg = "";
+String last_applied_settings_msg = ""; // <-- Added tracking variable
 
 Contact temp_contacts[20];
 int temp_contactCount = 0;
 bool newContactsAvailable = false;
 String pending_contacts_msg = "";
+String last_applied_contacts_msg = ""; // <-- Added tracking variable
 
 // Linear Regression History
 #define MAX_HISTORY 30
@@ -267,7 +270,6 @@ void setup() {
 
     Wire.begin();
     if (!rtc.begin()) Serial.println("RTC Failed!");
-    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
     initGSM();
     connectToPriorityNetwork();
@@ -314,31 +316,53 @@ void loop() {
         return;
     }
 
-    static unsigned long lastReading = 0;
+    // --- NEW SEPARATED TIMERS ---
+    static unsigned long lastSample = 0;
+    static unsigned long lastPublish = 0;
     static unsigned long lastTick = 0;
-    static unsigned long current_interval_ms = 5000; // Dynamic interval variable
+    static bool forcePublish = true; // Start by forcing a publish on boot
+    const unsigned long SAMPLE_INTERVAL = 5000; // Probe hardware every 5 seconds
 
-    if (millis() - lastTick > 1000 && lastReading != 0) {
-        long secondsLeft = (current_interval_ms - (millis() - lastReading)) / 1000;
-        if (secondsLeft > 0) {
-            Serial.print("⏳ Next reading in: ");
+    unsigned long publish_interval_ms = reading_interval_min * 60000UL;
+
+    // --- COUNTDOWN DISPLAY ---
+    if (millis() - lastTick > 1000 && !forcePublish && lastPublish != 0) {
+        long secondsLeft = (publish_interval_ms - (millis() - lastPublish)) / 1000;
+        // Only print every 10 seconds to avoid spamming the console
+        if (secondsLeft > 0 && secondsLeft % 10 == 0) { 
+            Serial.print("⏳ Next data publish in: ");
             Serial.print(secondsLeft);
-            Serial.println(" seconds...");
+            Serial.println(" seconds... (Probing continuously in background)");
         }
         lastTick = millis();
     }
 
-    if (millis() - lastReading > current_interval_ms || lastReading == 0) {
+    // --- BACKGROUND PROBING (Runs every 5 seconds) ---
+    if (millis() - lastSample > SAMPLE_INTERVAL || lastSample == 0) {
+        
+        // --- APPLY NEW SETTINGS AND CONTACTS SILENTLY ---
         if (newSettingsAvailable) {
-            Serial.println("📥 Applied New Message [" + String(settings_topic) + "] Payload: " + pending_settings_msg);
+            // Only announce if the payload actually changed
+            if (pending_settings_msg != last_applied_settings_msg) {
+                Serial.println("📥 Applied New Message [" + String(settings_topic) + "] Payload: " + pending_settings_msg);
+                last_applied_settings_msg = pending_settings_msg;
+            }
+            
             threshold_normal_ft = temp_threshold_normal_ft;
             threshold_attention_ft = temp_threshold_attention_ft;
             threshold_critical_ft = temp_threshold_critical_ft;
             reading_interval_min = temp_reading_interval_min;
+            publish_interval_ms = reading_interval_min * 60000UL; // Update active timer
             newSettingsAvailable = false;
         }
+        
         if (newContactsAvailable) {
-            Serial.println("📥 Applied New Message [contacts/list] Payload: " + pending_contacts_msg);
+            // Only announce if the payload actually changed
+            if (pending_contacts_msg != last_applied_contacts_msg) {
+                Serial.println("📥 Applied New Message [contacts/list] Payload: " + pending_contacts_msg);
+                last_applied_contacts_msg = pending_contacts_msg;
+            }
+            
             for(int i=0; i<temp_contactCount; i++) {
                 contacts[i] = temp_contacts[i];
             }
@@ -346,7 +370,6 @@ void loop() {
             newContactsAvailable = false;
         }
 
-        Serial.println("\n🌊 TAKING SENSOR READING NOW...");
         float duration = 0;
         int attempts = 0;
         while (duration == 0 && attempts < 3) {
@@ -361,8 +384,31 @@ void loop() {
             attempts++;
         }
         
+        // --- 1. CALCULATE DISTANCE FIRST ---
         float dist = (duration * 0.034 / 2) / 2.54; 
         float elev_ft = abs(SENSOR_HEIGHT_INCHES - dist) / 12.0;
+
+        // --- 2. SANITY CHECK FOR "WEIRD" READINGS ---
+        bool isWeird = (dist > 0 && dist < 8.0) || (dist > SENSOR_HEIGHT_INCHES + 10.0);
+
+        // --- 3. SET THE HEALTH STATUS ---
+        String ultraStatus = "OK";
+        if (duration == 0) {
+            ultraStatus = "ERROR"; 
+        } else if (isWeird) {
+            ultraStatus = "ERROR"; 
+        }
+        
+        // --- 4. PUBLISH HEALTH FREQUENTLY ---
+        StaticJsonDocument<128> healthDoc;
+        healthDoc["online"] = true;
+        healthDoc["ultrasonic"] = ultraStatus;
+        healthDoc["float"] = "OK"; 
+        
+        char healthBuf[128];
+        serializeJson(healthDoc, healthBuf);
+        client.publish(esp_health_topic, healthBuf);
+
         // --- VALIDATION --- 
         bool s = !digitalRead(FLOATER_SAFE);
         bool w = !digitalRead(FLOATER_WARNING);
@@ -380,59 +426,61 @@ void loop() {
         String range = (elev_ft >= threshold_critical_ft) ? "🔴 CRITICAL" :
                        (elev_ft >= threshold_attention_ft) ? "🟠 WARNING" : "🟢 SAFE";
         
-        // --- NEW TIME INTEGRATION ---
-        DateTime now = rtc.now();
-        char dateBuf[11]; 
-        char timeBuf[9];  
-        sprintf(dateBuf, "%04d-%02d-%02d", now.year(), now.month(), now.day());
-        sprintf(timeBuf, "%02d:%02d:%02d", now.hour(), now.minute(), now.second());
         if (validated == true) {
-            addToHistory(elev_ft);
-            // Rounding payload data to fix decimal spam
-            float rounded_elev = round(elev_ft * 100.0) / 100.0;
-            float rounded_pred = round(predictLevel() * 100.0) / 100.0;
-
-            JsonDocument doc;
-            doc["elevation"] = rounded_elev;
-            doc["distance"] = rounded_elev;
-            doc["range"] = range;
-            doc["predicted"] = rounded_pred;
-            doc["date"] = dateBuf;
-            doc["time"] = timeBuf; 
-        
-            char buffer[256];
-            serializeJson(doc, buffer);
-            
-            Serial.print("📡 Sending Sensor Reading: ");
-            Serial.println(buffer);
-            client.publish(mqtt_topic, buffer);
-
-            
-            // Handle Multi-Contact Alerts
-            if (cleanRange != lastAlertRange && cleanRange != "SAFE") {
-                String alertMsg = "Hulo River Level Alert: " + range + "! Level: " + String(elev_ft, 2) + "ft.";
+            // --- CHECK IF IT'S TIME TO PUBLISH DATA ---
+            if (forcePublish || millis() - lastPublish > publish_interval_ms || lastPublish == 0) {
                 
-                // Pass the cleanRange into the bulk sender filter
-                sendBulkSMS(alertMsg, cleanRange);
+                DateTime now = rtc.now();
+                char dateBuf[11]; 
+                char timeBuf[9];  
+                sprintf(dateBuf, "%04d-%02d-%02d", now.year(), now.month(), now.day());
+                sprintf(timeBuf, "%02d:%02d:%02d", now.hour(), now.minute(), now.second());
                 
-                lastAlertRange = cleanRange;
-                Serial.println("message sent");
+                addToHistory(elev_ft);
+                float rounded_elev = round(elev_ft * 100.0) / 100.0;
+                float rounded_pred = round(predictLevel() * 100.0) / 100.0;
+
+                JsonDocument doc;
+                doc["elevation"] = rounded_elev;
+                doc["distance"] = rounded_elev;
+                doc["range"] = range;
+                doc["predicted"] = rounded_pred;
+                doc["date"] = dateBuf;
+                doc["time"] = timeBuf; 
+                
+                char buffer[256];
+                serializeJson(doc, buffer);
+                
+                Serial.print("📡 Sending Sensor Reading: ");
+                Serial.println(buffer);
+                client.publish(mqtt_topic, buffer);
+                
+                // Handle Multi-Contact Alerts
+                if (cleanRange != lastAlertRange && cleanRange != "SAFE") {
+                    String alertMsg = "Hulo River Level Alert: " + range + "! Level: " + String(elev_ft, 2) + "ft.";
+                    sendBulkSMS(alertMsg, cleanRange);
+                    lastAlertRange = cleanRange;
+                    Serial.println("message sent");
+                } else {
+                    Serial.println("range unchanged, no message sent.");
+                }
+                
+                lastPublish = millis();
+                forcePublish = false; // Reset the flag
+                Serial.println("✅ Data published. Waiting for next interval...");
+            } else {
+                // If it's not time to publish yet, we just silently succeed
             }
-            else{
-                Serial.println("range unchanged, no message sent.");
-            }
-            // SUCCESS: Set next interval to standard setting (minutes -> ms)
-            current_interval_ms = reading_interval_min * 60000UL;
-            Serial.println("✅ Validation passed. Next reading in " + String(reading_interval_min) + " minutes.");
         }
         else {
             Serial.println("❌ Validation Error: Ultrasonic and Floaters mismatch.");
             Serial.println("dist: " + String(dist)+" elev_ft: "+String(elev_ft)+" fsafe: " + String(s) + " fwarn: " + String(w) + " fcrit: " + String(c));
-            current_interval_ms = 5000; 
-            Serial.println("⚠️ Retrying reading in 5 seconds...");
+            
+            // If validation fails, force the system to publish immediately on the next successful valid probe
+            forcePublish = true; 
+            Serial.println("⚠️ Flagged for immediate publish upon next valid reading.");
         }
         
-        lastReading = millis();
-        lastTick = millis();
+        lastSample = millis();
     }
 }
