@@ -40,7 +40,7 @@ export default function GlobalLayout({ children }) {
 
           // 3.1 FT CUSTOM CHECK
           if (newest.distance > 3.1 && !custom31TriggeredRef.current) {
-            showPopup("Notice: River level has exceeded 3.1 ft.", "info");
+            showPopup("Notice: River level has exceeded 3.1 ft. \nPlease slide the frame up.", "error");
             custom31TriggeredRef.current = true;
           } else if (newest.distance <= 3.1 && custom31TriggeredRef.current) {
             custom31TriggeredRef.current = false;
