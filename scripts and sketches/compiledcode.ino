@@ -29,7 +29,7 @@ const int mqtt_port = 1883;
 const char* mqtt_topic = "sensor/hulo/reading";
 const char* settings_topic = "system/settings";
 const char* sms_command_topic = "sms/command";
-const char* esp_health_topic = "system/status/esp32"; // <-- Added Health Topic
+const char* esp_health_topic = "system/status/esp32";
 
 // --- MAIN ACTIVE VARIABLES ---
 float threshold_normal_ft = 6.5, threshold_attention_ft = 8.0, threshold_critical_ft = 9.5;
@@ -48,13 +48,18 @@ float temp_threshold_normal_ft = 6.5, temp_threshold_attention_ft = 8.0, temp_th
 int temp_reading_interval_min = 5;
 bool newSettingsAvailable = false;
 String pending_settings_msg = "";
-String last_applied_settings_msg = ""; // <-- Added tracking variable
+String last_applied_settings_msg = ""; 
 
 Contact temp_contacts[20];
 int temp_contactCount = 0;
 bool newContactsAvailable = false;
 String pending_contacts_msg = "";
-String last_applied_contacts_msg = ""; // <-- Added tracking variable
+String last_applied_contacts_msg = ""; 
+
+// --- PERSISTENT FAULT TOLERANCE COUNTERS (Moved to Global) ---
+int consecutive_bad = 0; 
+int consecutive_good = 0;
+String ultraStatus = "OK"; 
 
 // Linear Regression History
 #define MAX_HISTORY 30
@@ -98,7 +103,7 @@ void connectToPriorityNetwork() {
 
 // ---------- NEW OPTIMIZED GSM HELPERS (A7670E) ----------
 String getCommandResponse(String cmd, int waitTime = 1000) {
-    while(Serial2.available()) Serial2.read(); // Clear buffer
+    while(Serial2.available()) Serial2.read(); 
     if (cmd != "") Serial2.println(cmd);
     
     String response = "";
@@ -111,17 +116,15 @@ String getCommandResponse(String cmd, int waitTime = 1000) {
     return response;
 }
 
-// Bulk SMS logic to minimize delays between contacts
 void sendBulkSMS(String text, String targetLevel) {
     if (!gsmReady) return;
     Serial.println("\n--- Starting Bulk SMS Dispatch for: " + targetLevel + " ---");
     
-    Serial2.println("AT+CMGF=1"); // Ensure Text Mode
+    Serial2.println("AT+CMGF=1"); 
     delay(500);
     for (int i = 0; i < contactCount; i++) {
         if (contacts[i].phone == "") continue;
 
-        // --- NEW FILTER ---
         if (!contacts[i].alertLevel.equalsIgnoreCase("ALL") && !contacts[i].alertLevel.equalsIgnoreCase(targetLevel)) {
             continue; 
         }
@@ -132,7 +135,6 @@ void sendBulkSMS(String text, String targetLevel) {
         Serial2.print(contacts[i].phone); 
         Serial2.println("\"");
         
-        // Wait for the '>' prompt
         unsigned long waitStart = millis();
         bool promptReceived = false;
         
@@ -148,7 +150,7 @@ void sendBulkSMS(String text, String targetLevel) {
         if (promptReceived) {
             Serial2.print(text);
             delay(100);
-            Serial2.write(26); // Ctrl+Z
+            Serial2.write(26); 
             
             String confirm = getCommandResponse("", 5000);
             if (confirm.indexOf("+CMGS") != -1 || confirm.indexOf("OK") != -1) {
@@ -160,7 +162,6 @@ void sendBulkSMS(String text, String targetLevel) {
             Serial.println("❌ Modem Prompt Failed.");
         }
         
-        // Anti-spam/Network breather delay
         delay(1500);
     }
     Serial.println("--- Bulk SMS Complete ---\n");
@@ -259,15 +260,6 @@ void setup() {
     pinMode(FLOATER_SAFE, INPUT_PULLUP); pinMode(FLOATER_WARNING, INPUT_PULLUP); pinMode(FLOATER_CRITICAL, INPUT_PULLUP);
     delay(200);
     
-    //ultrasonic sensor prep
-    digitalWrite(ULTRASONIC_TRIG, LOW);
-    delay(50);
-    digitalWrite(ULTRASONIC_TRIG, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(ULTRASONIC_TRIG, LOW);
-    pulseIn(ULTRASONIC_ECHO, HIGH, 30000);
-    delay(100);
-
     Wire.begin();
     if (!rtc.begin()) Serial.println("RTC Failed!");
 
@@ -294,6 +286,56 @@ void setup() {
     client.setServer(mqttIP, mqtt_port);
     client.setCallback(callback);
     client.setBufferSize(1024);
+
+    // --- SETUP-TIME SENSOR SANITY CHECK ---
+    Serial.println("\n--- Performing Initial Sensor Sanity Check ---");
+    float duration = 0;
+    int attempts = 0;
+    while (duration == 0 && attempts < 5) {
+        digitalWrite(ULTRASONIC_TRIG, HIGH); delayMicroseconds(2);
+        digitalWrite(ULTRASONIC_TRIG, LOW);  delayMicroseconds(20);
+        digitalWrite(ULTRASONIC_TRIG, HIGH);
+        duration = pulseIn(ULTRASONIC_ECHO, HIGH, 30000);
+        if (duration == 0) delay(50);
+        attempts++;
+    }
+    
+    float dist = (duration * 0.034 / 2) / 2.54; 
+    float elev_ft = abs(SENSOR_HEIGHT_INCHES - dist) / 12.0;
+    bool isWeird = (dist > 0 && dist < 8.0) || (dist > SENSOR_HEIGHT_INCHES + 10.0) || (elev_ft < 2.0);
+
+    if (duration == 0 || isWeird) {
+        consecutive_bad = 2;  // Pre-seed an immediate error state
+        consecutive_good = 0;
+        ultraStatus = "ERROR";
+        Serial.println("⚠️ SETUP SANITY CHECK FAILED: Ultrasonic sensor reporting abnormalities.");
+    } else {
+        consecutive_good = 2; // Pre-seed an immediate OK state
+        consecutive_bad = 0;
+        ultraStatus = "OK";
+        Serial.println("✅ SETUP SANITY CHECK PASSED: Ultrasonic sensor normal.");
+    }
+
+    // --- IMMEDIATELY PUBLISH BOOT-UP HEALTH STATUS ---
+    Serial.println("Connecting to MQTT to broadcast boot-up health...");
+    if (client.connect("HuloESP32")) {
+        client.subscribe(settings_topic);
+        client.subscribe("contacts/list");
+        client.subscribe(sms_command_topic);
+        
+        StaticJsonDocument<128> healthDoc;
+        healthDoc["online"] = true;
+        healthDoc["ultrasonic"] = ultraStatus;
+        healthDoc["float"] = "OK"; 
+        
+        char healthBuf[128];
+        serializeJson(healthDoc, healthBuf);
+        client.publish(esp_health_topic, healthBuf);
+        Serial.println("📤 Initial Health Status pushed to Dashboard.");
+    } else {
+        Serial.println("⚠️ Could not connect to MQTT at setup. Will retry in main loop.");
+    }
+    Serial.println("--- Setup Complete ---\n");
 }
 
 // ---------- Loop ----------
@@ -316,19 +358,17 @@ void loop() {
         return;
     }
 
-    // --- NEW SEPARATED TIMERS ---
     static unsigned long lastSample = 0;
     static unsigned long lastPublish = 0;
     static unsigned long lastTick = 0;
-    static bool forcePublish = true; // Start by forcing a publish on boot
-    const unsigned long SAMPLE_INTERVAL = 5000; // Probe hardware every 5 seconds
+    static bool forcePublish = true; 
+    
+    const unsigned long SAMPLE_INTERVAL = 5000; 
 
     unsigned long publish_interval_ms = reading_interval_min * 60000UL;
 
-    // --- COUNTDOWN DISPLAY ---
     if (millis() - lastTick > 1000 && !forcePublish && lastPublish != 0) {
         long secondsLeft = (publish_interval_ms - (millis() - lastPublish)) / 1000;
-        // Only print every 10 seconds to avoid spamming the console
         if (secondsLeft > 0 && secondsLeft % 10 == 0) { 
             Serial.print("⏳ Next data publish in: ");
             Serial.print(secondsLeft);
@@ -337,32 +377,26 @@ void loop() {
         lastTick = millis();
     }
 
-    // --- BACKGROUND PROBING (Runs every 5 seconds) ---
     if (millis() - lastSample > SAMPLE_INTERVAL || lastSample == 0) {
         
-        // --- APPLY NEW SETTINGS AND CONTACTS SILENTLY ---
         if (newSettingsAvailable) {
-            // Only announce if the payload actually changed
             if (pending_settings_msg != last_applied_settings_msg) {
                 Serial.println("📥 Applied New Message [" + String(settings_topic) + "] Payload: " + pending_settings_msg);
                 last_applied_settings_msg = pending_settings_msg;
             }
-            
             threshold_normal_ft = temp_threshold_normal_ft;
             threshold_attention_ft = temp_threshold_attention_ft;
             threshold_critical_ft = temp_threshold_critical_ft;
             reading_interval_min = temp_reading_interval_min;
-            publish_interval_ms = reading_interval_min * 60000UL; // Update active timer
+            publish_interval_ms = reading_interval_min * 60000UL; 
             newSettingsAvailable = false;
         }
         
         if (newContactsAvailable) {
-            // Only announce if the payload actually changed
             if (pending_contacts_msg != last_applied_contacts_msg) {
                 Serial.println("📥 Applied New Message [contacts/list] Payload: " + pending_contacts_msg);
                 last_applied_contacts_msg = pending_contacts_msg;
             }
-            
             for(int i=0; i<temp_contactCount; i++) {
                 contacts[i] = temp_contacts[i];
             }
@@ -388,18 +422,25 @@ void loop() {
         float dist = (duration * 0.034 / 2) / 2.54; 
         float elev_ft = abs(SENSOR_HEIGHT_INCHES - dist) / 12.0;
 
-        // --- 2. SANITY CHECK FOR "WEIRD" READINGS ---
-        bool isWeird = (dist > 0 && dist < 8.0) || (dist > SENSOR_HEIGHT_INCHES + 10.0);
+        // --- 2. EVALUATE PROBE HEALTH ---
+        bool isWeird = (dist > 0 && dist < 8.0) || (dist > SENSOR_HEIGHT_INCHES + 10.0) || (elev_ft < 2.0);
 
-        // --- 3. SET THE HEALTH STATUS ---
-        String ultraStatus = "OK";
-        if (duration == 0) {
-            ultraStatus = "ERROR"; 
-        } else if (isWeird) {
-            ultraStatus = "ERROR"; 
+        // --- 3. TWO-WAY HYSTERESIS (3 Bad to Error, 3 Good to Recover) ---
+        if (duration == 0 || isWeird) {
+            consecutive_good = 0;           
+            consecutive_bad++;              
+            if (consecutive_bad >= 2) {
+                ultraStatus = "ERROR";      
+            }
+        } else {
+            consecutive_bad = 0;            
+            consecutive_good++;             
+            if (consecutive_good >= 2) {
+                ultraStatus = "OK";         
+            }
         }
         
-        // --- 4. PUBLISH HEALTH FREQUENTLY ---
+        // --- 4. PUBLISH HEALTH ---
         StaticJsonDocument<128> healthDoc;
         healthDoc["online"] = true;
         healthDoc["ultrasonic"] = ultraStatus;
@@ -414,11 +455,12 @@ void loop() {
         bool w = !digitalRead(FLOATER_WARNING);
         bool c = !digitalRead(FLOATER_CRITICAL);
 
-        bool nonzero = (elev_ft != 0 && elev_ft < threshold_normal_ft);
+        bool valid_range = (elev_ft >= 2.0 && elev_ft < threshold_normal_ft);
         bool float_match_threshold = (s == (elev_ft >= threshold_normal_ft)) &&
                         (w == (elev_ft >= threshold_attention_ft)) &&
                         (c == (elev_ft >= threshold_critical_ft));
-        bool validated = nonzero || float_match_threshold;
+        
+        bool validated = (ultraStatus == "OK") && (valid_range || float_match_threshold);
 
         String cleanRange = (elev_ft >= threshold_critical_ft) ? "CRITICAL" :
                             (elev_ft >= threshold_attention_ft) ? "WARNING" : "SAFE";
@@ -427,7 +469,6 @@ void loop() {
                        (elev_ft >= threshold_attention_ft) ? "🟠 WARNING" : "🟢 SAFE";
         
         if (validated == true) {
-            // --- CHECK IF IT'S TIME TO PUBLISH DATA ---
             if (forcePublish || millis() - lastPublish > publish_interval_ms || lastPublish == 0) {
                 
                 DateTime now = rtc.now();
@@ -438,7 +479,12 @@ void loop() {
                 
                 addToHistory(elev_ft);
                 float rounded_elev = round(elev_ft * 100.0) / 100.0;
-                float rounded_pred = round(predictLevel() * 100.0) / 100.0;
+                
+                // --- CLAMP PREDICTED LEVEL BETWEEN 1.5 AND 12.0 ---
+                float raw_pred = predictLevel();
+                if (raw_pred < 1.5) raw_pred = 1.5;
+                if (raw_pred > 12.0) raw_pred = 12.0;
+                float rounded_pred = round(raw_pred * 100.0) / 100.0;
 
                 JsonDocument doc;
                 doc["elevation"] = rounded_elev;
@@ -455,28 +501,24 @@ void loop() {
                 Serial.println(buffer);
                 client.publish(mqtt_topic, buffer);
                 
-                // Handle Multi-Contact Alerts
                 if (cleanRange != lastAlertRange && cleanRange != "SAFE") {
                     String alertMsg = "Hulo River Level Alert: " + range + "! Level: " + String(elev_ft, 2) + "ft.";
                     sendBulkSMS(alertMsg, cleanRange);
                     lastAlertRange = cleanRange;
-                    Serial.println("message sent");
                 } else {
                     Serial.println("range unchanged, no message sent.");
                 }
                 
                 lastPublish = millis();
-                forcePublish = false; // Reset the flag
+                forcePublish = false; 
                 Serial.println("✅ Data published. Waiting for next interval...");
-            } else {
-                // If it's not time to publish yet, we just silently succeed
-            }
+            } 
         }
         else {
-            Serial.println("❌ Validation Error: Ultrasonic and Floaters mismatch.");
-            Serial.println("dist: " + String(dist)+" elev_ft: "+String(elev_ft)+" fsafe: " + String(s) + " fwarn: " + String(w) + " fcrit: " + String(c));
+            Serial.println("❌ Validation Error: Reading suppressed.");
+            Serial.println("dist Streak (Bad/Good): " + String(consecutive_bad) + "/" + String(consecutive_good) + " | Status: " + ultraStatus +
+             " | elev_ft: " + String(elev_ft) + " | Floaters: s = " + s + " w = " + w + " c = " + c);
             
-            // If validation fails, force the system to publish immediately on the next successful valid probe
             forcePublish = true; 
             Serial.println("⚠️ Flagged for immediate publish upon next valid reading.");
         }
