@@ -248,30 +248,7 @@ const SystemTab = () => {
   return (
     <div className="main-content">
       <Toast ref={toast} />
-<<<<<<< HEAD
       {/* inline styles moved to ../../styles/SystemTab.css */}
-=======
-      <style>{`
-        .input-with-unit { display: flex; align-items: center; background: #e9ecef; border-radius: 4px; padding: 0 8px; min-width: 100px; }
-        .settings-input { border: none !important; background: transparent !important; width: 60px; padding: 8px 4px !important; text-align: right; outline: none; }
-        .unit-label { font-size: 14px; color: #555; margin-left: 4px; padding-bottom: 2px; }
-        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .card-wrapper { display: flex; flex-direction: column; height: 100%; max-height: 100%; }
-        .tab-panel { flex: 1; overflow-y: auto; padding-right: 4px; }
-        .tab-panel::-webkit-scrollbar { width: 6px; }
-        .tab-panel::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.2); border-radius: 3px; }
-
-        .custom-number-input { display: flex; align-items: center; background: #e9ecef; border-radius: 4px; padding: 0 8px; min-width: 100px; }
-        .custom-number-input .settings-input { width: 60px; border: none !important; background: transparent !important; padding: 8px 4px !important; text-align: right; outline: none; }
-        .custom-number-input .unit-label { margin-left: 4px; font-size: 14px; color: #555; }
-        .custom-number-input .number-buttons { display: flex; flex-direction: column; margin-left: 6px; }
-        .custom-number-input .number-btn { background: none; border: none; font-size: 10px; cursor: pointer; padding: 2px 4px; line-height: 1; color: #666; }
-        .custom-number-input .number-btn:hover { color: #002D5A; }
-        .custom-number-input .settings-input { -moz-appearance: textfield; }
-        .custom-number-input .settings-input::-webkit-inner-spin-button,
-        .custom-number-input .settings-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-      `}</style>
->>>>>>> cfba45988a11ca87cddee55ce20fe75372715e50
 
       <div className="card-wrapper" id="main-profile-card">
         <h1 className="card-heading">SYSTEM</h1>
