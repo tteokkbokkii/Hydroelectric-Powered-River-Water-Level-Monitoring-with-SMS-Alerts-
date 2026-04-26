@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import RiverLevel from '../components/features/RiverLevel.jsx';
 import RiverTrend from '../components/features/RiverTrend.jsx';
 import RecentLogs from '../components/features/RecentLogs.jsx';
