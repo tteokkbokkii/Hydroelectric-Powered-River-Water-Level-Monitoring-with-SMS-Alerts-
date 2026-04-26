@@ -119,8 +119,6 @@ void sendBulkSMS(String text, String targetLevel) {
         if (contacts[i].phone == "") continue;
 
         // --- NEW FILTER ---
-        // If the contact's alertLevel does not match the targetLevel, skip them.
-        // We use equalsIgnoreCase so "critical" matches "CRITICAL".
         if (!contacts[i].alertLevel.equalsIgnoreCase("ALL") && !contacts[i].alertLevel.equalsIgnoreCase(targetLevel)) {
             continue; 
         }
