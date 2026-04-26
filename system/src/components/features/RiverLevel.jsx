@@ -56,31 +56,22 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
       >{/* Readings with visibility shadows */}
         <div className="live-expected">
           <p>PREDICTED</p>
-<<<<<<< HEAD
-          <h1 style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
-=======
           <h1
             style={{
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
             }}
           >
->>>>>>> cfba45988a11ca87cddee55ce20fe75372715e50
             {(Number(displayPredicted) || 0).toFixed(2)} ft.
           </h1>
         </div>
         <div className="live-current">
           <p>CURRENT</p>
-<<<<<<< HEAD
-          <h1 style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
-          {(Number(displayLevel) || 0).toFixed(2)} ft.
-=======
           <h1
             style={{
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
             }}
           >
             {(Number(displayLevel) || 0).toFixed(2)} ft.
->>>>>>> cfba45988a11ca87cddee55ce20fe75372715e50
           </h1>
         </div>
 
