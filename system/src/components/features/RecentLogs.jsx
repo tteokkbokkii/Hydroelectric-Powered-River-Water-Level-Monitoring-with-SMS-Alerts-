@@ -15,7 +15,7 @@ function RecentLogs({ logs }) {
           <p className="loading-text">Waiting for database entries...</p>
         )}
 
-        {logs.map((log, index) => {
+        {[...logs].reverse().map((log, index) => {
           // Mapping variables to the unified keys from Flask API
           const value = log.distance || 0;
           const time = (log.time && log.time !== "None") ? log.time : '--:--';
@@ -23,7 +23,7 @@ function RecentLogs({ logs }) {
 
           return (
             <p
-              key={log.id || index}
+              key={log.id || `${time}-${index}-${value}`}
               className={`log-entry ${status.toLowerCase()}`}
             >
               <span className="log-time">
