@@ -111,9 +111,9 @@
 
 /* -- River Trend -- */
 #rivertrend-contents {
-  height: auto;
+  min-height: 300px;
   width: 100%;
-  min-width: auto;
+  min-width: 0;
 }
 
 /* -- Recent Logs -- */
