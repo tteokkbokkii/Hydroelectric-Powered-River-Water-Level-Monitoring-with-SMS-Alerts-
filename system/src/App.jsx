@@ -1,23 +1,15 @@
-import Header from './components/Header.jsx'
-import Footer from './components/Footer.jsx'
-import Announcement from './components/Announcement.jsx'
-import RiverLevel from "./components/features/RiverLevel.jsx";
-import RiverTrend from './components/features/RiverTrend.jsx'
-import RecentLogs from './components/features/RecentLogs.jsx'
-import SystemTab from './components/features/SystemTab.jsx';
-import HistoryTab from './components/features/HistoryTab.jsx';
-import {HashRouter as Router, Routes, Route} from 'react-router-dom'
-import Contacts from './pages/Contacts'
+import { HashRouter as Router, Routes, Route } from 'react-router-dom'
+import GlobalLayout from './components/GlobalLayout.jsx';
 import Dashboard from './pages/Dashboard'
+import Contacts from './pages/Contacts'
 import History from './pages/History'
 import System from './pages/System'
-import HandshakeCheck from './components/HandshakeCheck.jsx';
 import TestPage from './pages/TestPage.jsx';
 
 function App() {
     return (
-        <>
-            <Router>
+        <Router>
+            <GlobalLayout>
                 <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path='/Dashboard' element={<Dashboard/>}/>
@@ -26,13 +18,9 @@ function App() {
                     <Route path='/System' element={<System/>}/>
                     <Route path='/TestPage' element={<TestPage/>}/>
                 </Routes>
-            </Router>
-            {
-                /*<HandshakeCheck/>*/
-            }
-        </>
-    ); // Added the missing semicolon and ensured the brace is closed below
+            </GlobalLayout>
+        </Router>
+    );
 }
 
-
-export default App
+export default App; 

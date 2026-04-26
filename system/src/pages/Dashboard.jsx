@@ -1,12 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom';
-import Header from '../components/Header.jsx'
-// popup styles consolidated into global styles (index.css)
-import Footer from '../components/Footer.jsx'
-import Announcement from '../components/Announcement.jsx'
-import RiverLevel from "../components/features/RiverLevel.jsx";
-import RiverTrend from '../components/features/RiverTrend.jsx'
-import RecentLogs from '../components/features/RecentLogs.jsx'
+import React, { useState, useEffect } from 'react';
+import RiverLevel from '../components/features/RiverLevel.jsx';
+import RiverTrend from '../components/features/RiverTrend.jsx';
+import RecentLogs from '../components/features/RecentLogs.jsx';
 
 // --- Generic Popup Component (Imported from your System setup) ---
 const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null }] }) => {
@@ -77,7 +72,7 @@ function Dashboard() {
       const response = await fetch(`${API_BASE}/data`);
       const data = await response.json();
       if (Array.isArray(data)) {
-        setWaterData(data);
+        setWaterData(data); // Feeds the RiverTrend chart and RecentLogs table
         if (data.length > 0) {
           const newest = data[0];  
           setLatestReading(newest); 
@@ -88,6 +83,7 @@ function Dashboard() {
     }
   };
 
+  // Polls the database every 2 seconds to keep the dashboard live
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, POLL_INTERVAL);
@@ -132,29 +128,14 @@ function Dashboard() {
   }, [latestReading]);
 
   return (
-    <>
-      <Header/>
-      <Announcement/>
-      <div className="main-content">
-        
-        {/* popup styles moved to ../../styles/Dashboard.css */}
-
-        <div className='dashboard-grid'>
-          <RiverLevel
-            currentLevel={latestReading?.distance || 0}
-            predictedLevel={latestReading?.predicted || 0}
-          />
-          <RiverTrend history={waterData} />
-          <RecentLogs logs={waterData} />
-        </div>
-      </div>
-      <Footer/>
-
-      {/* Render the Popup here if it's triggered */}
-      {popup.visible && (
-        <Popup message={popup.message} severity={popup.severity} buttons={popup.buttons} onClose={closePopup} />
-      )}
-    </>
+    <div className="dashboard-grid">
+      <RiverLevel
+        currentLevel={latestReading?.distance || 0}
+        predictedLevel={latestReading?.predicted || 0}
+      />
+      <RiverTrend history={waterData} />
+      <RecentLogs logs={waterData} />
+    </div>
   );
 }
 

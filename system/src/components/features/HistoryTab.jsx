@@ -220,9 +220,27 @@ const HistoryTab = () => {
         </div>
 
         <div className="tab-panel content-padding">
-          <div id='history-panel' style={{ display: 'flex', gap: '20px', marginBottom: '20px', alignItems: 'center' }}>
-            <Calendar value={selectedDate} onChange={(e) => setSelectedDate(e.value)} dateFormat="mm/dd/yy" showIcon />
-            <Button label="EXPORT PDF" icon="pi pi-file-pdf" onClick={handleExportPDF} disabled={allData.length === 0} />
+          <div
+            id="history-panel"
+            style={{
+              display: 'flex',
+              gap: '20px',
+              marginBottom: '20px',
+              alignItems: 'center',
+            }}
+          >
+            <Calendar
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.value)}
+              dateFormat="mm/dd/yy"
+              showIcon
+            />
+            <Button
+              label="EXPORT PDF"
+              icon="pi pi-file-pdf"
+              onClick={handleExportPDF}
+              disabled={allData.length === 0}
+            />
           </div>
 
           <div className="columns-container">
@@ -230,10 +248,29 @@ const HistoryTab = () => {
               {loading && <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>}
               {error && <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>Error: {error}</div>}
               {!loading && !error && (
-                <DataTable value={activeDisplayData} scrollable scrollHeight="flex" responsiveLayout="stack" breakpoint="1024px" size="small" emptyMessage="No data found for this date.">
-                  <Column field="displayTime" header="TIME" sortable />
-                  <Column field="displayValue" header="VALUE" body={(row) => `${(Number(row.displayValue) || 0).toFixed(2)} ft.`} />
-                  <Column field="displayStatus" header="STATUS" />
+                <DataTable
+                  value={activeDisplayData}
+                  scrollable
+                  scrollHeight="flex"
+                  responsiveLayout="stack"
+                  breakpoint="1024px"
+                  size="small"
+                  emptyMessage="No data found for this date."
+                >
+                  <Column
+                    field="displayTime"
+                    header="TIME"
+                    sortable
+                  />
+                  <Column
+                    field="displayValue"
+                    header="VALUE"
+                    body={(row) => `${(Number(row.displayValue) || 0).toFixed(2)} ft.`}
+                  />
+                  <Column
+                    field="displayStatus"
+                    header="STATUS"
+                  />
                 </DataTable>
               )}
             </div>
@@ -243,16 +280,52 @@ const HistoryTab = () => {
                 <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                   <LineChart data={activeDisplayData} margin={{ top: 15, right: 30, left: 25, bottom: 35 }}>
                     <CartesianGrid stroke="#f0f0f0" />
-                    <XAxis 
-                        dataKey="displayTime" 
-                        minTickGap={30} 
-                        interval="preserveStartEnd"
-                        tick={{ fontSize: 10 }} 
-                        label={{ value: 'time (t)', position: 'insideBottom', offset: -15, style: { fontStyle: 'italic', fontSize: '10px' } }} 
+                    <XAxis
+                      dataKey="displayTime"
+                      minTickGap={30}
+                      interval="preserveStartEnd"
+                      tick={{ fontSize: 10 }}
+                      label={{
+                        value: 'time (t)',
+                        position: 'insideBottom',
+                        offset: -15,
+                        style: {
+                          fontStyle: 'italic',
+                          fontSize: '10px',
+                        },
+                      }}
                     />
-                    <YAxis domain={[0, 13]} ticks={[0, 2, 4, 6, 8, 10, 12]} tick={{ fontSize: 10 }} tickFormatter={(v) => `${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontStyle: 'italic', fontSize: '10px' } }} />
-                    <Tooltip cursor={{ stroke: '#ccc', strokeWidth: 1 }} labelFormatter={(value) => `time: ${value}`} formatter={(value) => [`${(Number(value) || 0).toFixed(2)} ft.`, "level"]} />
-                    <Line type="monotone" dataKey="displayValue" stroke={activeTab === 'ACTUAL' ? "#ff8f00" : "#002D5A"} strokeWidth={2} dot={false} />
+                    <YAxis
+                      domain={[0, 13]}
+                      ticks={[0, 2, 4, 6, 8, 10, 12]}
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(v) => `${v} ft.`}
+                      label={{
+                        value: 'water level (ft.)',
+                        angle: -90,
+                        position: 'insideLeft',
+                        style: {
+                          textAnchor: 'middle',
+                          fontStyle: 'italic',
+                          fontSize: '10px',
+                        },
+                      }}
+                    />
+                    <Tooltip
+                      cursor={{ stroke: '#ccc', strokeWidth: 1 }}
+                      labelFormatter={(value) => `time: ${value}`}
+                      formatter={(value) => [
+                        `${(Number(value) || 0).toFixed(2)} ft.`,
+                        'level',
+                      ]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="displayValue"
+                      stroke={activeTab === 'ACTUAL' ? '#ff8f00' : '#002D5A'}
+                      strokeWidth={2}
+                      dot={false}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -266,26 +339,100 @@ const HistoryTab = () => {
 
       {/* Hidden Off-Screen Charts explicitly mapped for PDF Extraction */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-        <div ref={actualChartRef} style={{ width: '1000px', height: '400px', background: 'white', padding: '20px' }}>
+        <div
+          ref={actualChartRef}
+          style={{
+            width: '1000px',
+            height: '400px',
+            background: 'white',
+            padding: '20px',
+          }}
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={actualData} margin={{ top: 15, right: 30, left: 25, bottom: 35 }}>
+            <LineChart
+              data={actualData}
+              margin={{ top: 15, right: 30, left: 25, bottom: 35 }}
+            >
               <CartesianGrid stroke="#f0f0f0" />
-              <XAxis dataKey="displayTime" minTickGap={30} interval="preserveStartEnd" tick={{ fontSize: 10 }} label={{ value: 'time (t)', position: 'insideBottom', offset: -10 }} />
-              <YAxis domain={[0,13]} ticks={[0,2,4,6,8,10,12]} tick={{ fontSize:10 }} tickFormatter={(v)=>`${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }} />
+              <XAxis
+                dataKey="displayTime"
+                minTickGap={30}
+                interval="preserveStartEnd"
+                tick={{ fontSize: 10 }}
+                label={{
+                  value: 'time (t)',
+                  position: 'insideBottom',
+                  offset: -10,
+                }}
+              />
+              <YAxis
+                domain={[0, 13]}
+                ticks={[0, 2, 4, 6, 8, 10, 12]}
+                tick={{ fontSize: 10 }}
+                tickFormatter={(v) => `${v} ft.`}
+                label={{
+                  value: 'water level (ft.)',
+                  angle: -90,
+                  position: 'insideLeft',
+                }}
+              />
               <Tooltip />
-              <Line type="monotone" dataKey="displayValue" stroke="#ff8f00" strokeWidth={2} dot={false} />
+              <Line
+                type="monotone"
+                dataKey="displayValue"
+                stroke="#ff8f00"
+                strokeWidth={2}
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        <div ref={predictedChartRef} style={{ width: '1000px', height: '400px', background: 'white', padding: '20px' }}>
+        <div
+          ref={predictedChartRef}
+          style={{
+            width: '1000px',
+            height: '400px',
+            background: 'white',
+            padding: '20px',
+          }}
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={predictedData} margin={{ top: 15, right: 30, left: 25, bottom: 35 }}>
+            <LineChart
+              data={predictedData}
+              margin={{ top: 15, right: 30, left: 25, bottom: 35 }}
+            >
               <CartesianGrid stroke="#f0f0f0" />
-              <XAxis dataKey="displayTime" minTickGap={30} interval="preserveStartEnd" tick={{ fontSize: 10 }} label={{ value: 'time (t)', position: 'insideBottom', offset: -10 }} />
-              <YAxis domain={[0,13]} ticks={[0,2,4,6,8,10,12]} tick={{ fontSize:10 }} tickFormatter={(v)=>`${v} ft.`} label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }} />
+              <XAxis
+                dataKey="displayTime"
+                minTickGap={30}
+                interval="preserveStartEnd"
+                tick={{ fontSize: 10 }}
+                label={{
+                  value: 'time (t)',
+                  position: 'insideBottom',
+                  offset: -10,
+                }}
+              />
+              <YAxis
+                domain={[0, 13]}
+                ticks={[0, 2, 4, 6, 8, 10, 12]}
+                tick={{ fontSize: 10 }}
+                tickFormatter={(v) => `${v} ft.`}
+                label={{
+                  value: 'water level (ft.)',
+                  angle: -90,
+                  position: 'insideLeft',
+                }}
+              />
               <Tooltip />
-              <Line type="monotone" dataKey="displayValue" stroke="#002D5A" strokeWidth={2} dot={false} />
+              <Line
+                type="monotone"
+                dataKey="displayValue"
+                stroke="#002D5A"
+                strokeWidth={2}
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>

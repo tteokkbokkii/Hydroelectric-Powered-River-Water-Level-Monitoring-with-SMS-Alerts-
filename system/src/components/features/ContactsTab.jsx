@@ -11,7 +11,12 @@ const SMS_COMMAND_TOPIC = 'sms/command';
 const SMS_LOG_TOPIC = 'sms/log';
 
 // ---------- Popup Component ----------
-const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: null, autoClose: true }] }) => {
+const Popup = ({
+  message,
+  severity,
+  onClose,
+  buttons = [{ label: 'OK', onClick: null, autoClose: true }],
+}) => {
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') onClose();
@@ -28,20 +33,43 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
   const isSingleButton = buttons.length === 1;
 
   return ReactDOM.createPortal(
-    <div className="notification-overlay" onClick={onClose}>
-      <div className={`notification-card ${severity}`} onClick={(e) => e.stopPropagation()}>
-        <button className="notification-close-x" onClick={onClose}>×</button>
+    <div
+      className="notification-overlay"
+      onClick={onClose}
+    >
+      <div
+        className={`notification-card ${severity}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          className="notification-close-x"
+          onClick={onClose}
+        >
+          ×
+        </button>
         <div className="notification-header">
-          <h3>{severity === 'error' ? '⚠️ ERROR' : severity === 'success' ? '✓ SUCCESS' : 'ℹ️ INFORMATION'}</h3>
+          <h3>
+            {severity === 'error'
+              ? '⚠️ ERROR'
+              : severity === 'success'
+                ? '✓ SUCCESS'
+                : 'ℹ️ INFORMATION'}
+          </h3>
         </div>
         <div className="notification-body">
           <p>{message}</p>
         </div>
-        <div className={`notification-footer ${isSingleButton ? 'footer-left' : ''}`}>
+        <div
+          className={`notification-footer ${isSingleButton ? 'footer-left' : ''}`}
+        >
           {buttons.map((btn, idx) => (
             <button
               key={idx}
-              className={idx === 0 ? "notification-primary-btn" : "notification-secondary-btn"}
+              className={
+                idx === 0
+                  ? 'notification-primary-btn'
+                  : 'notification-secondary-btn'
+              }
               onClick={() => handleButtonClick(btn)}
             >
               {btn.label}
@@ -292,35 +320,124 @@ const ContactsTab = () => {
             <tbody>
               {editingIndex === 'new' && (
                 <tr className="fixed-row adding-mode">
-                  <td><input autoFocus className="table-input" placeholder="Name..." value={editForm.name} onChange={(e) => handleEditChange('name', e.target.value)} disabled={isSaving} /></td>
-                  <td><input className="table-input" value={editForm.phone} onChange={(e) => handleEditChange('phone', e.target.value)} disabled={isSaving} /></td>
-                  <td><Dropdown className="table-dropdown" value={editForm.alertLevel} options={alertLevelOptions} onChange={(e) => handleEditChange('alertLevel', e.value)} disabled={isSaving} /></td>
+                  <td>
+                    <input
+                      autoFocus
+                      className="table-input"
+                      placeholder="Name..."
+                      value={editForm.name}
+                      onChange={(e) => handleEditChange('name', e.target.value)}
+                      disabled={isSaving}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="table-input"
+                      value={editForm.phone}
+                      onChange={(e) => handleEditChange('phone', e.target.value)}
+                      disabled={isSaving}
+                    />
+                  </td>
+                  <td>
+                    <Dropdown
+                      className="table-dropdown"
+                      value={editForm.alertLevel}
+                      options={alertLevelOptions}
+                      onChange={(e) => handleEditChange('alertLevel', e.value)}
+                      disabled={isSaving}
+                    />
+                  </td>
                   <td className="action-cell">
-                    <button className="icon-only-btn save" onClick={handleSaveEdit} disabled={isSaving}>✓</button>
-                    <button className="icon-only-btn cancel" onClick={handleCancel} disabled={isSaving}>✕</button>
+                    <button
+                      className="icon-only-btn save"
+                      onClick={handleSaveEdit}
+                      disabled={isSaving}
+                    >
+                      ✓
+                    </button>
+                    <button
+                      className="icon-only-btn cancel"
+                      onClick={handleCancel}
+                      disabled={isSaving}
+                    >
+                      ✕
+                    </button>
                   </td>
                 </tr>
               )}
               {contacts.map((contact, index) => (
-                <tr key={contact.id} className={editingIndex === index ? "fixed-row adding-mode" : "fixed-row"}>
+                <tr
+                  key={contact.id}
+                  className={editingIndex === index ? 'fixed-row adding-mode' : 'fixed-row'}
+                >
                   {editingIndex === index ? (
                     <>
-                      <td><input className="table-input" value={editForm.name} onChange={(e) => handleEditChange('name', e.target.value)} disabled={isSaving} /></td>
-                      <td><input className="table-input" value={editForm.phone} onChange={(e) => handleEditChange('phone', e.target.value)} disabled={isSaving} /></td>
-                      <td><Dropdown className="table-dropdown" value={editForm.alertLevel} options={alertLevelOptions} onChange={(e) => handleEditChange('alertLevel', e.value)} disabled={isSaving} /></td>
+                      <td>
+                        <input
+                          className="table-input"
+                          value={editForm.name}
+                          onChange={(e) => handleEditChange('name', e.target.value)}
+                          disabled={isSaving}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="table-input"
+                          value={editForm.phone}
+                          onChange={(e) => handleEditChange('phone', e.target.value)}
+                          disabled={isSaving}
+                        />
+                      </td>
+                      <td>
+                        <Dropdown
+                          className="table-dropdown"
+                          value={editForm.alertLevel}
+                          options={alertLevelOptions}
+                          onChange={(e) => handleEditChange('alertLevel', e.value)}
+                          disabled={isSaving}
+                        />
+                      </td>
                       <td className="action-cell">
-                        <button className="icon-only-btn save" onClick={handleSaveEdit} disabled={isSaving}>✓</button>
-                        <button className="icon-only-btn cancel" onClick={handleCancel} disabled={isSaving}>✕</button>
+                        <button
+                          className="icon-only-btn save"
+                          onClick={handleSaveEdit}
+                          disabled={isSaving}
+                        >
+                          ✓
+                        </button>
+                        <button
+                          className="icon-only-btn cancel"
+                          onClick={handleCancel}
+                          disabled={isSaving}
+                        >
+                          ✕
+                        </button>
                       </td>
                     </>
                   ) : (
                     <>
                       <td>{contact.name}</td>
                       <td>{contact.phone}</td>
-                      <td><span className={`badge ${contact.alertLevel.toLowerCase()}`}>{contact.alertLevel}</span></td>
+                      <td>
+                        <span className={`badge ${contact.alertLevel.toLowerCase()}`}>
+                          {contact.alertLevel}
+                        </span>
+                      </td>
                       <td className="action-cell">
-                        <button className="icon-only-btn edit" onClick={() => handleEdit(index)} disabled={isSaving}>✎</button>
-                        <button className="icon-only-btn del" onClick={() => handleDelete(index)} disabled={isSaving}>✕</button>
+                        <button
+                          className="icon-only-btn edit"
+                          onClick={() => handleEdit(index)}
+                          disabled={isSaving}
+                        >
+                          ✎
+                        </button>
+                        <button
+                          className="icon-only-btn del"
+                          onClick={() => handleDelete(index)}
+                          disabled={isSaving}
+                        >
+                          ✕
+                        </button>
                       </td>
                     </>
                   )}
@@ -353,7 +470,13 @@ const ContactsTab = () => {
                   className="sms-dropdown"
                   disabled={isSaving}
                 />
-                <button className="send-btn primary" onClick={handleSend} disabled={isSaving}>SEND MESSAGE</button>
+                <button
+                  className="send-btn primary"
+                  onClick={handleSend}
+                  disabled={isSaving}
+                >
+                  SEND MESSAGE
+                </button>
               </div>
             </div>
           </div>

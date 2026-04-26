@@ -8,6 +8,7 @@ import './styles/Card.css'
 import './styles/SystemTab.css'
 import './styles/HistoryTab.css'
 import './styles/ContactsTab.css'
+import './styles/Popups.css' // <-- ADD THIS LINE
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(

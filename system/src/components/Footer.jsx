@@ -82,14 +82,33 @@ const Footer = () => {
   const badgeTextColor = isNormal ? '#002D5A' : '#ED2100';
 
   return (
-    <footer className='footer-container'>
-      <div className='system-status'>
-        <div className='status-badge' style={{ backgroundColor: badgeBg, borderColor: badgeBorder }}>
-          <span className='status-label' style={{ color: badgeTextColor }}>CONNECTIONS:</span>
-          <span className='status-value' style={{ color: badgeTextColor, fontWeight: 'bold' }}>{systemStatus}</span>
+    <footer className="footer-container">
+      <div className="system-status">
+        <div
+          className="status-badge"
+          style={{
+            backgroundColor: badgeBg,
+            borderColor: badgeBorder,
+          }}
+        >
+          <span
+            className="status-label"
+            style={{ color: badgeTextColor }}
+          >
+            CONNECTIONS:
+          </span>
+          <span
+            className="status-value"
+            style={{
+              color: badgeTextColor,
+              fontWeight: 'bold',
+            }}
+          >
+            {systemStatus}
+          </span>
         </div>
       </div>
-      <div className='signal-container'>
+      <div className="signal-container">
         <div className="signal-bars-container">
           {renderBars()}
         </div>
