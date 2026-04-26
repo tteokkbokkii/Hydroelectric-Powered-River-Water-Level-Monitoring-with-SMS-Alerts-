@@ -11,6 +11,7 @@ const Footer = () => {
 
   useEffect(() => {
     const client = mqtt.connect(MQTT_BROKER);
+    
     client.on('connect', () => {
       console.log('Footer connected to MQTT');
       client.subscribe('system/signal');
@@ -31,10 +32,21 @@ const Footer = () => {
           const issues = [];
 
           if (status.reset_reason === 'POWER_ON') issues.push('POWER LOSS');
-          if (!status.ultrasonic_active || !status.float_ready) issues.push('SENSOR DISCONNECT');
+          
+          // --- UPDATED HARDWARE CHECKS ---
+          // Prioritize checking if the ESP is entirely offline first
+          if (status.esp_connected === false) {
+             issues.push('ESP OFFLINE');
+          } else {
+             // Explicitly display which sensor is failing based on the Python bridge payload
+             if (status.ultrasonic_active === false) issues.push('ULTRASONIC ERROR');
+             if (status.float_ready === false) issues.push('FLOAT ERROR');
+          }
+          // -------------------------------
 
           let displayText = 'NORMAL';
           let color = '#002D5A';
+          
           if (issues.length > 0) {
             displayText = issues.join(' | ');
             color = '#ED2100';
@@ -91,10 +103,7 @@ const Footer = () => {
             borderColor: badgeBorder,
           }}
         >
-          <span
-            className="status-label"
-            style={{ color: badgeTextColor }}
-          >
+          <span className="status-label" style={{ color: badgeTextColor }}>
             CONNECTIONS:
           </span>
           <span
@@ -102,6 +111,7 @@ const Footer = () => {
             style={{
               color: badgeTextColor,
               fontWeight: 'bold',
+              marginLeft: '8px'
             }}
           >
             {systemStatus}
