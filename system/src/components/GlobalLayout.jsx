@@ -13,6 +13,7 @@ export default function GlobalLayout({ children }) {
   const [latestReading, setLatestReading] = useState(null);
   const [popup, setPopup] = useState({ visible: false, message: '', severity: '', buttons: [] });
   const previousRangeRef = useRef(null);
+  const custom31TriggeredRef = useRef(false);
 
   const showPopup = (message, severity) => {
     setPopup({ visible: true, message, severity });
@@ -36,6 +37,15 @@ export default function GlobalLayout({ children }) {
             }
           }
           previousRangeRef.current = newest.range;
+
+          // 3.1 FT CUSTOM CHECK
+          if (newest.distance > 3.1 && !custom31TriggeredRef.current) {
+            showPopup("Notice: River level has exceeded 3.1 ft.", "info");
+            custom31TriggeredRef.current = true;
+          } else if (newest.distance <= 3.1 && custom31TriggeredRef.current) {
+            custom31TriggeredRef.current = false;
+          }
+
           setLatestReading(newest);
         }
       } catch (e) { console.error("Global monitor error:", e); }
