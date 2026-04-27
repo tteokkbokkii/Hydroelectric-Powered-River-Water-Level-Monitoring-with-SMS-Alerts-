@@ -265,8 +265,8 @@ const ContactsTab = () => {
                   <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>No SMS logs found.</td></tr>
                 ) : (
                   smsLogs.map((log, idx) => (
-                    {/* CHANGED: Uses log.log_type instead of log.type */}
                     <tr key={log.id || idx} className={`log-row ${log.log_type === 'ALERT' ? 'alrt' : 'maint'}`}>
+                      {/* CHANGED: Uses log.log_type instead of log.type */}
                       <td className="l-time">{log.timestamp || "--:--"}</td>
                       {/* CHANGED: Checks for ALERT, otherwise displays TEST */}
                       <td className="l-tag">[{log.log_type === 'ALERT' ? 'ALERT' : 'TEST'}]</td>
