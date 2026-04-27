@@ -10,10 +10,10 @@
           <Announcement/>
           <div className="main-content contacts-main-content">
             <ContactsTab/>
-          </div>
+    </div>
           <Footer/>
         </>
       )
-  }
+}
 
-  export default Contacts
+export default Contacts;

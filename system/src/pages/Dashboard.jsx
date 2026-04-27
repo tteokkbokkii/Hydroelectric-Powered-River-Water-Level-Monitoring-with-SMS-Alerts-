@@ -140,13 +140,13 @@ function Dashboard() {
         {/* popup styles moved to ../../styles/Dashboard.css */}
 
         <div className='dashboard-grid'>
-          <RiverLevel
-            currentLevel={latestReading?.distance || 0}
-            predictedLevel={latestReading?.predicted || 0}
-          />
-          <RiverTrend history={waterData} />
-          <RecentLogs logs={waterData} />
-        </div>
+      <RiverLevel
+        currentLevel={latestReading?.distance || 0}
+        predictedLevel={latestReading?.predicted || 0}
+      />
+      <RiverTrend history={waterData} />
+      <RecentLogs logs={waterData} />
+    </div>
       </div>
       <Footer/>
 

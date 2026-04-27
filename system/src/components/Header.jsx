@@ -1,33 +1,33 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef  } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
 
-function Header() {
-const [isOpen, setIsOpen] = useState(false);
-const menuRef = useRef(null);
-const toggleMenu = () => {
-    setIsOpen(!isOpen);
-};
-
-useEffect(() => {
-    const handleClickOutside = (event) => {
-        if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setIsOpen(false);
-    }
+function Header(){
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef(null);
+    const toggleMenu = () => {
+        setIsOpen(!isOpen);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-    document.removeEventListener('mousedown', handleClickOutside);
-    };
-}, []);
 
-const [time, setTime] = useState(new Date());
-useEffect(() => {
-    const timer = setInterval(() => {
-    setTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-}, []);
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const [time, setTime] = useState(new Date());
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
 
 const dateNtime = new Date();
 const mm = String(dateNtime.getMonth() + 1).padStart(2, '0');
@@ -58,33 +58,33 @@ return (
 
     <div className="header-right">
         <div className="date-time-container">
-        <p className="date">{formattedDate}</p>
-        <p className="time">{formattedTime}</p>
+            <p className="date">{formattedDate}</p>
+            <p className="time">{formattedTime}</p>
         </div>
-
-        <nav
-        ref={menuRef}
-        className={`navigation-container ${isOpen ? 'active' : ''}`}
-        onClick={() => setIsOpen(!isOpen)}
+                
+        <nav 
+            ref={menuRef}
+            className={`navigation-container ${isOpen ? 'active' : ''}`} 
+            onClick={() => setIsOpen(!isOpen)}
         >
         <div className="dropdown">
             <button className="menu-button">
-            <div className="bar" />
-            <div className="bar" />
-            <div className="bar" />
+                <div className="bar" />
+                <div className="bar" />
+                <div className="bar" />
             </button>
-
+                       
             <div className="contents">
-            <Link to="/Dashboard">DASHBOARD</Link>
-            <Link to="/History">HISTORY</Link>
-            <Link to="/Contacts">CONTACTS</Link>
-        <Link to="/System">SYSTEM</Link>
+                <Link to="/Dashboard">DASHBOARD</Link>
+                <Link to="/History">HISTORY</Link>
+                <Link to="/Contacts">CONTACTS</Link>
+                <Link to="/System">SYSTEM</Link>
+           </div>
+                    </div>
+                </nav>
             </div>
-        </div>
-        </nav>
-    </div>
-    </header>
-);
+        </header>
+    );
 }
 
 export default Header;
