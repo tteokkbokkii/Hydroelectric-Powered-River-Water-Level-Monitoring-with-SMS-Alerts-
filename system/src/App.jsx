@@ -2,7 +2,6 @@ import {HashRouter as Router, Routes, Route} from 'react-router-dom'
 import GlobalStateProvider from './components/features/GlobalStateProvider.jsx';
 import Contacts from './pages/Contacts'
 import Dashboard from './pages/Dashboard'
-import Contacts from './pages/Contacts'
 import History from './pages/History'
 import System from './pages/System'
 // import HandshakeCheck from './components/HandshakeCheck.jsx';
