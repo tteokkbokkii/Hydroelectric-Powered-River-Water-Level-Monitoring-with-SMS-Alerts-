@@ -6,10 +6,10 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 clear
-echo -e "${CYAN}==================================================${NC}"
+echo -e "${CYAN}=========================================================${NC}"
 echo -e "       SYSTEM HEALTH CHECK MAINTENANCE            "
 echo -e "       Report Generated: $(date)                  "
-echo -e "${CYAN}==================================================${NC}"
+echo -e "${CYAN}=========================================================${NC}"
 
 # 1. CORE AUTOMATION CHECK
 echo -e "\n[1] AUTOMATION SERVICE STATUS:"
@@ -20,15 +20,17 @@ pgrep -fl "databaseManager.sh" > /dev/null && echo -e "  Manager Service: ${CYAN
 echo -e "\n[2] COMPONENT AUDIT:"
 
 # Executes storageHealth.sh (SD Card monitoring)
-echo -ne "  Storage Status:  "
+echo -n "  Storage Status:   "
 /home/admin/thesis/scripts-and-sketches/storageHealth.sh
+echo "" # This forces a new line
 
 # Executes flaskHealth.sh (Web Server monitoring)
-echo -ne "  Flask API Status: "
+echo -n "  Flask API Status: "
 /home/admin/thesis/scripts-and-sketches/flaskHealth.sh
+echo "" # This forces a new line
 
 # Executes databaseHealth.sh (File integrity monitoring)
-echo -ne "  Database Status: "
+echo -n "  Database Status:  "
 /home/admin/thesis/scripts-and-sketches/databaseHealth.sh
 
 # 3. EXTERNAL STORAGE STATUS
