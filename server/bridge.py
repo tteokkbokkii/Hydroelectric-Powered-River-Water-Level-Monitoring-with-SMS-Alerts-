@@ -13,6 +13,7 @@ STATUS_TOPIC = "system/status"
 SETTINGS_TOPIC = "system/settings"
 CONTACTS_UPDATE_TOPIC = "contacts/update"
 CONTACTS_LIST_TOPIC = "contacts/list"
+SMS_COMMAND_TOPIC = "sms/command" # <--- ADDED TOPIC
 MQTT_SERVER = "127.0.0.1"
 DB_PATH = "river_monitor.db"
 SETTINGS_FILE = "settings.json"
@@ -162,7 +163,7 @@ def on_message(client, userdata, msg):
             print(f"Error saving contacts: {e}")
             
     elif msg.topic == "system/status/esp32":
-        last_esp_contact = time.time() # Added this to maintain the connection heartbeat
+        last_esp_contact = time.time() 
         try:
             data = json.loads(msg.payload.decode())
             esp32_health["online"] = data.get("online", False)
@@ -170,6 +171,27 @@ def on_message(client, userdata, msg):
             esp32_health["float"] = data.get("float", "OK")
         except Exception as e:
             print(f"Error parsing ESP32 status: {e}")
+
+    # --- NEW: SMS LOGGING LISTENER ---
+    elif msg.topic == SMS_COMMAND_TOPIC:
+        try:
+            data = json.loads(msg.payload.decode())
+            recipient_phone = data.get("phone", "Unknown")
+            recipient_name = data.get("name", "Unknown Contact")
+            message = data.get("message", "Test Message")
+            
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute("""
+                INSERT INTO sms_logs (log_type, recipient_name, recipient_phone, message)
+                VALUES (?, ?, ?, ?)
+            """, ("TEST", recipient_name, recipient_phone, message))
+            conn.commit()
+            conn.close()
+            print(f"📝 Logged TEST SMS to database for {recipient_phone}")
+        except Exception as e:
+            print(f"Error logging SMS: {e}")
+
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.on_message = on_message
@@ -180,6 +202,7 @@ try:
     client.subscribe(MQTT_TOPIC)
     client.subscribe("system/status/esp32")
     client.subscribe(CONTACTS_UPDATE_TOPIC)
+    client.subscribe(SMS_COMMAND_TOPIC) # <--- SUBSCRIBE TO THE COMMAND TOPIC
     
     # Publish existing contacts if any
     try:
