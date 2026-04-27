@@ -21,15 +21,15 @@ echo -e "\n[2] COMPONENT AUDIT:"
 
 # Executes storageHealth.sh (SD Card monitoring)
 echo -ne "  Storage Status:  "
-/home/admin/thesis/maintenance/storageHealth.sh
+/home/admin/thesis/scripts_and_sketches/storageHealth.sh
 
 # Executes flaskHealth.sh (Web Server monitoring)
 echo -ne "  Flask API Status: "
-/home/admin/thesis/maintenance/flaskHealth.sh
+/home/admin/thesis/scripts_and_sketches/flaskHealth.sh
 
 # Executes databaseHealth.sh (File integrity monitoring)
 echo -ne "  Database Status: "
-/home/admin/thesis/maintenance/databaseHealth.sh
+/home/admin/thesis/scripts_and_sketches/databaseHealth.sh
 
 # 3. EXTERNAL STORAGE STATUS
 echo -e "\n[3] EXTERNAL DRIVE STATUS:"
