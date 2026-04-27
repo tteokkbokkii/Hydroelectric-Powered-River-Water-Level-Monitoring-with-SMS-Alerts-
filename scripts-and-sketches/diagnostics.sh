@@ -33,6 +33,18 @@ echo -ne "  Database Status: "
 
 # 3. EXTERNAL STORAGE STATUS
 echo -e "\n[3] EXTERNAL DRIVE STATUS:"
+
+# --- AUTO-MOUNT LOGIC START ---
+# Check if the USB hardware (sda1 or sdb1) is plugged in but not mounted correctly
+USB_DEV=$(lsblk -no NAME,MOUNTPOINT | grep -E "sda1|sdb1" | awk '$2=="" {print "/dev/"$1}')
+
+if [ ! -z "$USB_DEV" ]; then
+    # If hardware is found but not mounted, force mount it to MULTIBOOT
+    sudo mkdir -p /media/admin/MULTIBOOT
+    sudo mount "$USB_DEV" /media/admin/MULTIBOOT > /dev/null 2>&1
+fi
+# --- AUTO-MOUNT LOGIC END ---
+
 if [ -d "/media/admin/MULTIBOOT" ]; then
     echo -e "  USB Drive: ${CYAN}CONNECTED${NC}"
     df -h "/media/admin/MULTIBOOT" | awk 'NR==2 {print "  Available: " $4}'
