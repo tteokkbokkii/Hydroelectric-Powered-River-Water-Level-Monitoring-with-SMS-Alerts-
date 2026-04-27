@@ -126,7 +126,6 @@ def on_message(client, userdata, msg):
     global last_esp_contact, esp32_health
     if msg.topic == MQTT_TOPIC:
         last_esp_contact = time.time()
-        # Removed the hardcoded esp32_health reset from here!
         try:
             data = json.loads(msg.payload.decode())
             

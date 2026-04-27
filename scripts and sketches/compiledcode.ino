@@ -260,8 +260,18 @@ void setup() {
     pinMode(FLOATER_SAFE, INPUT_PULLUP); pinMode(FLOATER_WARNING, INPUT_PULLUP); pinMode(FLOATER_CRITICAL, INPUT_PULLUP);
     delay(200);
     
+    //ultrasonic sensor prep
+    digitalWrite(ULTRASONIC_TRIG, LOW);
+    delay(50);
+    digitalWrite(ULTRASONIC_TRIG, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(ULTRASONIC_TRIG, LOW);
+    pulseIn(ULTRASONIC_ECHO, HIGH, 30000);
+    delay(100);
+
     Wire.begin();
     if (!rtc.begin()) Serial.println("RTC Failed!");
+    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
     initGSM();
     connectToPriorityNetwork();
