@@ -35,7 +35,7 @@ echo -ne "  Database Status: "
 echo -e "\n[3] EXTERNAL DRIVE STATUS:"
 if [ -d "/media/admin/MULTIBOOT" ]; then
     echo -e "  USB Drive: ${CYAN}CONNECTED${NC}"
-    df -h "/media/admin/USB Drive" | awk 'NR==2 {print "  Available: " $4}'
+    df -h "/media/admin/MULTIBOOT" | awk 'NR==2 {print "  Available: " $4}'
 else
     echo -e "  USB Drive: ${YELLOW}NOT DETECTED${NC}"
     echo "  System Action: Retaining data volumes on internal SD card."
