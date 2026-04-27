@@ -19,19 +19,20 @@ pgrep -fl "databaseManager.sh" > /dev/null && echo -e "  Manager Service: ${CYAN
 # 2. COMPONENT AUDIT (MAINTENANCE SCRIPTS)
 echo -e "\n[2] COMPONENT AUDIT:"
 
-# Executes storageHealth.sh (SD Card monitoring)
+# Storage check
 echo -n "  Storage Status:   "
 /home/admin/thesis/scripts-and-sketches/storageHealth.sh
-echo "" # This forces a new line
+echo "" # <--- This fixes the spacing
 
-# Executes flaskHealth.sh (Web Server monitoring)
+# Flask check
 echo -n "  Flask API Status: "
 /home/admin/thesis/scripts-and-sketches/flaskHealth.sh
-echo "" # This forces a new line
+echo "" # <--- This fixes the spacing
 
-# Executes databaseHealth.sh (File integrity monitoring)
+# Database check
 echo -n "  Database Status:  "
 /home/admin/thesis/scripts-and-sketches/databaseHealth.sh
+# No echo "" needed here because databaseHealth.sh already prints a new line
 
 # 3. EXTERNAL STORAGE STATUS
 echo -e "\n[3] EXTERNAL DRIVE STATUS:"
