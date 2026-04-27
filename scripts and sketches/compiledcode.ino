@@ -41,6 +41,10 @@ struct Contact {
     String phone;
     String alertLevel; 
 };
+struct Contact { 
+    String phone;
+    String alertLevel; 
+};
 Contact contacts[20];
 int contactCount = 0;
 
@@ -69,6 +73,8 @@ int history_count = 0, history_index = 0;
 
 // ---------- WiFi Priority Logic ----------
 void connectToPriorityNetwork() {
+    struct Network { const char* ssid;
+    const char* pass; };
     struct Network { const char* ssid;
     const char* pass; };
     Network list[] = {
@@ -108,6 +114,7 @@ String getCommandResponse(String cmd, int waitTime = 1000) {
     
     String response = "";
     unsigned long start = millis();
+    while (millis() - start < waitTime) {
     while (millis() - start < waitTime) {
         while (Serial2.available()) {
             response += (char)Serial2.read();
@@ -171,7 +178,24 @@ void initGSM() {
     Serial2.begin(115200, SERIAL_8N1, MODEM_RX, MODEM_TX);
     
     Serial.println("\n--- Initializing A7670E Modem ---");
+    
+    Serial.println("\n--- Initializing A7670E Modem ---");
     pinMode(MODEM_PWRKEY, OUTPUT);
+    digitalWrite(MODEM_PWRKEY, LOW); 
+    delay(1200); 
+    digitalWrite(MODEM_PWRKEY, HIGH);
+
+    Serial.println("Waiting 20 seconds for network registration...");
+    delay(20000); 
+    
+    getCommandResponse("ATE0", 1000);
+
+    String cmgfRes = getCommandResponse("AT+CMGF=1", 1000);
+    if (cmgfRes.indexOf("OK") != -1 || cmgfRes != "") {
+        gsmReady = true;
+        Serial.println("✅ GSM Modem Ready and Text Mode set.");
+    } else {
+        Serial.println("⚠️ Warning: Modem initialization check incomplete, but continuing.");
     digitalWrite(MODEM_PWRKEY, LOW); 
     delay(1200); 
     digitalWrite(MODEM_PWRKEY, HIGH);
@@ -233,6 +257,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
         temp_reading_interval_min = doc["reading_interval"] | temp_reading_interval_min;
         
         pending_settings_msg = msg;
+        pending_settings_msg = msg;
         settingsReceived = true;
         newSettingsAvailable = true; 
     } 
@@ -246,6 +271,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
         }
         
         pending_contacts_msg = msg;
+        pending_contacts_msg = msg;
         contactsReceived = true;
         newContactsAvailable = true;
     }
@@ -256,15 +282,19 @@ void setup() {
     Serial.begin(115200);
     delay (2000);
     digitalWrite(ULTRASONIC_TRIG, HIGH);
+    delay (2000);
+    digitalWrite(ULTRASONIC_TRIG, HIGH);
     pinMode(ULTRASONIC_TRIG, OUTPUT); pinMode(ULTRASONIC_ECHO, INPUT);
     pinMode(FLOATER_SAFE, INPUT_PULLUP); pinMode(FLOATER_WARNING, INPUT_PULLUP); pinMode(FLOATER_CRITICAL, INPUT_PULLUP);
     delay(200);
     
     Wire.begin();
     if (!rtc.begin()) Serial.println("RTC Failed!");
+    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
     initGSM();
     connectToPriorityNetwork();
+    
     
     Serial.println("\n--- Locating Raspberry Pi (rivermonitoring.local) ---");
     MDNS.begin("esp32-node");

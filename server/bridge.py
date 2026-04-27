@@ -164,6 +164,7 @@ def on_message(client, userdata, msg):
             
     elif msg.topic == "system/status/esp32":
         last_esp_contact = time.time() # Added this to maintain the connection heartbeat
+        last_esp_contact = time.time() # Added this to maintain the connection heartbeat
         try:
             data = json.loads(msg.payload.decode())
             esp32_health["online"] = data.get("online", False)

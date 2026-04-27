@@ -32,17 +32,12 @@ const Footer = () => {
           const issues = [];
 
           if (status.reset_reason === 'POWER_ON') issues.push('POWER LOSS');
-          
-          // --- UPDATED HARDWARE CHECKS ---
-          // Prioritize checking if the ESP is entirely offline first
           if (status.esp_connected === false) {
-             issues.push('ESP OFFLINE');
+            issues.push('ESP OFFLINE');
           } else {
-             // Explicitly display which sensor is failing based on the Python bridge payload
-             if (status.ultrasonic_active === false) issues.push('ULTRASONIC ERROR');
-             if (status.float_ready === false) issues.push('FLOAT ERROR');
+            if (status.ultrasonic_active === false) issues.push('ULTRASONIC ERROR');
+            if (status.float_ready === false) issues.push('FLOAT ERROR');
           }
-          // -------------------------------
 
           let displayText = 'NORMAL';
           let color = '#002D5A';

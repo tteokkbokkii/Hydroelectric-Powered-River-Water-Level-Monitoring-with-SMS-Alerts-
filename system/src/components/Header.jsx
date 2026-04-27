@@ -3,88 +3,88 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
 
 function Header() {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef(null);
-  const toggleMenu = () => {
+const [isOpen, setIsOpen] = useState(false);
+const menuRef = useRef(null);
+const toggleMenu = () => {
     setIsOpen(!isOpen);
-  };
+};
 
-  useEffect(() => {
+useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        if (menuRef.current && !menuRef.current.contains(event.target)) {
         setIsOpen(false);
-      }
+    }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+    document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+}, []);
 
-  const [time, setTime] = useState(new Date());
-  useEffect(() => {
+const [time, setTime] = useState(new Date());
+useEffect(() => {
     const timer = setInterval(() => {
-      setTime(new Date());
+    setTime(new Date());
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+}, []);
 
-  const dateNtime = new Date();
-  const mm = String(dateNtime.getMonth() + 1).padStart(2, '0');
-  const dd = String(dateNtime.getDate()).padStart(2, '0');
-  const yy = String(dateNtime.getFullYear()).slice(-2);
-  const formattedDate = `${mm}/${dd}/${yy}`;
+const dateNtime = new Date();
+const mm = String(dateNtime.getMonth() + 1).padStart(2, '0');
+const dd = String(dateNtime.getDate()).padStart(2, '0');
+const yy = String(dateNtime.getFullYear()).slice(-2);
+const formattedDate = `${mm}/${dd}/${yy}`;
 
-  const hh = String(dateNtime.getHours()).padStart(2, '0');
-  const min = String(dateNtime.getMinutes()).padStart(2, '0');
-  const ss = String(dateNtime.getSeconds()).padStart(2, '0');
-  const formattedTime = `${hh}:${min}:${ss}`;
+const hh = String(dateNtime.getHours()).padStart(2, '0');
+const min = String(dateNtime.getMinutes()).padStart(2, '0');
+const ss = String(dateNtime.getSeconds()).padStart(2, '0');
+const formattedTime = `${hh}:${min}:${ss}`;
 
-  return (
+return (
     <header className="header-container">
-      <a href="#">
+    <a href="#">
         <img
-          src={logo}
-          alt="Ferry Station Logo"
-          className="logo"
+        src={logo}
+        alt="Ferry Station Logo"
+        className="logo"
         />
-      </a>
-      <a
+    </a>
+    <a
         href="#"
         id="title"
-      >
+    >
         <h1>HULO FERRY STATION</h1>
-      </a>
+    </a>
 
-      <div className="header-right">
+    <div className="header-right">
         <div className="date-time-container">
-          <p className="date">{formattedDate}</p>
-          <p className="time">{formattedTime}</p>
+        <p className="date">{formattedDate}</p>
+        <p className="time">{formattedTime}</p>
         </div>
 
         <nav
-          ref={menuRef}
-          className={`navigation-container ${isOpen ? 'active' : ''}`}
-          onClick={() => setIsOpen(!isOpen)}
+        ref={menuRef}
+        className={`navigation-container ${isOpen ? 'active' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
         >
-          <div className="dropdown">
+        <div className="dropdown">
             <button className="menu-button">
-              <div className="bar" />
-              <div className="bar" />
-              <div className="bar" />
+            <div className="bar" />
+            <div className="bar" />
+            <div className="bar" />
             </button>
 
             <div className="contents">
-              <Link to="/Dashboard">DASHBOARD</Link>
-              <Link to="/History">HISTORY</Link>
-              <Link to="/Contacts">CONTACTS</Link>
-              <Link to="/System">SYSTEM</Link>
+            <Link to="/Dashboard">DASHBOARD</Link>
+            <Link to="/History">HISTORY</Link>
+            <Link to="/Contacts">CONTACTS</Link>
+        <Link to="/System">SYSTEM</Link>
             </div>
-          </div>
+        </div>
         </nav>
-      </div>
+    </div>
     </header>
-  );
+);
 }
 
 export default Header;
