@@ -111,7 +111,7 @@
 
 /* -- River Trend -- */
 #rivertrend-contents {
-  min-height: auto;
+  height: auto;
   width: 100%;
   min-width: auto;
 }

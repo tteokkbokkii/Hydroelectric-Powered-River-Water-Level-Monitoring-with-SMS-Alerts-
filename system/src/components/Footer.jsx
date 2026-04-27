@@ -11,7 +11,6 @@ const Footer = () => {
 
   useEffect(() => {
     const client = mqtt.connect(MQTT_BROKER);
-    
     client.on('connect', () => {
       console.log('Footer connected to MQTT');
       client.subscribe('system/signal');
@@ -41,7 +40,6 @@ const Footer = () => {
 
           let displayText = 'NORMAL';
           let color = '#002D5A';
-          
           if (issues.length > 0) {
             displayText = issues.join(' | ');
             color = '#ED2100';
