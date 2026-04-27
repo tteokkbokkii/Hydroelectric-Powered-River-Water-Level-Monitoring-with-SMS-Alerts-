@@ -131,7 +131,6 @@ function Dashboard() {
     }
   }, [latestReading]);
 
-  /*
   return (
     <>
       <Header />
@@ -152,36 +151,6 @@ function Dashboard() {
       
       {popup.visible && (
         <Popup message={popup.message} severity={popup.severity} buttons={popup.buttons} onClose={closePopup} />
-      )}
-    </>
-  );*/
-  
-  return (
-    <>
-      <div style={{ background: 'red', color: 'white', padding: '10px' }}>TEST HEADER</div>
-      <Header />
-      
-      <div style={{ background: 'orange', color: 'white', padding: '10px' }}>TEST ANNOUNCEMENT</div>
-      <Announcement />
-      
-      <div className="main-content" style={{ border: '10px solid green', minHeight: '300px', backgroundColor: '#f0f0f0' }}>
-        <h1 style={{ color: 'black', textAlign: 'center' }}>CAN YOU SEE THIS GREEN BOX?</h1>
-        
-        <div className="dashboard-grid">
-          <RiverLevel
-            currentLevel={latestReading?.distance || 0}
-            predictedLevel={latestReading?.predicted || 0}
-          />
-          <RiverTrend history={waterData} />
-          <RecentLogs logs={waterData} />
-        </div>
-      </div>
-
-      <Footer />
-      <div style={{ background: 'blue', color: 'white', padding: '10px' }}>TEST FOOTER</div>
-      
-      {popup.visible && ( 
-        <Popup message={popup.message} severity={popup.severity} buttons={popup.buttons} onClose={closePopup} /> 
       )}
     </>
   );

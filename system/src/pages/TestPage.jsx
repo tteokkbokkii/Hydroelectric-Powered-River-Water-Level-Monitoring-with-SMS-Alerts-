@@ -129,7 +129,6 @@ const TestPage = () => {
             }}>
               STATUS: {sensor.status}
             </div>
->>>>>>> 1bac044ed5bcda94cc4d04e90101482289c203b2
           </div>
         ))}
 
