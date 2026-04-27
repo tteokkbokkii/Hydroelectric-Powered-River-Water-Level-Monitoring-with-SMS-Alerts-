@@ -254,6 +254,8 @@ const ContactsTab = () => {
       showPopup('Please select a recipient', 'error');
       return;
     }
+    
+    // Find the actual contact object based on the name selected in the dropdown
     const contact = contacts.find(c => c.name === selectedRecipient);
     if (!contact) return;
 
@@ -264,15 +266,15 @@ const ContactsTab = () => {
         onClick: () => {
           closePopup();
           if (mqttClient && mqttClient.connected) {
+            
             const payload = JSON.stringify({
+              command: "SEND_TEST_SMS",
               phone: contact.phone,
               message: customMessage
             });
+            
             mqttClient.publish(SMS_COMMAND_TOPIC, payload);
-            
-            // --- BUMP COUNTER ---
             setTestCounter(prev => prev + 1);
-            
             showPopup('SMS command sent to ESP32', 'success');
           } else {
             showPopup('MQTT not connected', 'error');
