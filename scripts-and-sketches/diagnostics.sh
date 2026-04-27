@@ -1,4 +1,3 @@
-cat << 'EOF' > /home/admin/thesis/scripts-and-sketches/diagnostics.sh
 #!/bin/bash
 # Formatting Colors
 CYAN='\033[0;36m'
@@ -52,5 +51,3 @@ else
 fi 
 
 echo -e "\n${CYAN}==================================================${NC}"
-EOF
-chmod +x /home/admin/thesis/scripts-and-sketches/diagnostics.sh
