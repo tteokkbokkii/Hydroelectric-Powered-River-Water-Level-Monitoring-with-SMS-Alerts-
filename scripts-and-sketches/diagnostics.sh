@@ -33,7 +33,7 @@ echo -ne "  Database Status: "
 
 # 3. EXTERNAL STORAGE STATUS
 echo -e "\n[3] EXTERNAL DRIVE STATUS:"
-if [ -d "/media/admin/USB Drive" ]; then
+if [ -d "/media/admin/MULTIBOOT" ]; then
     echo -e "  USB Drive: ${CYAN}CONNECTED${NC}"
     df -h "/media/admin/USB Drive" | awk 'NR==2 {print "  Available: " $4}'
 else
