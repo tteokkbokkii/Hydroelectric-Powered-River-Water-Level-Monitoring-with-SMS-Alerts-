@@ -13,7 +13,8 @@ STATUS_TOPIC = "system/status"
 SETTINGS_TOPIC = "system/settings"
 CONTACTS_UPDATE_TOPIC = "contacts/update"
 CONTACTS_LIST_TOPIC = "contacts/list"
-SMS_COMMAND_TOPIC = "sms/command" # <-- ADDED: Topic for SMS intercept
+SMS_COMMAND_TOPIC = "sms/command" 
+SMS_LOG_TOPIC = "sms/log"
 MQTT_SERVER = "127.0.0.1"
 DB_PATH = "river_monitor.db"
 SETTINGS_FILE = "settings.json"
@@ -197,6 +198,31 @@ def on_message(client, userdata, msg):
             print(f"📝 Logged TEST SMS to database for {recipient_name} ({recipient_phone})")
         except Exception as e:
             print(f"Error logging SMS: {e}")
+            
+    # --- Intercept ACTUAL ESP32 Alerts and log to DB ---
+    elif msg.topic == SMS_LOG_TOPIC:
+        try:
+            data = json.loads(msg.payload.decode())
+            
+            # Extract data sent by ESP32 (fallback to defaults if missing)
+            log_type = data.get("type", "ALERT")
+            alert_level = data.get("level", "UNKNOWN")
+            water_level = data.get("water_level", 0.0)
+            recipient_phone = data.get("phone", "Unknown")
+            recipient_name = data.get("name", "Unknown Contact")
+            message = data.get("message", "Alert message sent")
+            
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute("""
+                INSERT INTO sms_logs (log_type, alert_level, water_level, recipient_name, recipient_phone, message)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (log_type, alert_level, water_level, recipient_name, recipient_phone, message))
+            conn.commit()
+            conn.close()
+            print(f"🚨 Logged ALERT SMS for {recipient_name} at level {alert_level}")
+        except Exception as e:
+            print(f"Error logging ALERT SMS: {e}")
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.on_message = on_message
@@ -207,7 +233,8 @@ try:
     client.subscribe(MQTT_TOPIC)
     client.subscribe("system/status/esp32")
     client.subscribe(CONTACTS_UPDATE_TOPIC)
-    client.subscribe(SMS_COMMAND_TOPIC) # <-- ADDED: Subscribe to new topic
+    client.subscribe(SMS_COMMAND_TOPIC) 
+    client.subscribe(SMS_LOG_TOPIC)
     
     try:
         with open(CONTACTS_FILE, 'r') as f:
