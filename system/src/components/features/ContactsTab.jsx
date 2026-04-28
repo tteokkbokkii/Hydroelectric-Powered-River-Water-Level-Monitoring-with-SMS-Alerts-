@@ -116,7 +116,6 @@ const ContactsTab = () => {
     { label: 'WARNING', value: 'WARNING' },
     { label: 'CRITICAL', value: 'CRITICAL' }
   ];
-  const [smsLogs, setSmsLogs] = useState([]);
 
   useEffect(() => {
     const fetchSmsLogs = async () => {
