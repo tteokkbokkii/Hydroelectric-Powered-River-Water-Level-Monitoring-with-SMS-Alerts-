@@ -124,8 +124,8 @@
     width: 100%;
     border-collapse: collapse;
     font-family: 'InterMedium', sans-serif;
-    text-transform: uppercase;
-    font-size: 0.95rem;
+    text-transform: none;
+    font-size: 0.75rem;
 }
 
 /* --- ADDED: Spacing for SMS logs cells --- */
