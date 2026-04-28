@@ -12,12 +12,9 @@ export const GlobalContext = createContext();
 export default function GlobalStateProvider({ children }) {
     const [latestReading, setLatestReading] = useState(null);
     const [popup, setPopup] = useState({ visible: false, message: '', severity: '', buttons: [] });
-    
-    // 2. Add state for popup preferences
     const [popupSettings, setPopupSettings] = useState({ attention: true, critical: true });
-    
-    // 3. Use a ref to prevent stale closures inside the setInterval
     const popupSettingsRef = useRef(popupSettings);
+    
     useEffect(() => {
         popupSettingsRef.current = popupSettings;
     }, [popupSettings]);
@@ -38,20 +35,19 @@ export default function GlobalStateProvider({ children }) {
                 if (Array.isArray(data) && data.length > 0) {
                     const newest = data[0];
                 
-                    // STRICT ESCALATION CHECK
-                    if (previousRangeRef.current !== null && newest.range !== previousRangeRef.current) {
-                        // 4. Wrap the popups in the context toggle checks
-                        if (previousRangeRef.current === "SAFE" && newest.range === "WARNING") {
-                            if (popupSettingsRef.current.attention) {
-                                showPopup("Water has reached the WARNING threshold! Please prepare.", "warn");
-                            }
-                        } else if (newest.range === "CRITICAL" && previousRangeRef.current !== "CRITICAL") {
-                            if (popupSettingsRef.current.critical) {
-                                showPopup("Water has reached the CRITICAL threshold! Immediate action required!", "error");
-                            }
+                // NON-STRICT CHECK
+                if (newest.range !== previousRangeRef.current) {
+                    if (newest.range === "WARNING") {
+                        if (popupSettingsRef.current.attention) {
+                            showPopup("Water has reached the WARNING threshold! Please prepare.", "warn");
                         }
-                    }
-                    
+                    } 
+                    else if (newest.range === "CRITICAL") {
+                        if (popupSettingsRef.current.critical) {
+                            showPopup("Water has reached the CRITICAL threshold! Immediate action required!", "error");
+                        }
+                    }           
+                }
                     previousRangeRef.current = newest.range;
 
                     if (newest.distance > usonic_genbox_dist && !custom31TriggeredRef.current) {
