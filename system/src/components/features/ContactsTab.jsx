@@ -484,10 +484,10 @@ const ContactsTab = () => {
                 textAlign: 'right', 
                 fontSize: '0.85rem', 
                 marginTop: '4px',
-                color: customMessage.length >= 160 ? '#d32f2f' : '#666',
-                fontWeight: customMessage.length >= 160 ? 'bold' : 'normal'
+                color: customMessage.length >= 159 ? '#d32f2f' : '#666',
+                fontWeight: customMessage.length >= 159 ? 'bold' : 'normal'
               }}>
-                {customMessage.length} / 160 characters
+                {customMessage.length} / 159 characters
               </div>
             </div>
             <div className="form-row align-center">
