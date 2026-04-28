@@ -201,9 +201,9 @@ const SystemTab = () => {
   };
 
   const handleNotificationChange = (key) => {
-    setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
+    setPopupSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
-
+  
   const saveChanges = async () => {
     setIsLoading(true);
     try {
