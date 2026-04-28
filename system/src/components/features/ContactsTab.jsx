@@ -520,13 +520,8 @@ const ContactsTab = () => {
                     <tr key={log.id || idx} className={`log-row ${log.log_type === 'ALERT' ? 'alrt' : 'maint'}`}>
                       <td className="l-time">{log.timestamp || "--:--"}</td>
                       <td className="l-tag">[{log.log_type === 'ALERT' ? 'ALERT' : 'TEST'}]</td>
-                      <td className="l-sender" style={{ lineHeight: '1.4' }}>
+                      <td className="l-sender">
                         <strong>{log.recipient_name}</strong> ({log.recipient_phone})
-                        {log.log_type === 'ALERT' && (
-                          <div style={{ fontSize: '0.85em', color: '#666', marginTop: '2px' }}>
-                            Water Lvl: {log.water_level} ft | Status: {log.alert_level}
-                          </div>
-                        )}
                       </td>
                       <td className="l-msg">{log.message}</td>
                     </tr>
