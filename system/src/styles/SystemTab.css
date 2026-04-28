@@ -397,9 +397,6 @@ input:checked + .slider:before {
   flex: 1;
   overflow-y: auto;
   padding-right: 4px;
-  min-height: 0;             /* <--- ADDED FIX */
-  display: flex;             /* <--- ADDED PRO-TIP */
-  flex-direction: column;    /* <--- ADDED PRO-TIP */
 }
 
 .custom-number-input {
