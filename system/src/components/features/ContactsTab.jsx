@@ -523,7 +523,7 @@ const ContactsTab = () => {
                       <td className="l-sender" style={{ textTransform: 'none'}}>
                         <strong>{log.recipient_name}</strong> ({log.recipient_phone})
                       </td>
-                      <td className="l-msg">{log.message}</td>
+                      <td className="l-msg" style={{ textTransform: 'none'}}>{log.message}</td>
                     </tr>
                   ))
                 )}
