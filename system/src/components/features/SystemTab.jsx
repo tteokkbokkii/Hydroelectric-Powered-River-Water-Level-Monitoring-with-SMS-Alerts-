@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Toast } from 'primereact/toast';
 import mqtt from 'mqtt';
 import '../../styles/SystemTab.css';
-
+import { GlobalContext } from './GlobalStateProvider'; 
 // ---------- Custom Number Input Component ----------
 const NumberInput = ({ value, onChange, step = 0.1, min, max, unit, decimalPlaces = 2 }) => {
   const formatValue = (val) => {
@@ -114,9 +114,7 @@ const SystemTab = () => {
   // Settings state
   const [thresholds, setThresholds] = useState({ normal: 6.5, attention: 8.0, critical: 9.5 });
   const [intervals, setIntervals] = useState({ reading: 5, predicting: 60 });
-  const [notifications, setNotifications] = useState({
-    normal: true, attention: true, critical: true, powerLoss: true, sensorDisconnect: true
-  });
+  const { popupSettings, setPopupSettings } = useContext(GlobalContext);
   
   const [isLoading, setIsLoading] = useState(false);
   const mqttClientRef = useRef(null);
@@ -239,9 +237,7 @@ const SystemTab = () => {
   const resetToDefault = () => {
     setThresholds({ normal: 6.5, attention: 8.0, critical: 9.5 });
     setIntervals({ reading: 5, predicting: 60 });
-    setNotifications({
-      normal: true, attention: true, critical: true, powerLoss: true, sensorDisconnect: true
-    });
+    setPopupSettings({ attention: true, critical: true });
     toast.current.show({ severity: 'info', summary: 'Reset', detail: 'Settings reset to defaults. Click SAVE CHANGES to apply.', life: 4000 });
   };
 
@@ -372,32 +368,33 @@ const SystemTab = () => {
               </div>
               <div className="settings-column">
                 <div className="content-group">
-                  <h3 className="SysTab-title">PUSH NOTIFICATION</h3>
-                  <div className="toggle-group">
-                    <div className="toggle-row">
-                      <span>Normal Thresholds</span>
-                      <label className="switch">
-                        <input type="checkbox" checked={notifications.normal} onChange={() => handleNotificationChange('normal')} />
-                        <span className="slider"></span>
-                      </label>
+                  <h3 className="SysTab-title">POP UP NOTIFICATIONS</h3>
+                      <div className="toggle-group">
+                        <div className="toggle-row">
+                        <span>Needs Attention</span>
+                        <label className="switch">
+                          <input 
+                          type="checkbox" 
+                          checked={popupSettings.attention} 
+                          onChange={() => handleNotificationChange('attention')} 
+                          />
+                          <span className="slider"></span>
+                        </label>
+                        </div>
+                        <div className="toggle-row">
+                          <span>Highly Critical</span>
+                          <label className="switch">
+                            <input 
+                            type="checkbox" 
+                            checked={popupSettings.critical} 
+                            onChange={() => handleNotificationChange('critical')} 
+                            />
+                            <span className="slider"></span>
+                          </label>
+                        </div>
+                      </div>
                     </div>
-                    <div className="toggle-row">
-                      <span>Needs Attention</span>
-                      <label className="switch">
-                        <input type="checkbox" checked={notifications.attention} onChange={() => handleNotificationChange('attention')} />
-                        <span className="slider"></span>
-                      </label>
-                    </div>
-                    <div className="toggle-row">
-                      <span>Highly Critical</span>
-                      <label className="switch">
-                        <input type="checkbox" checked={notifications.critical} onChange={() => handleNotificationChange('critical')} />
-                        <span className="slider"></span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <div className="settings-actions">
+                  <div className="settings-actions">
                   <button className="action-button save-btn" onClick={saveChanges} disabled={isLoading}>{isLoading ? 'SAVING...' : 'SAVE CHANGES'}</button>
                   <button className="action-button reset-btn" onClick={resetToDefault}>RESET TO DEFAULT</button>
                 </div>
