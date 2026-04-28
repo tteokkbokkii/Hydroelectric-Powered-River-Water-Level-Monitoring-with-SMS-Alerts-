@@ -279,7 +279,6 @@ const ContactsTab = () => {
     if (!contact) return;
 
     showPopup(`Send message to "${contact.name}"?`, 'info', [
-      { label: 'NO', onClick: () => {} },
       {
         label: 'YES',
         autoClose: false,
@@ -301,7 +300,8 @@ const ContactsTab = () => {
             showPopup('MQTT not connected', 'error');
           }
         }
-      }
+      },
+      { label: 'NO', onClick: () => {} }
     ]);
   };
 
