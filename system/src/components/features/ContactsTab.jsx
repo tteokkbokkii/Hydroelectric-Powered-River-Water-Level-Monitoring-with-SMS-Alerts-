@@ -477,9 +477,18 @@ const ContactsTab = () => {
               <textarea
                 className="modern-textarea"
                 value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
+                onChange={(e) => setCustomMessage(e.target.value.slice(0, 160))}
                 disabled={isSaving}
               />
+              <div style={{
+                textAlign: 'right', 
+                fontSize: '0.85rem', 
+                marginTop: '4px',
+                color: customMessage.length >= 160 ? '#d32f2f' : '#666',
+                fontWeight: customMessage.length >= 160 ? 'bold' : 'normal'
+              }}>
+                {customMessage.length} / 160 characters
+              </div>
             </div>
             <div className="form-row align-center">
               <label>SEND TO</label>
