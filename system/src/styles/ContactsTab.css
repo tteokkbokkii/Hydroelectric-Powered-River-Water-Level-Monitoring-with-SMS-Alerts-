@@ -136,8 +136,7 @@
 
 /* Column widths with extra right padding */
 .l-time {
-    min-width: 55px;
-    width: auto;
+    width: 120px;
     color: #64748b;
     padding-right: 12px;
 }
