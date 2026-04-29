@@ -70,6 +70,19 @@ def get_history():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# ---- SMS Logs Endpoint ----
+@app.route('/api/sms_logs', methods=['GET'])
+def get_sms_logs():
+    try:
+        conn = get_db_connection()
+        query = "SELECT * FROM sms_logs ORDER BY timestamp DESC LIMIT 50"
+        rows = conn.execute(query).fetchall()
+        conn.close()
+        logs = [dict(row) for row in rows]
+        return jsonify(logs)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 # ---- Settings endpoints ----
 @app.route('/api/settings', methods=['GET', 'POST'])
 def settings():
@@ -93,4 +106,4 @@ def settings():
         return jsonify({"status": "success"}), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

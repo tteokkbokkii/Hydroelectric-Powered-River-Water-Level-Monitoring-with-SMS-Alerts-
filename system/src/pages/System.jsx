@@ -14,4 +14,4 @@ function System() {
   );
 }
 
-export default System;
+export default System

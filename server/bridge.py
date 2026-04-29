@@ -13,6 +13,8 @@ STATUS_TOPIC = "system/status"
 SETTINGS_TOPIC = "system/settings"
 CONTACTS_UPDATE_TOPIC = "contacts/update"
 CONTACTS_LIST_TOPIC = "contacts/list"
+SMS_COMMAND_TOPIC = "sms/command" 
+SMS_LOG_TOPIC = "sms/log"
 MQTT_SERVER = "127.0.0.1"
 DB_PATH = "river_monitor.db"
 SETTINGS_FILE = "settings.json"
@@ -44,6 +46,7 @@ def publish_settings(client):
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
+    # Existing readings table
     c.execute('''
         CREATE TABLE IF NOT EXISTS readings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,6 +57,19 @@ def init_db():
             server_time DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    # ADDED: Ensure sms_logs table exists just in case
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS sms_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            log_type TEXT,
+            alert_level TEXT,
+            water_level REAL,
+            recipient_name TEXT,
+            recipient_phone TEXT,
+            message TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -83,12 +99,10 @@ def get_uptime_string():
 def broadcast_status(client):
     global last_esp_contact, esp32_health
     
-    # --- INTEGRATED DYNAMIC TIMEOUT ---
     current_settings = get_settings()
     interval_minutes = current_settings.get("reading_interval", 5)
     timeout_seconds = (interval_minutes * 60) + 60 
     is_alive = (time.time() - last_esp_contact) < timeout_seconds
-    # ----------------------------------
     
     status_payload = {
         "uptime": get_uptime_string(),
@@ -103,23 +117,19 @@ def broadcast_status(client):
     }
     client.publish(STATUS_TOPIC, json.dumps(status_payload), retain=True)
 
-#//////////////////////////////////////////////////////
 def publish_contacts(client):
     try:
         with open(CONTACTS_FILE, 'r') as f:
             contacts = json.load(f)
             client.publish(CONTACTS_LIST_TOPIC, json.dumps(contacts), retain=True)
     except FileNotFoundError:
-        pass # The init block at the bottom will handle creating the file
-#/////////////////////////////////////////////////////
+        pass 
 
 def heartbeat_loop(client):
     while True:
         broadcast_status(client)
         publish_settings(client)
-        #//////////////////////
         publish_contacts(client)
-        #//////////////////////
         time.sleep(2)
 
 def on_message(client, userdata, msg):
@@ -129,11 +139,9 @@ def on_message(client, userdata, msg):
         try:
             data = json.loads(msg.payload.decode())
             
-            # --- INTEGRATED ELEVATION FALLBACK ---
             distance_ft = data.get("distance")
             if distance_ft is None:
                 distance_ft = data.get("elevation")
-            # -------------------------------------
             
             predicted_ft = data.get("predicted")
             status = data.get("range")
@@ -162,7 +170,7 @@ def on_message(client, userdata, msg):
             print(f"Error saving contacts: {e}")
             
     elif msg.topic == "system/status/esp32":
-        last_esp_contact = time.time() # Added this to maintain the connection heartbeat
+        last_esp_contact = time.time() 
         try:
             data = json.loads(msg.payload.decode())
             esp32_health["online"] = data.get("online", False)
@@ -170,6 +178,51 @@ def on_message(client, userdata, msg):
             esp32_health["float"] = data.get("float", "OK")
         except Exception as e:
             print(f"Error parsing ESP32 status: {e}")
+
+    # --- ADDED: Intercept manual SMS tests and log to DB ---
+    elif msg.topic == SMS_COMMAND_TOPIC:
+        try:
+            data = json.loads(msg.payload.decode())
+            recipient_phone = data.get("phone", "Unknown")
+            recipient_name = data.get("name", "Unknown Contact")
+            message = data.get("message", "Test Message")
+            
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute("""
+                INSERT INTO sms_logs (log_type, recipient_name, recipient_phone, message)
+                VALUES (?, ?, ?, ?)
+            """, ("TEST", recipient_name, recipient_phone, message))
+            conn.commit()
+            conn.close()
+            print(f"📝 Logged TEST SMS to database for {recipient_name} ({recipient_phone})")
+        except Exception as e:
+            print(f"Error logging SMS: {e}")
+            
+    # --- Intercept ACTUAL ESP32 Alerts and log to DB ---
+    elif msg.topic == SMS_LOG_TOPIC:
+        try:
+            data = json.loads(msg.payload.decode())
+            
+            # Extract data sent by ESP32 (fallback to defaults if missing)
+            log_type = data.get("type", "ALERT")
+            alert_level = data.get("level", "UNKNOWN")
+            water_level = data.get("water_level", 0.0)
+            recipient_phone = data.get("phone", "Unknown")
+            recipient_name = data.get("name", "Unknown Contact")
+            message = data.get("message", "Alert message sent")
+            
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute("""
+                INSERT INTO sms_logs (log_type, alert_level, water_level, recipient_name, recipient_phone, message)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (log_type, alert_level, water_level, recipient_name, recipient_phone, message))
+            conn.commit()
+            conn.close()
+            print(f"🚨 Logged ALERT SMS for {recipient_name} at level {alert_level}")
+        except Exception as e:
+            print(f"Error logging ALERT SMS: {e}")
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.on_message = on_message
@@ -180,14 +233,14 @@ try:
     client.subscribe(MQTT_TOPIC)
     client.subscribe("system/status/esp32")
     client.subscribe(CONTACTS_UPDATE_TOPIC)
+    client.subscribe(SMS_COMMAND_TOPIC) 
+    client.subscribe(SMS_LOG_TOPIC)
     
-    # Publish existing contacts if any
     try:
         with open(CONTACTS_FILE, 'r') as f:
             contacts = json.load(f)
             client.publish(CONTACTS_LIST_TOPIC, json.dumps(contacts), retain=True)
     except FileNotFoundError:
-        # Create default contacts
         default_contacts = [
             {"id": 1, "name": "John Doe", "phone": "+639123456789", "alertLevel": "ALL"},
             {"id": 2, "name": "Jane Smith", "phone": "+639987654321", "alertLevel": "WARNING"},
@@ -198,7 +251,6 @@ try:
         client.publish(CONTACTS_LIST_TOPIC, json.dumps(default_contacts), retain=True)
         print("Created default contacts")
         
-    # Start heartbeat
     threading.Thread(target=heartbeat_loop, args=(client,), daemon=True).start()
     print("Bridge active. Monitoring ESP32 and System Health...")
     client.loop_forever()

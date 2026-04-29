@@ -56,30 +56,30 @@ return (
         <h1>HULO FERRY STATION</h1>
     </a>
 
-            <div className="header-right">
-                <div className='date-time-container'>
-                    <p className='date'>{formattedDate}</p>
-                    <p className='time'>{formattedTime}</p>
-                </div>
+    <div className="header-right">
+        <div className="date-time-container">
+            <p className="date">{formattedDate}</p>
+            <p className="time">{formattedTime}</p>
+        </div>
                 
-                <nav 
-                    ref={menuRef}
-                    className={`navigation-container ${isOpen ? 'active' : ''}`} 
-                    onClick={() => setIsOpen(!isOpen)}
-                >
-                    <div className='dropdown'>
-                        <button className='menu-button'>
-                            <div className='bar'></div>
-                            <div className='bar'></div>
-                            <div className='bar'></div>
-                        </button>
+        <nav 
+            ref={menuRef}
+            className={`navigation-container ${isOpen ? 'active' : ''}`} 
+            onClick={() => setIsOpen(!isOpen)}
+        >
+        <div className="dropdown">
+            <button className="menu-button">
+                <div className="bar" />
+                <div className="bar" />
+                <div className="bar" />
+            </button>
                        
-                        <div className='contents'>
-                            <Link to="/Dashboard">DASHBOARD</Link>
-                            <Link to="/History">HISTORY</Link>
-                            <Link to="/Contacts">CONTACTS</Link>
-                            <Link to="/System">SYSTEM</Link>
-                        </div>
+            <div className="contents">
+                <Link to="/Dashboard">DASHBOARD</Link>
+                <Link to="/History">HISTORY</Link>
+                <Link to="/Contacts">CONTACTS</Link>
+                <Link to="/System">SYSTEM</Link>
+           </div>
                     </div>
                 </nav>
             </div>

@@ -5,6 +5,7 @@ import mqtt from 'mqtt';
 
 const currentIP = window.location.hostname || 'rivermonitoring.local';
 const MQTT_BROKER = `ws://${currentIP}:9001`;
+const API_BASE = `http://${currentIP}:5000/api`;
 const CONTACTS_LIST_TOPIC = 'contacts/list';
 const CONTACTS_UPDATE_TOPIC = 'contacts/update';
 const SMS_COMMAND_TOPIC = 'sms/command';
@@ -115,6 +116,24 @@ const ContactsTab = () => {
     { label: 'WARNING', value: 'WARNING' },
     { label: 'CRITICAL', value: 'CRITICAL' }
   ];
+
+  useEffect(() => {
+    const fetchSmsLogs = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/sms_logs`);
+        if (response.ok) {
+          const data = await response.json();
+          setSmsLogs(data);
+        }
+      } catch (error) {
+        console.error("Error fetching SMS logs:", error);
+      }
+    };
+
+    fetchSmsLogs();
+    const logInterval = setInterval(fetchSmsLogs, 5000); 
+    return () => clearInterval(logInterval);
+  }, []);
 
   // --- Effect to update message when counter changes ---
   useEffect(() => {
@@ -254,6 +273,8 @@ const ContactsTab = () => {
       showPopup('Please select a recipient', 'error');
       return;
     }
+    
+    // Find the actual contact object based on the name selected in the dropdown
     const contact = contacts.find(c => c.name === selectedRecipient);
     if (!contact) return;
 
@@ -264,15 +285,16 @@ const ContactsTab = () => {
         onClick: () => {
           closePopup();
           if (mqttClient && mqttClient.connected) {
+            
             const payload = JSON.stringify({
+              command: "SEND_TEST_SMS",
               phone: contact.phone,
+              name: contact.name, 
               message: customMessage
             });
+            
             mqttClient.publish(SMS_COMMAND_TOPIC, payload);
-            
-            // --- BUMP COUNTER ---
             setTestCounter(prev => prev + 1);
-            
             showPopup('SMS command sent to ESP32', 'success');
           } else {
             showPopup('MQTT not connected', 'error');
@@ -455,9 +477,18 @@ const ContactsTab = () => {
               <textarea
                 className="modern-textarea"
                 value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
+                onChange={(e) => setCustomMessage(e.target.value.slice(0, 160))}
                 disabled={isSaving}
               />
+              <div style={{
+                textAlign: 'right', 
+                fontSize: '0.85rem', 
+                marginTop: '4px',
+                color: customMessage.length >= 159 ? '#d32f2f' : '#666',
+                fontWeight: customMessage.length >= 159 ? 'bold' : 'normal'
+              }}>
+                {customMessage.length} / 159 characters
+              </div>
             </div>
             <div className="form-row align-center">
               <label>SEND TO</label>
@@ -491,14 +522,20 @@ const ContactsTab = () => {
           <div className="logs-scrollable">
             <table className="logs-table">
               <tbody>
-                {smsLogs.map((log, idx) => (
-                  <tr key={idx} className={`log-row ${log.type === 'alert' ? 'alrt' : 'maint'}`}>
-                    <td className="l-time">{log.time || "--:--"}</td>
-                    <td className="l-tag">[{log.type === 'alert' ? 'ALERT' : 'MANUAL'}]</td>
-                    <td className="l-sender">{log.recipient}:</td>
-                    <td className="l-msg">{log.message}</td>
-                  </tr>
-                ))}
+                {smsLogs.length === 0 ? (
+                  <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>No SMS logs found.</td></tr>
+                ) : (
+                  smsLogs.map((log, idx) => (
+                    <tr key={log.id || idx} className={`log-row ${log.log_type === 'ALERT' ? 'alrt' : 'maint'}`}>
+                      <td className="l-time">{log.timestamp || "--:--"}</td>
+                      <td className="l-tag">[{log.log_type === 'ALERT' ? 'ALERT' : 'TEST'}]</td>
+                      <td className="l-sender" style={{ textTransform: 'none'}}>
+                        <strong>{log.recipient_name}</strong> ({log.recipient_phone})
+                      </td>
+                      <td className="l-msg" style={{ textTransform: 'none'}}>{log.message}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
