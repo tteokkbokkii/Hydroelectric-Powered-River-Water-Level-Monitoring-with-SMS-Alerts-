@@ -141,7 +141,7 @@ const TestPage = () => {
   );
 };
 
-export default TestPage;
+export default App;
 
 /*
 import {HashRouter as Router, Routes, Route} from 'react-router-dom'
