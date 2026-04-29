@@ -51,7 +51,7 @@ export default function GlobalStateProvider({ children }) {
                     previousRangeRef.current = newest.range;
 
                     if (newest.distance > usonic_genbox_dist && !custom31TriggeredRef.current) {
-                        showPopup("Notice: River level has exceeded "+String(usonic_genbox_dist)+" ft. \nPlease slide the frame up.", "error");
+                        showPopup("Notice: River level has exceeded "+String(usonic_genbox_dist)+" ft. \nPlease slide the frame up.", "info");
                         custom31TriggeredRef.current = true;
                     } else if (newest.distance <= usonic_genbox_dist && custom31TriggeredRef.current) {
                         custom31TriggeredRef.current = false;
