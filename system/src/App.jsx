@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import mqtt from 'mqtt';
 const App = () => {
-  // Initialized to 0 as requested
   const [sensors, setSensors] = useState([
     {
       id: "HULO_01",
@@ -28,7 +27,6 @@ const App = () => {
 
     client.on('connect', () => {
       console.log('TestPage connected to MQTT');
-      // Subscribe to the specific topic your ESP32 uses
       client.subscribe('sensor/hulo/reading'); 
       client.subscribe('system/status');
       client.subscribe('system/signal');
@@ -53,7 +51,6 @@ const App = () => {
               };
             }
             
-            // Map distance2 and range2 to the HSR Station B Sensor
             if (sensor.id === "HSR_02") {
               const currentLevel2 = payload.distance2 != null ? payload.distance2 : sensor.level;
               return {
@@ -73,10 +70,10 @@ const App = () => {
     });
 
     return () => {
-      try { client.end(); } catch (e) { /* ignore */ }
+      try { client.end(); } catch (e)
     };
   }, []);
-  
+
   return (
     <div style={{ padding: '20px', backgroundColor: '#F4F4F4', minHeight: '100vh', color: '#002D5A' }}>
       <header style={{ borderBottom: '1px solid #eef2f6', marginBottom: '20px' }}>
