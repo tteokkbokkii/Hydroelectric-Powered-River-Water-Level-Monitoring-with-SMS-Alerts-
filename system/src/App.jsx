@@ -70,7 +70,9 @@ const App = () => {
     });
 
     return () => {
-      try { client.end(); } catch (e)
+      try { client.end(); } catch (e) {
+        console.error("Failed to connect to MQTT client, e");
+      }
     };
   }, []);
 
