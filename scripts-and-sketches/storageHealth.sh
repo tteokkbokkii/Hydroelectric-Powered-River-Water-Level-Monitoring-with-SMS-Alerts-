@@ -5,7 +5,6 @@ MAINTENANCE_DONE=false
 
 for FILE in "${FILES[@]}"; do
     if [ -f "$FILE" ]; then
-        # If log is over 5MB, clear it
         if [ $(stat -c%s "$FILE") -gt 5242880 ]; then
             cat /dev/null > "$FILE"
             echo "[$(date)] STORAGE: Rotated log: $FILE" >> "$MAIN_LOG"
@@ -15,9 +14,8 @@ for FILE in "${FILES[@]}"; do
 done
 sudo rm -rf /tmp/*
 
-# REPORTING LOGIC
 if [ "$MAINTENANCE_DONE" = true ]; then
-    echo -e "\e[33mCLEANED\e[0m" # Yellow text if maintenance was performed
+    echo -e "\e[33mCLEANED\e[0m"
 else
     echo "ok"
 fi
