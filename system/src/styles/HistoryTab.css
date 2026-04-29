@@ -115,6 +115,7 @@
 
 .graph-footer {
     text-align: center;
+    margin-left: 47px;
     margin-bottom: 15px;
     font-size: 10px;
     color: #666;
@@ -213,12 +214,15 @@
 
     /* Chart column scroll */
     #history-column2 {
-        overflow-y: auto;
+        overflow-y: hidden; /* Hide the scrollbar completely */
+        display: flex;
+        flex-direction: column;
     }
 
     #history-column2 .chart-wrapper {
         min-height: 200px;
-        height: 100%;
+        flex: 1; 
+        min-height: 0; 
     }
 }
 

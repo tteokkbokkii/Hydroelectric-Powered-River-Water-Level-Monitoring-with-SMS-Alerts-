@@ -146,9 +146,7 @@ function Dashboard() {
           <RecentLogs logs={waterData} />
         </div>
       </div>
-
       <Footer />
-      
       {popup.visible && (
         <Popup message={popup.message} severity={popup.severity} buttons={popup.buttons} onClose={closePopup} />
       )}

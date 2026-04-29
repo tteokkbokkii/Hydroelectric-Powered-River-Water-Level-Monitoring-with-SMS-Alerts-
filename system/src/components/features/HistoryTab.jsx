@@ -278,9 +278,10 @@ const HistoryTab = () => {
             <div className="content-column" id="history-column2">
               <div className='chart-wrapper'>
                 <ResponsiveContainer width="100%" height="100%" minHeight={300}>
-                  <LineChart data={activeDisplayData} margin={{ top: 15, right: 30, left: 25, bottom: 35 }}>
+                  <LineChart data={activeDisplayData} margin={{ top: 15, right: 30, left: 25, bottom: 60 }}>
                     <CartesianGrid stroke="#f0f0f0" />
                     <XAxis
+                      height={60}
                       dataKey="displayTime"
                       minTickGap={30}
                       interval="preserveStartEnd"
@@ -288,7 +289,7 @@ const HistoryTab = () => {
                       label={{
                         value: 'time (t)',
                         position: 'insideBottom',
-                        offset: -15,
+                        offset: 45,
                         style: {
                           fontStyle: 'italic',
                           fontSize: '10px',
