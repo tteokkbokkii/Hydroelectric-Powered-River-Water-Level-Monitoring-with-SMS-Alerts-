@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
@@ -47,7 +48,7 @@ function RiverTrend({ history }) {
     const latest = formatted[formatted.length - 1];
     if (latest && latest.predicted !== null) {
       let futureTime = latest.time;
-      
+
       // Only attempt to split and add minutes if it's a valid time string
       if (futureTime && futureTime.includes(':')) {
         const [hour, minute] = futureTime.split(':').map(Number);
@@ -78,58 +79,60 @@ function RiverTrend({ history }) {
       <h2 className="card-title">RIVER TREND</h2>
       <div className="innercard-container" id='rivertrend-contents'>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            margin={{ top: 30, right: 35, left: 30, bottom: 40 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-            <XAxis
-              dataKey="time"
-              tick={{ fontSize: 11, fill: '#666' }}
-              tickMargin={15}
-              axisLine={{ stroke: '#ccc' }}
-            />
-            <YAxis
-              domain={[5, 12]}
-              ticks={[5, 6, 7, 8, 9, 10, 11, 12]}
-              tick={{ fontSize: 11, fill: '#666' }}
-              tickMargin={15}
-              axisLine={{ stroke: '#ccc' }}
-              tickFormatter={(value) => `${value} ft.`}
-            />
-            <Tooltip
-              labelFormatter={(label) => `time: ${label}`}
-              formatter={(value, name) => [`${(Number(value) || 0).toFixed(2)} ft.`, name === 'current' ? 'Actual' : 'Predicted']}
-              contentStyle={{ borderRadius: '10px', border: '1px solid #ddd', padding: '10px', fontSize: '12px' }}
-            />
-            <Legend
-              verticalAlign='top'
-              align='right'
-              iconType='plainline'
-              wrapperStyle={{ top: 10, right: 10, fontSize: '12px' }}
-              formatter={(value) => value === 'current' ? 'Actual' : 'Predicted'}
-            />
-            <Line
-              name="predicted"
-              type="monotone"
-              dataKey="predicted"
-              stroke="#002D5A"
-              strokeWidth={2}
-              dot={{ r: 3, fill: '#fff', stroke: '#002D5A', strokeWidth: 2 }}
-              isAnimationActive={false}
-              connectNulls={true}
-            />
-            <Line
-              name="current"
-              type="monotone"
-              dataKey="current"
-              stroke="#ff8f00"
-              strokeWidth={2}
-              dot={{ r: 3, fill: '#fff', stroke: '#ff8f00', strokeWidth: 2 }}
-              isAnimationActive={false}
-              connectNulls={false}
-            />
-          </LineChart>
+          <Link to="/history" style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}>
+            <LineChart
+              data={chartData}
+              margin={{ top: 30, right: 35, left: 30, bottom: 40 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+              <XAxis
+                dataKey="time"
+                tick={{ fontSize: 11, fill: '#666' }}
+                tickMargin={15}
+                axisLine={{ stroke: '#ccc' }}
+              />
+              <YAxis
+                domain={[5, 12]}
+                ticks={[5, 6, 7, 8, 9, 10, 11, 12]}
+                tick={{ fontSize: 11, fill: '#666' }}
+                tickMargin={15}
+                axisLine={{ stroke: '#ccc' }}
+                tickFormatter={(value) => `${value} ft.`}
+              />
+              <Tooltip
+                labelFormatter={(label) => `time: ${label}`}
+                formatter={(value, name) => [`${(Number(value) || 0).toFixed(2)} ft.`, name === 'current' ? 'Actual' : 'Predicted']}
+                contentStyle={{ borderRadius: '10px', border: '1px solid #ddd', padding: '10px', fontSize: '12px' }}
+              />
+              <Legend
+                verticalAlign='top'
+                align='right'
+                iconType='plainline'
+                wrapperStyle={{ top: 10, right: 10, fontSize: '12px' }}
+                formatter={(value) => value === 'current' ? 'Actual' : 'Predicted'}
+              />
+              <Line
+                name="predicted"
+                type="monotone"
+                dataKey="predicted"
+                stroke="#002D5A"
+                strokeWidth={2}
+                dot={{ r: 3, fill: '#fff', stroke: '#002D5A', strokeWidth: 2 }}
+                isAnimationActive={false}
+                connectNulls={true}
+              />
+              <Line
+                name="current"
+                type="monotone"
+                dataKey="current"
+                stroke="#ff8f00"
+                strokeWidth={2}
+                dot={{ r: 3, fill: '#fff', stroke: '#ff8f00', strokeWidth: 2 }}
+                isAnimationActive={false}
+                connectNulls={false}
+              />
+            </LineChart>
+          </Link>
         </ResponsiveContainer>
       </div>
     </div>

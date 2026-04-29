@@ -32,6 +32,7 @@ const Popup = ({ message, severity, onClose, buttons = [{ label: 'OK', onClick: 
         <div className="notification-body">
           <p>{message}</p>
         </div>
+  
         <div className="notification-footer">
           {buttons.map((btn, idx) => (
             <button
@@ -56,10 +57,10 @@ const POLL_INTERVAL = 2000; // 2 seconds
 function Dashboard() {
   const [waterData, setWaterData] = useState([]);
   const [latestReading, setLatestReading] = useState(null);
-  
+
   // Custom Popup State
   const [popup, setPopup] = useState({ visible: false, message: '', severity: '', buttons: [] });
-  
+
   // Memory to track the previous state
   const previousRangeRef = useRef(null);
 
@@ -67,6 +68,7 @@ function Dashboard() {
   const showPopup = (message, severity, buttons = [{ label: 'I UNDERSTAND', onClick: null }]) => {
     setPopup({ visible: true, message, severity, buttons });
   };
+
   const closePopup = () => {
     setPopup({ visible: false, message: '', severity: '', buttons: [] });
   };
@@ -79,7 +81,7 @@ function Dashboard() {
         setWaterData(data);
         if (data.length > 0) {
           const newest = data[0];  
-          setLatestReading(newest); 
+          setLatestReading(newest);
         }
       }
     } catch (error) {
@@ -138,12 +140,12 @@ function Dashboard() {
       
       <div className="main-content">
         <div className="dashboard-grid">
-          <RiverLevel
-            currentLevel={latestReading?.distance || 0}
-            predictedLevel={latestReading?.predicted || 0}
-          />
-          <RiverTrend history={waterData} />
-          <RecentLogs logs={waterData} />
+            <RiverLevel
+              currentLevel={latestReading?.distance || 0}
+              predictedLevel={latestReading?.predicted || 0}
+            />
+            <RiverTrend history={waterData} />
+            <RecentLogs logs={waterData} />
         </div>
       </div>
       <Footer />

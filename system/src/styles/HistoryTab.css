@@ -1,3 +1,9 @@
+.recharts-wrapper,
+.recharts-surface,
+.recharts-responsive-container:focus {
+    outline: none !important;
+}
+
 .history-page-wrapper {
     flex: 1;
     display: flex;
@@ -5,7 +11,7 @@
     min-height: 0;
     width: 100%;
     box-sizing: border-box;
-    padding-bottom: 50px; /* Matches the 50px height of the fixed footer */
+    padding-bottom: 50px;
 }
 
 .card-heading {

@@ -1,83 +1,91 @@
 /* --- Fonts & Body --- */
 @font-face {
-	font-family: InterRegular;
-	src: url('../assets/fonts/Inter_24pt-Regular.ttf') format('truetype');
+  font-family: InterRegular;
+  src: url('../assets/fonts/Inter_24pt-Regular.ttf') format('truetype');
 }
+
 @font-face {
-	font-family: InterMedium;
-	src: url('../assets/fonts/Inter_24pt-Medium.ttf') format('truetype');
+  font-family: InterMedium;
+  src: url('../assets/fonts/Inter_24pt-Medium.ttf') format('truetype');
 }
+
 @font-face {
-	font-family: InterBlack;
-	src: url('../assets/fonts/Inter_28pt-Black.ttf') format('truetype');
+  font-family: InterBlack;
+  src: url('../assets/fonts/Inter_28pt-Black.ttf') format('truetype');
 }
+
 @font-face {
-	font-family: InterExtraBold;
-	src: url('../assets/fonts/Inter_28pt-ExtraBold.ttf') format('truetype');
+  font-family: InterExtraBold;
+  src: url('../assets/fonts/Inter_28pt-ExtraBold.ttf') format('truetype');
 }
 
 html, body {
-	margin: 0;
-	padding: 0;
-	overflow-x: hidden;
-	height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  height: 100%;
 }
 
 #root {
-	display: flex;
-	flex-direction: column;
-	height: 100vh;
-	overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
-
 
 /* Main content area – scrollable */
 .main-content {
-	flex: 1;
-	overflow-y: auto;
-	padding-bottom: 60px; /* space for fixed footer */
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 60px; /* space for fixed footer */
 }
 
 /* --- Card Formatting --- */
 .card-container {
-	background-color: #F4F4F4;
-	padding: 1rem;
-	border-radius: 1em;
-	box-shadow: 0px 0px 7px #0000004b;
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-	font-family: InterMedium;
-	margin: 3px;
+  background-color: #F4F4F4;
+  padding: 1rem;
+  border-radius: 1em;
+  box-shadow: 0px 0px 7px #0000004b;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: InterMedium;
+  margin: 3px;
 }
 
 .card-title {
-	font-family: InterBlack;
-	color: #002D5A;
-	font-size: 1.48rem;
-	margin: 0 0 0.5rem 0;
-	text-align: left;
-	letter-spacing: 0.02em;
+  font-family: InterBlack;
+  color: #002D5A;
+  font-size: 1.48rem;
+  margin: 0 0 0.5rem 0;
+  text-align: left;
+  letter-spacing: 0.02em;
 }
 
 .innercard-container {
-	background-color: #ffffff;
-	flex-grow: 1;
-	border-radius: 0.8em;
-	box-shadow: 0px 0px 7px #00000016;
-	overflow: hidden;
+  background-color: #ffffff;
+  flex-grow: 1;
+  border-radius: 0.8em;
+  box-shadow: 0px 0px 7px #00000016;
+  overflow: hidden;
 }
 
 .dashboard-grid {
-	display: grid;
-	grid-template-columns: 2.3fr 3fr;
-	grid-template-rows: 2fr 1fr;
-	gap: 15px;
-	padding: 15px;
-	height: calc(100vh - 180px);
-	box-sizing: border-box;
-	overflow: hidden;
-	cursor: pointer;
+  display: grid;
+  grid-template-columns: 2.3fr 3fr;
+  grid-template-rows: 2fr 1fr;
+  gap: 15px;
+  padding: 15px;
+  height: calc(100vh - 180px);
+  box-sizing: border-box;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* Rechart rules */
+.dashboard-grid .recharts-wrapper, 
+.dashboard-grid .recharts-surface {
+  cursor: pointer !important;
 }
 
 /* Target every action button found: Add, Send, Save, and Reset */
@@ -87,14 +95,14 @@ html, body {
 .reset-btn,
 .action-button,
 .p-button {
-	background-color: #002D5A !important; /* Cohesive Navy Base */
-	color: white !important;
-	border: none !important;
-	font-weight: 700 !important; /* Bold for outdoor visibility */
-	transition: all 0.2s ease-in-out !important;
-	cursor: pointer !important;
-	padding: 0.75rem 1.5rem !important; /* Ensures consistent sizing */
-	border-radius: 4px !important;
+  background-color: #002D5A !important; /* Cohesive Navy Base */
+  color: white !important;
+  border: none !important;
+  font-weight: 700 !important; /* Bold for outdoor visibility */
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  padding: 0.75rem 1.5rem !important; /* Ensures consistent sizing */
+  border-radius: 4px !important;
 }
 
 /* Hover Effect: The Success Blue for everything */
@@ -104,9 +112,9 @@ html, body {
 .reset-btn:hover,
 .action-button:hover,
 .p-button:hover {
-	background-color: #0056b3 !important; /* Your Modal 'OK' Blue */
-	transform: translateY(-1px) !important;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  background-color: #0056b3 !important; /* Your Modal 'OK' Blue */
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Active State for physical feedback */
@@ -116,199 +124,218 @@ html, body {
 .reset-btn:active,
 .action-button:active,
 .p-button:active {
-	background-color: #003d82 !important;
-	transform: translateY(0) !important;
+  background-color: #003d82 !important;
+  transform: translateY(0) !important;
 }
 
 /* Special fix for buttons that only have an icon (like the Calendar) */
 .p-button.p-button-icon-only {
-	padding: 0 !important; /* Removes the extra space that pushed the icon out */
-	width: 3rem !important; /* Keeps the button square */
-	display: flex !important;
-	align-items: center !important;
-	justify-content: center !important;
+  padding: 0 !important; /* Removes the extra space that pushed the icon out */
+  width: 3rem !important; /* Keeps the button square */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* Ensure the icon itself is white and visible */
 .p-button.p-button-icon-only .p-button-icon {
-	color: #ffffff !important;
-	font-size: 1.2rem !important;
+  color: #ffffff !important;
+  font-size: 1.2rem !important;
 }
 
 /* Fix the Menu Hover Color specifically */
 .navigation-container .contents a:hover {
-	background-color: #0056b3 !important; /* Your Success Blue from the OK button */
-	color: #ffffff !important;
-	padding-left: 32px !important; /* Keep that smooth "nudge" effect */
-	transition: all 0.3s ease !important;
+  background-color: #0056b3 !important; /* Your Success Blue from the OK button */
+  color: #ffffff !important;
+  padding-left: 32px !important; /* Keep that smooth "nudge" effect */
+  transition: all 0.3s ease !important;
 }
-
 
 /* --- Responsiveness --- */
 @media (max-width: 768px) {
-	#title {
-		font-size: 1.1rem;
-	}
+  #title {
+    font-size: 1.1rem;
+  }
 
-	.logo {
-		width: 3.5em;
-		margin-left: 0.8em;
-	}
+  .logo {
+    width: 3.5em;
+    margin-left: 0.8em;
+  }
 
-	.date-time-container {
-		font-size: 0.9em;
-		margin-right: 0.8em;
-	}
+  .date-time-container {
+    font-size: 0.9em;
+    margin-right: 0.8em;
+  }
 
-	.navigation-container {
-		padding: 0 0.8em;
-	}
+  .navigation-container {
+    padding: 0 0.8em;
+  }
 
-	.bar {
-		width: 28px;
-		height: 3px;
-	}
+  .bar {
+    width: 28px;
+    height: 3px;
+  }
 }
 
 @media (max-width: 480px) {
-	#title {
-		font-size: 0.9rem;
-	}
+  #title {
+    font-size: 0.9rem;
+  }
 
-	.date-time-container {
-		display: none;
-	}
+  .date-time-container {
+    display: none;
+  }
 }
 
 /* Make dashboard grid responsive */
 @media (max-width: 1024px) {
-	.dashboard-grid {
-		grid-template-columns: 1fr !important;
-		grid-template-rows: auto auto auto !important;
-		height: auto !important;
-		gap: 20px;
-		padding: 15px;
-		overflow: visible !important;
-	}
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto auto !important;
+    height: auto !important;
+    gap: 20px;
+    padding: 15px;
+    overflow: visible !important;
+  }
 
-	.card-container {
-		min-height: 400px;
-	}
+  .card-container {
+    min-height: 400px;
+  }
 
-	/* Ensure the main content scrolls on mobile */
-	.main-content {
-		overflow-y: auto;
-		height: auto;
-		min-height: 100vh;
-		padding-bottom: 60px;
-	}
+  /* Ensure the main content scrolls on mobile */
+  .main-content {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
 }
 
 @media (max-width: 768px) {
-	.dashboard-grid {
-		gap: 15px;
-	}
+  .dashboard-grid {
+    gap: 15px;
+  }
 
-	.card-title {
-		font-size: 1.2rem;
-	}
+  .card-title {
+    font-size: 1.2rem;
+  }
 }
 
 /* --- Global Popup / Notification Styles (moved from component CSS) --- */
 .notification-overlay {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: rgba(0, 0, 0, 0.5);
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	z-index: 9999;
-	animation: fadeIn 0.2s ease-in;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-in;
 }
+
 @keyframes fadeIn {
-	from { opacity: 0; }
-	to { opacity: 1; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
+
 .notification-card {
-	position: relative;
-	background: white;
-	border-radius: 12px;
-	box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-	width: 90%;
-	max-width: 400px;
-	animation: slideUp 0.3s ease-out;
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  width: 90%;
+  max-width: 400px;
+  animation: slideUp 0.3s ease-out;
 }
+
 @keyframes slideUp {
-	from { transform: translateY(20px); opacity: 0; }
-	to { transform: translateY(0); opacity: 1; }
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
+
 .notification-close-x {
-	position: absolute;
-	top: 12px;
-	right: 12px;
-	background: none;
-	border: none;
-	font-size: 24px;
-	cursor: pointer;
-	color: #666;
-	line-height: 1;
-	padding: 0;
-	width: 24px;
-	height: 24px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: 50%;
-	transition: background 0.2s;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
 }
-.notification-close-x:hover { background: #f0f0f0; color: #333; }
+
+.notification-close-x:hover { 
+  background: #f0f0f0; 
+  color: #333;
+}
+
 .notification-header {
-	padding: 20px 20px 0 20px;
-	border-bottom: 1px solid #eef2f6;
+  padding: 20px 20px 0 20px;
+  border-bottom: 1px solid #eef2f6;
 }
+
 .notification-header h3 {
-	margin: 0;
-	font-size: 1.2rem;
-	font-weight: bold;
-	font-family: InterBlack, sans-serif;
-	text-transform: uppercase;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  font-family: InterBlack, sans-serif;
+  text-transform: uppercase;
 }
+
 .notification-card.error .notification-header h3 { color: #dc2626; }
 .notification-card.warn .notification-header h3 { color: #f59e0b; }
 .notification-card.info .notification-header h3 { color: #002D5A; }
 .notification-card.success .notification-header h3 { color: #10b981; }
+
 .notification-body {
-	padding: 20px;
-	text-align: center;
-	font-size: 1rem;
-	line-height: 1.5;
-	color: #333;
-	font-family: InterMedium, sans-serif;
+  padding: 20px;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #333;
+  font-family: InterMedium, sans-serif;
 }
+
 .notification-footer {
-	padding: 0 20px 20px 20px;
-	display: flex;
-	justify-content: flex-end;
-	gap: 10px;
+  padding: 0 20px 20px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
+
 .notification-primary-btn, .notification-secondary-btn {
-	background-color: #002D5A;
-	color: white;
-	border: none;
-	border-radius: 6px;
-	padding: 8px 24px;
-	font-weight: bold;
-	cursor: pointer;
-	font-family: InterMedium, sans-serif;
-	transition: background 0.2s;
+  background-color: #002D5A;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 24px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: InterMedium, sans-serif;
+  transition: background 0.2s;
 }
+
 .notification-primary-btn:hover { background-color: #005bb5; }
 .notification-secondary-btn { background-color: #e9ecef; color: #333; }
 .notification-secondary-btn:hover { background-color: #d0d5db; }
 
 /* --- Global tab-panel scrollbar (used by multiple tab panels) --- */
-.tab-panel::-webkit-scrollbar { width: 6px; }
-.tab-panel::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.2); border-radius: 3px; }
+.tab-panel::-webkit-scrollbar { 
+  width: 6px; 
+}
+.tab-panel::-webkit-scrollbar-thumb { 
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 3px; 
+}

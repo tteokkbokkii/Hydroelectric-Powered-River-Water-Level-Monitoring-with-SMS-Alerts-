@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   BarChart, 
   Bar, 
@@ -59,7 +60,9 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
       <div id="riverlevel-card-header">
         <h2 className="card-title">LIVE LEVEL OF RIVER WATER</h2>
         <div className="status-indicator" style={{ backgroundColor: statusColor }}>
-          {statusLabel}
+          <Link to="/System" style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}>
+            {statusLabel}
+          </Link>
         </div>
       </div>
 
@@ -67,7 +70,8 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
         className="innercard-container"
         id="riverlevel-contents"
         style={{ position: 'relative' }}
-      >{/* Readings with visibility shadows */}
+      > {/* FIX: Added missing closing bracket here */}
+        
         <div className="live-expected">
           <p>PREDICTED</p>
           <h1
@@ -78,6 +82,7 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
             {(Number(displayPredicted) || 0).toFixed(2)} ft.
           </h1>
         </div>
+        
         <div className="live-current">
           <p>CURRENT</p>
           <h1
@@ -91,42 +96,44 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
 
         {/* MAIN CHART LAYER */}
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            barGap="-100%"
-            barCategoryGap={0}
-            margin={{ top: 0, bottom: 0, left: 0, right: 0 }}
-          >
-            <XAxis
-              hide
-              dataKey="time"
-            />
-            <YAxis
-              hide
-              domain={[4.125, 12.875]}
-            />
+          <Link to="/history" style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}>
+            <BarChart
+              data={chartData}
+              barGap="-100%"
+              barCategoryGap={0}
+              margin={{ top: 0, bottom: 0, left: 0, right: 0 }}
+            >
+              <XAxis
+                hide
+                dataKey="time"
+              />
+              <YAxis
+                hide
+                domain={[4.125, 12.875]}
+              />
 
-            <Bar
-              dataKey="predicted"
-              fill="#abd9ff"
-              isAnimationActive={false}
-            />
-            <Bar
-              dataKey="current"
-              fill="#002d5a"
-              stroke="#002d5a"
-              strokeWidth={1}
-              isAnimationActive={false}
-            />
+              <Bar
+                dataKey="predicted"
+                fill="#abd9ff"
+                isAnimationActive={false}
+              />
+              <Bar
+                dataKey="current"
+                fill="#002d5a"
+                stroke="#002d5a"
+                strokeWidth={1}
+                isAnimationActive={false}
+              />
 
-            <ReferenceLine
-              y={calibrate(displayPredicted)}
-              stroke="#abd9ff"
-              strokeWidth={3}
-              strokeDasharray={displayPredicted < displayLevel ? '5 5' : '0'}
-              strokeOpacity={displayPredicted === displayLevel ? 0 : 1}
-            />
-          </BarChart>
+              <ReferenceLine
+                y={calibrate(displayPredicted)}
+                stroke="#abd9ff"
+                strokeWidth={3}
+                strokeDasharray={displayPredicted < displayLevel ? '5 5' : '0'}
+                strokeOpacity={displayPredicted === displayLevel ? 0 : 1}
+              />
+            </BarChart>
+          </Link>
         </ResponsiveContainer>
 
         {/* SVG GAUGE OVERLAY */}
@@ -167,20 +174,23 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
             const yPos = `${getVisualY(val)}%`;
             const isWhole = val % 1 === 0;
             const isHalf = val % 1 === 0.5;
-            
+
             const isSubmerged = displayLevel >= val;
             const activeColor = isSubmerged ? "white" : "black";
-            
+
             // Contrast shadow: Dark shadow for white text, Light shadow for dark text
             const shadowColor = isSubmerged ? 'rgba(0,45,90,0.8)' : 'rgba(255,255,255,0.8)';
 
             let xStart, xEnd;
             if (isWhole) {
-              xStart = "45%"; xEnd = "55%";
+              xStart = "45%";
+              xEnd = "55%";
             } else if (isHalf) {
-              xStart = "46.5%"; xEnd = "53.5%";
+              xStart = "46.5%";
+              xEnd = "53.5%";
             } else {
-              xStart = "48%"; xEnd = "52%";
+              xStart = "48%";
+              xEnd = "52%";
             }
 
             return (
