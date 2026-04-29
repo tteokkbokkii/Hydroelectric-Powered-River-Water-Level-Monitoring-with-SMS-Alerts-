@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import mqtt from 'mqtt';
-const TestPage = () => {
+const App = () => {
   // Initialized to 0 as requested
   const [sensors, setSensors] = useState([
     {
       id: "HULO_01",
       name: "Hulo Ferry Station",
-      type: "Ultrasonic (Main)",
+      type: "JSN-SR04T Ultrasonic Sensor (Main)",
       level: 0,
       predicted: 0,
       status: "WAITING"
