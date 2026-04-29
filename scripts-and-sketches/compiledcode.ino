@@ -87,27 +87,34 @@ void connectToPriorityNetwork() {
         {"bruv", "12345qtq"},
         {"hellnahv", "secretnoclue"}
     };
+
     Serial.println("\n--- WiFi Connection Phase ---");
-    for (int i = 0; i < 10; i++) {
-        if (list[i].ssid == ""){
-            break;
-        }
+
+    int totalNetworks = sizeof(list) / sizeof(list[0]); // 🔧 FIXED
+
+    for (int i = 0; i < totalNetworks; i++) {
         WiFi.disconnect();
         delay(100);
-        Serial.printf("Attempting [%d/3]: %s\n", i+1, list[i].ssid);
+
+        Serial.printf("Attempt [%d/%d]: %s\n", i+1, totalNetworks, list[i].ssid);
+
         WiFi.begin(list[i].ssid, list[i].pass);
+
         int retry = 0;
         while (WiFi.status() != WL_CONNECTED && retry < 10) {
             delay(500);
             Serial.print(".");
             retry++;
         }
+
         if (WiFi.status() == WL_CONNECTED) {
             Serial.printf("\n✅ WiFi Connected! IP: %s\n", WiFi.localIP().toString().c_str());
             return;
         }
+
         Serial.println("\n❌ Network not found.");
     }
+
     WiFiManager wm;
     if(!wm.startConfigPortal("Hulo-Sensor-Setup", "hulo2026")) {
         delay(3000); ESP.restart();
@@ -146,7 +153,7 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
         int retryCount = 0;
 
         // Keep trying to send to this specific contact until successful
-        while (!isSent || retryCount < 3) {
+        while (!isSent && retryCount < 3) {
             if (retryCount > 0) {
                 Serial.println("🔄 Retrying message to [" + contacts[i].phone + "] (Attempt " + String(retryCount + 1) + ")...");
                 delay(3000); // 3-second breather before trying again
@@ -162,6 +169,7 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
             bool promptReceived = false;
             
             while(millis() - waitStart < 5000) { 
+                client.loop(); // 🔧 KEEP MQTT ALIVE
                 if(Serial2.available()) {
                     if(Serial2.read() == '>') {
                         promptReceived = true;
@@ -169,6 +177,7 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
                     }
                 }
             }
+
 
             if (promptReceived) {
                 Serial2.print(text);
@@ -234,12 +243,10 @@ void initGSM() {
 
 // ---------- Logic & Prediction ----------
 void addToHistory(float lvl) {
-    if (rtc.begin()) {
-        history_time[history_index] = rtc.now().unixtime();
-        history_level[history_index] = lvl;
-        history_index = (history_index + 1) % MAX_HISTORY;
-        if (history_count < MAX_HISTORY) history_count++;
-    }
+    history_time[history_index] = rtc.now().unixtime(); // 🔧 REMOVED rtc.begin()
+    history_level[history_index] = lvl;
+    history_index = (history_index + 1) % MAX_HISTORY;
+    if (history_count < MAX_HISTORY) history_count++;
 }
 
 float predictLevel() {
@@ -385,32 +392,38 @@ void setup() {
         Serial.println("✅ SETUP SANITY CHECK PASSED: Ultrasonic sensor normal.");
     }
 
-    // --- RE-ESTABLISH CONNECTION IF LOST ---
-    if (!client.connected()) {
-        Serial.println("Reconnecting to MQTT...");
-        client.connect("HuloESP32"); 
-    }
-    
-    // Process background MQTT traffic to keep the connection from dropping again
-    client.loop();
-    // --- IMMEDIATELY PUBLISH BOOT-UP HEALTH STATUS ---
     Serial.println("Connecting to MQTT to broadcast boot-up health...");
-    if (client.connected()) {
-        client.subscribe(settings_topic);
-        client.subscribe("contacts/list");
-        client.subscribe(sms_command_topic);
-        
-        StaticJsonDocument<128> healthDoc;
-        healthDoc["online"] = true;
-        healthDoc["ultrasonic"] = ultraStatus;
-        healthDoc["float"] = "OK"; 
-        
-        char healthBuf[128];
-        serializeJson(healthDoc, healthBuf);
-        client.publish(esp_health_topic, healthBuf);
-        Serial.println("📤 Initial Health Status pushed to Dashboard.");
-    } else {
-        Serial.println("⚠️ Still could not connect to MQTT at setup. Will retry in main loop.");
+    int mqttretry = 0;
+
+    while (!client.connected() && mqttretry < 3) {
+        Serial.println("Reconnecting to MQTT...");
+
+        if (client.connect("HuloESP32")) {
+            Serial.println("✅ MQTT connected!");
+
+            client.subscribe(settings_topic);
+            client.subscribe("contacts/list");
+            client.subscribe(sms_command_topic);
+
+            StaticJsonDocument<192> healthDoc;
+            healthDoc["online"] = true;
+            healthDoc["ultrasonic"] = ultraStatus;
+            healthDoc["float"] = "OK"; 
+
+            char healthBuf[192];
+            serializeJson(healthDoc, healthBuf);
+
+            client.publish(esp_health_topic, healthBuf);
+            Serial.println("📤 Initial Health Status pushed to Dashboard.");
+
+            break; // stop retrying once connected
+        } 
+        else {
+            Serial.print("❌ Failed, rc=");
+            Serial.println(client.state()); 
+            mqttretry++;
+            delay(2000); 
+        }
     }
     Serial.println("--- Setup Complete ---\n");
 }
@@ -538,15 +551,10 @@ void loop() {
                         (c == (elev_ft >= threshold_critical_ft));
         bool validated = (ultraStatus == "OK") && (valid_range || float_match_threshold);
 
-        String cleanRange = (elev_ft >= threshold_critical_ft) ?
-            "CRITICAL" :
-                            (elev_ft >= threshold_attention_ft) ?
-            "WARNING" : "SAFE";
-
         String range = (elev_ft >= threshold_critical_ft) ?
-            "🔴 CRITICAL" :
+            "CRITICAL" :
                        (elev_ft >= threshold_attention_ft) ?
-            "🟠 WARNING" : "🟢 SAFE";
+            "WARNING" : "SAFE";
         
         if (validated == true) {
             if (forcePublish || millis() - lastPublish > publish_interval_ms || lastPublish == 0) {
@@ -581,19 +589,32 @@ void loop() {
                 Serial.println(buffer);
                 client.publish(mqtt_topic, buffer);
                 Serial.println(distcm);
-                String emoji = "";
-                if (cleanRange != lastAlertRange && cleanRange != "SAFE") {
-                    if (range == "CRITICAL")        { emoji = "🔴";}
-                    else if (range == "WARNING")    { emoji = "🟠";}
-                    
-                    String alertMsg = 
-                        "===Hulo River Level Alert===\n" + emoji + range + "!\nLevel: " + String(elev_ft, 2) + "ft.";
-                        
-                    // <--- PASSED elev_ft TO sendBulkSMS --->
-                    sendBulkSMS(alertMsg, cleanRange, elev_ft);
-                    
-                    lastAlertRange = cleanRange;
-                } else {
+                if (range != lastAlertRange && range != "SAFE") {
+                    String alertMsg = "===Hulo River Level Alert===\n" + range + "!\nLevel: " + String(elev_ft, 2) + "ft.";
+                    sendBulkSMS(alertMsg, range, elev_ft);
+                    lastAlertRange = range;
+                }
+                if (range != lastAlertRange && range != "SAFE") {
+                    String alertMsg = "";
+                    DateTime now = rtc.now();
+
+                    if (range == "CRITICAL") {
+                        alertMsg = "Good Day!\n\n"
+                                "The Hulo River level is critical. It is suggested to stop all operations and evacuate immediately.\n\n"
+                                "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n"
+                                "Water Level: " + String(elev_ft, 2) + " FT\n"
+                                "Alert Interpretation: CRITICAL";
+                    } else if (range == "WARNING") {
+                        alertMsg = "Good Day!\n\n"
+                                "The Hulo River level is rising. It is suggested to consult the Coast Guard for a professional assessment.\n\n"
+                                "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n"
+                                "Water Level: " + String(elev_ft, 2) + " FT\n"
+                                "Alert Interpretation: WARNING";
+                    }
+                    sendBulkSMS(alertMsg, range);
+                    lastAlertRange = range;
+                }
+                 else {
                     Serial.println("range unchanged, no message sent.");
                 }
                 
