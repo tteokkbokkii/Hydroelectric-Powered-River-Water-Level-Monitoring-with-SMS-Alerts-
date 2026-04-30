@@ -32,6 +32,12 @@ bash /home/admin/thesis/scripts-and-sketches/databaseHealth.sh
 
 # 3. EXTERNAL STORAGE STATUS
 echo -e "\n[3] EXTERNAL DRIVE STATUS:"
+USB_DEV=$(lsblk -no NAME,MOUNTPOINT | grep -E "sda1|sdb1" | awk '$2=="" {print "/dev/"$1}')
+if [ ! -z "$USB_DEV" ]; then
+    sudo mkdir -p /media/admin/MULTIBOOT
+    sudo mount "$USB_DEV" /media/admin/MULTIBOOT > /dev/null 2>&1
+fi
+
 if [ -d "/media/admin/MULTIBOOT" ]; then
     printf "  %-20s ${CYAN}%s${NC}\n" "USB Drive:" "CONNECTED"
     df -h "/media/admin/MULTIBOOT" | awk 'NR==2 {printf "  %-20s %s\n", "Available:", $4}'
