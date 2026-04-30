@@ -13,14 +13,11 @@ NC='\033[0m' # No Color
 pkill -f "python3 bridge.py"
 pkill -f "python3 app.py"
 pkill -f "http.server"
-pkill -f "databaseManager.sh"
 
 clear
 echo -e "${CYAN}==========================================${NC}"
 echo -e "${CYAN}   RIVER MONITORING SYSTEM: MASTER BOOT   ${NC}"
 echo -e "${CYAN}==========================================${NC}"
-
-BASE_DIR="/home/admin/thesis"
 
 # --- NETWORK SELECTION ---
 echo -e "${YELLOW}Select Network Mode:${NC}"
