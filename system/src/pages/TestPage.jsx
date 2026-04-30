@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import mqtt from 'mqtt';
 const TestPage = () => {
-  // Initialized to 0 as requested
   const [sensors, setSensors] = useState([
     {
       id: "HULO_01",
       name: "Hulo Ferry Station",
-      type: "Ultrasonic (Main)",
+      type: "JSN-SR04T Ultrasonic Sensor (Main)",
       level: 0,
       predicted: 0,
       status: "WAITING"
@@ -14,7 +13,7 @@ const TestPage = () => {
     {
       id: "HSR_02",
       name: "HSR Station B",
-      type: "HSR Ultrasonic",
+      type: "HR-SR04 Ultrasonic Sensor",
       level: 0,
       predicted: 0,
       status: "WAITING"
@@ -28,7 +27,7 @@ const TestPage = () => {
 
     client.on('connect', () => {
       console.log('TestPage connected to MQTT');
-      client.subscribe('sensor/+/reading');
+      client.subscribe('sensor/hulo/reading'); 
       client.subscribe('system/status');
       client.subscribe('system/signal');
     });
@@ -37,37 +36,33 @@ const TestPage = () => {
       try {
         const payload = JSON.parse(message.toString());
 
-        if (topic.startsWith('sensor/')) {
-          const parts = topic.split('/');
-          const key = parts[1] || 'unknown'; 
-          const prefix = key.toUpperCase();
-
-          setSensors(prev => {
-            const idx = prev.findIndex(s => s.id.startsWith(prefix));
+        // Process the combined payload from your ESP32
+        if (topic === 'sensor/hulo/reading') {
+          setSensors(prev => prev.map(sensor => {
             
-            // FUNCTIONALITY: Level is payload or 0. Predicted is level + 0.5.
-            const currentLevel = payload.distance != null ? payload.distance : 0;
-            const simplifiedPrediction = currentLevel > 0 ? currentLevel + 0.5 : 0;
-
-            if (idx !== -1) {
-              return prev.map(s => s.id === prev[idx].id ? {
-                ...s,
-                level: currentLevel,
-                predicted: simplifiedPrediction,
-                status: payload.range ?? s.status
-              } : s);
+            // Map distance1 and range1 to the Main Hulo Sensor
+            if (sensor.id === "HULO_01") {
+              const currentLevel1 = payload.distance1 != null ? payload.distance1 : sensor.level;
+              return {
+                ...sensor,
+                level: currentLevel1,
+                predicted: currentLevel1 > 0 ? currentLevel1 + 0.5 : 0,
+                status: payload.range1 ?? sensor.status
+              };
+            }
+            
+            if (sensor.id === "HSR_02") {
+              const currentLevel2 = payload.distance2 != null ? payload.distance2 : sensor.level;
+              return {
+                ...sensor,
+                level: currentLevel2,
+                predicted: currentLevel2 > 0 ? currentLevel2 + 0.5 : 0,
+                status: payload.range2 ?? sensor.status
+              };
             }
 
-            const newSensor = {
-              id: `${prefix}_01`,
-              name: `${key.charAt(0).toUpperCase() + key.slice(1)} Station`,
-              type: 'Ultrasonic',
-              level: currentLevel,
-              predicted: simplifiedPrediction,
-              status: payload.range ?? 'UNKNOWN'
-            };
-            return [newSensor, ...prev];
-          });
+            return sensor; // Return any other sensors unchanged
+          }));
         }
       } catch (e) {
         console.error('Failed to parse MQTT message', topic, e);
@@ -75,7 +70,9 @@ const TestPage = () => {
     });
 
     return () => {
-      try { client.end(); } catch (e) { /* ignore */ }
+      try { client.end(); } catch (e) {
+        console.error("Failed to connect to MQTT client, e");
+      }
     };
   }, []);
 
@@ -142,3 +139,4 @@ const TestPage = () => {
 };
 
 export default TestPage;
+
