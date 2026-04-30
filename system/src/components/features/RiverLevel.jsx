@@ -19,15 +19,15 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
   const displayLevel = currentLevel || 0;
   const displayPredicted = predictedLevel || 0;
 
-  const [thresholds, setThresholds] = useState({ attention: 8.0, critical: 9.5 });
+  const [thresholds, setThresholds] = useState({ attention: 10.0, critical: 11.0 });
 
   useEffect(() => {
     fetch(`${API_BASE}/settings`)
       .then(res => res.json())
       .then(data => {
         setThresholds({
-          attention: parseFloat(data.threshold_attention) || 8.0,
-          critical: parseFloat(data.threshold_critical) || 9.5
+          attention: parseFloat(data.threshold_attention) || 10.0,
+          critical: parseFloat(data.threshold_critical) || 11.0
         });
       })
       .catch(err => console.error('Error fetching thresholds:', err));

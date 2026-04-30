@@ -30,7 +30,7 @@ const char* sms_command_topic = "sms/command";
 const char* esp_health_topic = "system/status/esp32";
 const char* sms_log_topic = "sms/log";
 
-float threshold_normal_ft = 9.0, threshold_attention_ft = 9.5, threshold_critical_ft = 10.0;
+float threshold_normal_ft = 9.0, threshold_attention_ft = 10.0, threshold_critical_ft = 11.0;
 int reading_interval_min = 5;
 bool settingsReceived = false, contactsReceived = false, gsmReady = false;
 String lastAlertRange = "";
@@ -44,7 +44,7 @@ Contact contacts[20];
 int contactCount = 0;
 
 float distcm = 270;
-float temp_threshold_normal_ft = 6.5, temp_threshold_attention_ft = 8.0, temp_threshold_critical_ft = 9.5;
+float temp_threshold_normal_ft = 9.0, temp_threshold_attention_ft = 10.0, temp_threshold_critical_ft = 11.0;
 int temp_reading_interval_min = 5;
 
 bool newSettingsAvailable = false;
@@ -73,7 +73,7 @@ void connectToPriorityNetwork() {
         const char* pass;
     };
     Network list[] = {
-        {"River-Monitor","thesis2026"},
+        {"River-Monitor", "thesis2026"},
         {"Raspberry-Fi", "Hulo2026"}
     };
 
@@ -347,6 +347,8 @@ void setup() {
     client.setCallback(callback);
     client.setBufferSize(1024);
     
+    client.setKeepAlive(60);
+    
     Serial.println("\n--- Performing Initial Sensor Sanity Check ---");
     float duration = 0;
     int attempts = 0;
@@ -540,7 +542,10 @@ void loop() {
         bool c = !digitalRead(FLOATER_CRITICAL);
 
         bool valid_range = (elev_ft >= 2.0 && elev_ft < threshold_normal_ft);
-        bool float_match_threshold = (s == (elev_ft >= threshold_normal_ft)) && (w == (elev_ft >= threshold_attention_ft)) && (c == (elev_ft >= threshold_critical_ft));
+        bool float_match_threshold = 
+            (s == (elev_ft >= threshold_normal_ft)) &&
+            (w == (elev_ft >= threshold_attention_ft)) && 
+            (c == (elev_ft >= threshold_critical_ft));
         bool validated = (ultraStatus == "OK") && (valid_range || float_match_threshold);
 
         String range = (elev_ft >= threshold_critical_ft) ? "CRITICAL" : (elev_ft >= threshold_attention_ft) ? "WARNING" : "SAFE";
@@ -612,8 +617,9 @@ void loop() {
         }
         else {
             Serial.println("❌ Validation Error: Reading suppressed.");
-            Serial.println("dist Streak (Bad/Good): " + String(consecutive_bad) + "/" + String(consecutive_good) + " | Status: " + ultraStatus + " | elev_ft: " + String(elev_ft) + " | distcm: "+distcm+" | Floaters: s = " + s + " w = " + w + " c = " + c);
-             
+            Serial.println("dist Streak (Bad/Good): " + String(consecutive_bad) + "/" + String(consecutive_good) + 
+                " | sensorStatus: " + ultraStatus + " | elev_ft: " + String(elev_ft) + " | distcm: "+distcm + 
+                " | Floaters: s = " + s + " w = " + w + " c = " + c);
             Serial.println("⚠️ Bad reading dropped. Waiting for next interval or valid recovery.");
         }
         

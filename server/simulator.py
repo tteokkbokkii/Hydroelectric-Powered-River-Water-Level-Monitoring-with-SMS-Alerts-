@@ -87,9 +87,9 @@ while True:
     
     # 3. Determine Range based on default thresholds
     status_range = "SAFE"
-    if current_level >= 9.5: 
+    if current_level >= 11.0: 
         status_range = "CRITICAL"
-    elif current_level >= 8.0: 
+    elif current_level >= 10.0: 
         status_range = "WARNING"
 
     # 4. Prepare Sensor Payload

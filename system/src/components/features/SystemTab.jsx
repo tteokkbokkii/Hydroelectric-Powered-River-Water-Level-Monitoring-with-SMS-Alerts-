@@ -112,7 +112,7 @@ const SystemTab = () => {
   });
 
   // Settings state
-  const [thresholds, setThresholds] = useState({ normal: 6.5, attention: 8.0, critical: 9.5 });
+  const [thresholds, setThresholds] = useState({ normal: 9.0, attention: 10.0, critical: 11.0 });
   const [intervals, setIntervals] = useState({ reading: 5, predicting: 60 });
   const { popupSettings, setPopupSettings } = useContext(GlobalContext);
   
@@ -126,9 +126,9 @@ const SystemTab = () => {
       .then(res => res.json())
       .then(data => {
         setThresholds({
-          normal: parseFloat(data.threshold_normal) || 6.5,
-          attention: parseFloat(data.threshold_attention) || 8.0,
-          critical: parseFloat(data.threshold_critical) || 9.5
+          normal: parseFloat(data.threshold_normal) || 9.0,
+          attention: parseFloat(data.threshold_attention) || 10.0,
+          critical: parseFloat(data.threshold_critical) || 11.0
         });
         setIntervals({
           reading: data.reading_interval,
@@ -235,7 +235,7 @@ const SystemTab = () => {
   };
 
   const resetToDefault = () => {
-    setThresholds({ normal: 6.5, attention: 8.0, critical: 9.5 });
+    setThresholds({ normal: 9.0, attention: 10.0, critical: 11.0 });
     setIntervals({ reading: 5, predicting: 60 });
     setPopupSettings({ attention: true, critical: true });
     toast.current.show({ severity: 'info', summary: 'Reset', detail: 'Settings reset to defaults. Click SAVE CHANGES to apply.', life: 4000 });

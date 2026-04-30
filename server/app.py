@@ -92,9 +92,9 @@ def settings():
                 return jsonify(json.load(f))
         except FileNotFoundError:
             return jsonify({
-                "threshold_normal": 6.5,
-                "threshold_attention": 8.0,
-                "threshold_critical": 9.5,
+                "threshold_normal": 9.0,
+                "threshold_attention": 10.0,
+                "threshold_critical": 11.0,
                 "reading_interval": 5,
                 "predicting_interval": 60
             })
