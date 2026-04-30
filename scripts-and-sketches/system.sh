@@ -90,11 +90,11 @@ BASE_DIR="/home/admin/thesis"
 
 cd "$BASE_DIR/server"
 source venv/bin/activate
-python3 bridge.py > ~/bridge.log 2>&1 &
+python3 /home/admin/thesis/scripts-and-sketches/bridge.py > ~/bridge.log 2>&1 &
 echo -e "✅ ${GREEN}Bridge:${NC} Listening for ESP32..."
 
 # 2. Start API (DB -> Dashboard)
-python3 app.py > ~/api.log 2>&1 &
+python3 /home/admin/thesis/scripts-and-sketches/app.py > ~/api.log 2>&1 &
 echo -e "✅ ${GREEN}API:${NC}    Ready on Port 5000"
 
 # 3. Start UI (Production Build)
