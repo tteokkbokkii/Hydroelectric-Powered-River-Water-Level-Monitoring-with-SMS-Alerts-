@@ -95,7 +95,7 @@ cd "$BASE_DIR" # Ensure we are in the correct root
 echo -e "✅ ${GREEN}Bridge:${NC} Listening for ESP32..."
 
 # 2. Start API
-python3 /home/admin/thesis/server/app.py > ~/api.log 2>&1 &
+/usr/bin/python3 /home/admin/thesis/server/app.py > ~/api.log 2>&1 &
 echo -e "✅ ${GREEN}API:${NC}    Ready on Port 5000"
 
 # 3. Start UI
