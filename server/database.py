@@ -1,7 +1,7 @@
 import sqlite3
 
 def init_db():
-    conn = sqlite3.connect("river_monitor.db")
+    conn = sqlite3.connect("/home/admin/thesis/server/river_monitor.db")
     cursor = conn.cursor()
     
     # Existing readings table
