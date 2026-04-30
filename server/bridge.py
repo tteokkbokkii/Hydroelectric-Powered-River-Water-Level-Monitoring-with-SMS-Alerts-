@@ -16,7 +16,7 @@ CONTACTS_LIST_TOPIC = "contacts/list"
 SMS_COMMAND_TOPIC = "sms/command" 
 SMS_LOG_TOPIC = "sms/log"
 MQTT_SERVER = "127.0.0.1"
-DB_PATH = "river_monitor.db"
+DB_PATH = "/home/admin/thesis/server/river_monitor.db"
 SETTINGS_FILE = "settings.json"
 CONTACTS_FILE = "contacts.json"
 

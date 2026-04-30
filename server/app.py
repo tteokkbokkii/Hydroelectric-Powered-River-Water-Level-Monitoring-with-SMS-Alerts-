@@ -6,7 +6,7 @@ import json
 app = Flask(__name__)
 CORS(app)
 
-DB_PATH = 'river_monitor.db'
+DB_PATH = '/home/admin/thesis/server/river_monitor.db'
 SETTINGS_FILE = 'settings.json'
 
 def get_db_connection():

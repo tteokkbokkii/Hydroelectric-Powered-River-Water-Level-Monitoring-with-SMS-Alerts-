@@ -2,7 +2,7 @@
 
 # --- CONFIGURATION ---
 DB_DIR="/home/admin/thesis/server"
-DB_NAME="river_monitor.db"
+DB_NAME="/home/admin/thesis/server/river_monitor.db"
 DB_PATH="$DB_DIR/$DB_NAME"
 USB_MOUNT="/media/admin/USB-BACKUP"
 USB_DEST="$USB_MOUNT/thesis_backups"
