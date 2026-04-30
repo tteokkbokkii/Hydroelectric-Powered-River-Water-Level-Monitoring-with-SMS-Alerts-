@@ -25,8 +25,7 @@ echo -e "1) ${GREEN}FIELD MODE${NC} (Pi Hotspot)"
 echo -e "2) ${BLUE}LAB MODE${NC}   (External WiFi)"
 read -p "Selection [1-2]: " mode
 
-read -t 120 -p "Selection [1-2] (Auto-default to FIELD MODE in 2 MINS.): " mode
-
+read -t 120 -n 1 -p "Selection [1-2] (Auto-default to FIELD MODE in 120s): " SELECTION
 if [ -z "$mode" ]; then
     echo -e "\n${RED}No input detected. Resuming Field Mode for autonomous monitoring...${NC}"
     mode="1"
