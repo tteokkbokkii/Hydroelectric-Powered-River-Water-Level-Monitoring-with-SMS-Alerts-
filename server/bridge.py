@@ -228,13 +228,25 @@ client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.on_message = on_message
 client.will_set(STATUS_TOPIC, json.dumps({"esp_connected": False}), retain=True)
 
+# 1. Define the V2 on_connect callback
+def on_connect(client, userdata, flags, reason_code, properties):
+    if reason_code == 0:
+        print("Connected to broker! Subscribing to topics...")
+        client.subscribe(MQTT_TOPIC)
+        client.subscribe("system/status/esp32")
+        client.subscribe(CONTACTS_UPDATE_TOPIC)
+        client.subscribe(SMS_COMMAND_TOPIC) 
+        client.subscribe(SMS_LOG_TOPIC)
+    else:
+        print(f"Failed to connect. Code: {reason_code}")
+
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+client.on_connect = on_connect  # 2. Attach the callback
+client.on_message = on_message
+client.will_set(STATUS_TOPIC, json.dumps({"esp_connected": False}), retain=True)
+
 try:
     client.connect(MQTT_SERVER, 1883)
-    client.subscribe(MQTT_TOPIC)
-    client.subscribe("system/status/esp32")
-    client.subscribe(CONTACTS_UPDATE_TOPIC)
-    client.subscribe(SMS_COMMAND_TOPIC) 
-    client.subscribe(SMS_LOG_TOPIC)
     
     try:
         with open(CONTACTS_FILE, 'r') as f:
