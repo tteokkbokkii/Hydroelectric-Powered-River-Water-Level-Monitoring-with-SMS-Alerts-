@@ -26,26 +26,40 @@ const Announcement = () => {
   const directionRef = useRef(1);
   const maxOffsetRef = useRef(0);
 
-  // --- NEW: Instant API Fetch on Load ---
-  // This ensures the announcement bar doesn't have to wait for the next MQTT ping to show the correct data
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const response = await fetch(`${API_BASE}/data`);
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const newest = data[0]; // Newest reading based on your database sorting
-          if (newest && newest.distance !== undefined) {
-            setWaterLevel(newest.distance);
-          }
-        }
-      } catch (error) {
-        console.error('Announcement API fetch error:', error);
-      }
-    };
-    fetchInitialData();
-  }, []);
+    useEffect(() => {
+        fetch(`${API_BASE}/settings`)
+          .then(res => res.json())
+          .then(data => {
+            setThresholds({
+              normal: parseFloat(data.threshold_normal) || 6.5,
+              attention: parseFloat(data.threshold_attention) || 8.0,
+              critical: parseFloat(data.threshold_critical) || 9.5
+            });
+          })
+          .catch(err => console.error('Error fetching settings:', err));
+      }, []);
 
+    
+    // --- NEW: Instant API Fetch on Load ---
+    // This ensures the announcement bar doesn't have to wait for the next MQTT ping to show the correct data
+    useEffect(() => {
+      const fetchInitialData = async () => {
+        try {
+          const response = await fetch(`${API_BASE}/data`);
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const newest = data[0]; // Newest reading based on your database sorting
+            if (newest && newest.distance !== undefined) {
+              setWaterLevel(newest.distance);
+            }
+          }
+        } catch (error) {
+          console.error('Announcement API fetch error:', error);
+        }
+      };
+      fetchInitialData();
+    }, []);
+    
   // Helper to update the announcement text and color
   const updateAnnouncement = () => {
     let range = 'NORMAL';
@@ -62,9 +76,7 @@ const Announcement = () => {
       newColor = '#ff7676';
     } else if (range === 'NEEDS ATTENTION') {
       newColor = '#ffc074';
-    } else {
-      newColor = '#ABD9FF';
-    }
+    } 
     setColor(newColor);
   };
 

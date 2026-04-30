@@ -138,7 +138,7 @@ const ContactsTab = () => {
   // --- Effect to update message when counter changes ---
   useEffect(() => {
     const paddedId = String(testCounter).padStart(3, '0');
-    setCustomMessage(`Test ID: ${paddedId} Status: GSM Link Verification.`);
+    setCustomMessage(`Test ID: ${paddedId}`);
     localStorage.setItem('sms_test_counter', testCounter);
   }, [testCounter]);
 
@@ -521,21 +521,36 @@ const ContactsTab = () => {
         <div className="logs-container">
           <div className="logs-scrollable">
             <table className="logs-table">
+              <thead>
+                <tr>
+                    <th style={{ width: '20%', fontWeight: 'bold', color: '#002D5A' }}>DATE &   TIME</th>
+                    <th style={{ width: '15%', fontWeight: 'bold', color: '#002D5A' }}>TYPE</th>
+                    <th style={{ width: '30%', fontWeight: 'bold', color: '#002D5A' }}>RECIPIENT</th>
+                    <th style={{ width: '35%', fontWeight: 'bold', color: '#002D5A' }}>MESSAGE</th>
+                </tr>
+              </thead>
               <tbody>
-                {smsLogs.length === 0 ? (
-                  <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>No SMS logs found.</td></tr>
-                ) : (
-                  smsLogs.map((log, idx) => (
-                    <tr key={log.id || idx} className={`log-row ${log.log_type === 'ALERT' ? 'alrt' : 'maint'}`}>
-                      <td className="l-time">{log.timestamp || "--:--"}</td>
-                      <td className="l-tag">[{log.log_type === 'ALERT' ? 'ALERT' : 'TEST'}]</td>
-                      <td className="l-sender" style={{ textTransform: 'none'}}>
-                        <strong>{log.recipient_name}</strong> ({log.recipient_phone})
-                      </td>
-                      <td className="l-msg" style={{ textTransform: 'none'}}>{log.message}</td>
-                    </tr>
-                  ))
-                )}
+                {smsLogs.length === 0 ?
+                  (
+                    <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>No SMS logs found.</td></tr>
+                  ) : (
+                    smsLogs.map((log, idx) => (
+                      <tr key={log.id || idx} className={`log-row ${log.log_type === 'ALERT' ? 'alrt' : 'maint'}`}>
+                        <td className="l-time">{log.timestamp || "--:--"}</td>
+                        
+                        <td className="l-tag">
+                          {log.log_type === 'ALERT' ? 'ALERT' : log.log_type === 'GENBOX' ? 'GENBOX' : 'TEST'}
+                        </td>
+
+                        <td className="l-sender"> {log.recipient_name} </td>
+
+                        <td className="l-msg">
+                          { log.log_type === 'ALERT' ? 'RIVER LEVEL ALERT' : 
+                            log.log_type === 'GENBOX' ? 'GENBOX ALERT' : log.message }
+                        </td>
+                      </tr>
+                    ))
+                  )}
               </tbody>
             </table>
           </div>
