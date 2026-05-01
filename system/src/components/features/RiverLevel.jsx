@@ -1,3 +1,13 @@
+/*
+COMMENT LEGEND:
+//1 : 1. Status Indicator Logic
+//2 : FIX: Added missing closing bracket here
+//3 : MAIN CHART LAYER
+//4 : SVG GAUGE OVERLAY
+//5 : Vertical Center Lines
+//6 : Contrast shadow: Dark shadow for white text, Light shadow for dark text
+*/
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -12,12 +22,12 @@ import {
 const currentIP = window.location.hostname || 'rivermonitoring.local';
 const API_BASE = `http://${currentIP}:5000/api`;
 
-const RiverLevel = ({ currentLevel, predictedLevel }) => {
+const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
   const minLevel = 5;
   const maxLevel = 12;
 
   const displayLevel = currentLevel || 0;
-  const displayPredicted = predictedLevel || 0;
+  const displayPredicted = predictedHour || predictedLevel || 0;
 
   const [thresholds, setThresholds] = useState({ attention: 10.0, critical: 11.0 });
 
@@ -33,7 +43,7 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
       .catch(err => console.error('Error fetching thresholds:', err));
   }, []);
 
-  // 1. Status Indicator Logic
+  //1
   let statusLabel = 'NORMAL THRESHOLD';
   let statusColor = '#002D5A';
 
@@ -70,7 +80,7 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
         className="innercard-container"
         id="riverlevel-contents"
         style={{ position: 'relative' }}
-      > {/* FIX: Added missing closing bracket here */}
+      > {/* //2 */}
         
         <div className="live-expected">
           <p>PREDICTED</p>
@@ -94,7 +104,7 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
           </h1>
         </div>
 
-        {/* MAIN CHART LAYER */}
+        {/* //3 */}
         <ResponsiveContainer width="100%" height="100%">
           <Link to="/history" style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}>
             <BarChart
@@ -136,7 +146,7 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
           </Link>
         </ResponsiveContainer>
 
-        {/* SVG GAUGE OVERLAY */}
+        {/* //4 */}
         <svg
           style={{
             position: 'absolute',
@@ -148,7 +158,7 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
             zIndex: 10,
           }}
         >
-          {/* Vertical Center Lines */}
+          {/* //5 */}
           <line
             x1="50%"
             y1={`${getVisualY(calibrate(displayLevel))}%`}
@@ -178,7 +188,7 @@ const RiverLevel = ({ currentLevel, predictedLevel }) => {
             const isSubmerged = displayLevel >= val;
             const activeColor = isSubmerged ? "white" : "black";
 
-            // Contrast shadow: Dark shadow for white text, Light shadow for dark text
+            //6
             const shadowColor = isSubmerged ? 'rgba(0,45,90,0.8)' : 'rgba(255,255,255,0.8)';
 
             let xStart, xEnd;

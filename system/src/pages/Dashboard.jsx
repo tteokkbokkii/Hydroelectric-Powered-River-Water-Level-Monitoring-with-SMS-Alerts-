@@ -143,6 +143,7 @@ function Dashboard() {
             <RiverLevel
               currentLevel={latestReading?.distance || 0}
               predictedLevel={latestReading?.predicted || 0}
+              predictedHour={latestReading?.predicted_hour || 0}
             />
             <RiverTrend history={waterData} />
             <RecentLogs logs={waterData} />
