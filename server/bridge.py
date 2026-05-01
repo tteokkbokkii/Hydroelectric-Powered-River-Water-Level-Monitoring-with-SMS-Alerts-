@@ -224,10 +224,6 @@ def on_message(client, userdata, msg):
         except Exception as e:
             print(f"Error logging ALERT SMS: {e}")
 
-client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-client.on_message = on_message
-client.will_set(STATUS_TOPIC, json.dumps({"esp_connected": False}), retain=True)
-
 # 1. Define the V2 on_connect callback
 def on_connect(client, userdata, flags, reason_code, properties):
     if reason_code == 0:
