@@ -5,6 +5,7 @@
 #include <Wire.h>
 #include <RTClib.h>
 #include <WiFiManager.h>
+#include <Preferences.h>
 
 #define ULTRASONIC_TRIG     13
 #define ULTRASONIC_ECHO     14
@@ -21,8 +22,10 @@
 WiFiClient espClient;
 PubSubClient client(espClient);
 RTC_DS3231 rtc;
+Preferences preferences; 
 
 IPAddress mqttIP;
+
 const int mqtt_port = 1883;
 const char* mqtt_topic = "sensor/hulo/reading";
 const char* settings_topic = "system/settings";
@@ -32,6 +35,7 @@ const char* sms_log_topic = "sms/log";
 
 float threshold_normal_ft = 9.0, threshold_attention_ft = 10.0, threshold_critical_ft = 11.0;
 int reading_interval_min = 5;
+
 bool settingsReceived = false, contactsReceived = false, gsmReady = false;
 String lastAlertRange = "";
 
@@ -60,6 +64,7 @@ String last_applied_contacts_msg = "";
 
 int consecutive_bad = 0; 
 int consecutive_good = 0;
+
 String ultraStatus = "OK"; 
 
 #define MAX_HISTORY 30
@@ -74,7 +79,8 @@ void connectToPriorityNetwork() {
     };
     Network list[] = {
         {"River-Monitor", "thesis2026"},
-        {"Raspberry-Fi", "Hulo2026"}
+        {"Raspberry-Fi", "Hulo2026"},
+        {"tarub", "borenick1234"}
     };
 
     Serial.println("\n--- WiFi Connection Phase ---");
@@ -84,9 +90,7 @@ void connectToPriorityNetwork() {
     for (int i = 0; i < totalNetworks; i++) {
         WiFi.disconnect();
         delay(100);
-
         Serial.printf("Attempt [%d/%d]: %s\n", i+1, totalNetworks, list[i].ssid);
-
         WiFi.begin(list[i].ssid, list[i].pass);
 
         int retry = 0;
@@ -100,7 +104,6 @@ void connectToPriorityNetwork() {
             Serial.printf("\n✅ WiFi Connected! IP: %s\n", WiFi.localIP().toString().c_str());
             return;
         }
-
         Serial.println("\n❌ Network not found.");
     }
 
@@ -114,8 +117,10 @@ void connectToPriorityNetwork() {
 String getCommandResponse(String cmd, int waitTime = 1000) {
     while(Serial2.available()) Serial2.read();
     if (cmd != "") Serial2.println(cmd);
-    
+
     String response = "";
+    response.reserve(256);
+
     unsigned long start = millis();
     while (millis() - start < waitTime) {
         while (Serial2.available()) {
@@ -127,12 +132,14 @@ String getCommandResponse(String cmd, int waitTime = 1000) {
 
 void sendBulkSMS(String text, String targetLevel, float current_water_level) {
     if (!gsmReady) return;
+
     Serial.println("\n--- Starting Bulk SMS Dispatch for: " + targetLevel + " ---");
-    
     Serial2.println("AT+CMGF=1"); 
     delay(500);
+
     for (int i = 0; i < contactCount; i++) {
         if (contacts[i].phone == "") continue;
+
         if (!contacts[i].alertLevel.equalsIgnoreCase("ALL") && !contacts[i].alertLevel.equalsIgnoreCase(targetLevel)) {
             continue;
         }
@@ -151,12 +158,12 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
             Serial2.print("AT+CMGS=\""); 
             Serial2.print(contacts[i].phone); 
             Serial2.println("\"");
-            
+
             unsigned long waitStart = millis();
             bool promptReceived = false;
             
             while(millis() - waitStart < 5000) { 
-                client.loop(); 
+                client.loop();
                 if(Serial2.available()) {
                     if(Serial2.read() == '>') {
                         promptReceived = true;
@@ -173,6 +180,7 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
                 String confirm = getCommandResponse("", 5000);
                 if (confirm.indexOf("+CMGS") != -1 || confirm.indexOf("OK") != -1) {
                     Serial.println("✅ Sent.");
+                    
                     StaticJsonDocument<256> logDoc;
                     logDoc["type"] = "ALERT";
                     logDoc["level"] = targetLevel;
@@ -180,6 +188,7 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
                     logDoc["phone"] = contacts[i].phone;
                     logDoc["name"] = contacts[i].name;
                     logDoc["message"] = text;
+
                     char logBuffer[256];
                     serializeJson(logDoc, logBuffer);
                     client.loop(); 
@@ -187,7 +196,7 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
                         client.publish(sms_log_topic, logBuffer);
                         Serial.println("📤 Published SMS Log to MQTT");
                     }
-                    isSent = true; 
+                    isSent = true;
                 } else {
                     Serial.println("❌ Network Timeout. (Modem did not confirm)");
                     retryCount++;
@@ -196,9 +205,8 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
                 Serial.println("❌ Modem Prompt Failed.");
                 retryCount++;
             }
-            yield(); 
+            yield();
         }
-        
         delay(1500);
     }
     Serial.println("--- Bulk SMS Complete ---\n");
@@ -206,6 +214,7 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
 
 void initGSM() {
     Serial2.begin(115200, SERIAL_8N1, MODEM_RX, MODEM_TX);
+
     Serial.println("\n--- Initializing A7670E Modem ---");
     pinMode(MODEM_PWRKEY, OUTPUT);
     digitalWrite(MODEM_PWRKEY, LOW); 
@@ -214,6 +223,7 @@ void initGSM() {
 
     Serial.println("Waiting 20 seconds for network registration...");
     delay(20000);
+
     getCommandResponse("ATE0", 1000);
 
     String cmgfRes = getCommandResponse("AT+CMGF=1", 1000);
@@ -229,12 +239,14 @@ void initGSM() {
 void addToHistory(float lvl) {
     history_time[history_index] = rtc.now().unixtime(); 
     history_level[history_index] = lvl;
+
     history_index = (history_index + 1) % MAX_HISTORY;
     if (history_count < MAX_HISTORY) history_count++;
 }
 
 float predictLevel() {
     if (history_count < 2) return (history_count == 1) ? history_level[0] : 0.0;
+
     double sumX=0, sumY=0, sumXY=0, sumX2=0;
     for(int i=0; i<history_count; i++) {
         double x = (double)(history_time[i] - history_time[0]);
@@ -254,6 +266,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
     DynamicJsonDocument doc(2048);
     DeserializationError error = deserializeJson(doc, msg);
+
     if (error) {
         Serial.print("❌ JSON Parse Failed: ");
         Serial.println(error.f_str());
@@ -272,6 +285,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     } 
     else if (String(topic) == "contacts/list") {
         JsonArray arr = doc.as<JsonArray>();
+
         temp_contactCount = 0;
         for (JsonObject obj : arr) {
             if (temp_contactCount < 20) {
@@ -294,11 +308,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
         Serial.println("Sending to: " + targetPhone);
         Serial2.println("AT+CMGF=1");
         delay(500);
+
         Serial2.print("AT+CMGS=\""); 
         Serial2.print(targetPhone); 
         Serial2.println("\"");
         
         delay(1000);
+
         Serial2.print(alertMsg);
         delay(100);
         Serial2.write(26); 
@@ -310,8 +326,24 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void setup() {
     Serial.begin(115200);
     delay (2000);
+
+    preferences.begin("hulo_settings", false);
+    
+    threshold_normal_ft = preferences.getFloat("norm", 9.0);
+    threshold_attention_ft = preferences.getFloat("attn", 10.0);
+    threshold_critical_ft = preferences.getFloat("crit", 11.0);
+    reading_interval_min = preferences.getInt("interval", 5);
+
+    temp_threshold_normal_ft = threshold_normal_ft;
+    temp_threshold_attention_ft = threshold_attention_ft;
+    temp_threshold_critical_ft = threshold_critical_ft;
+    temp_reading_interval_min = reading_interval_min;
+
+    Serial.println("\n--- Loaded Settings from Flash Memory ---");
+    Serial.println("Normal: " + String(threshold_normal_ft) + " | Attn: " + String(threshold_attention_ft) + " | Crit: " + String(threshold_critical_ft));
+
     digitalWrite(ULTRASONIC_TRIG, HIGH);
-    pinMode(ULTRASONIC_TRIG, OUTPUT); 
+    pinMode(ULTRASONIC_TRIG, OUTPUT);
     pinMode(ULTRASONIC_ECHO, INPUT);
     pinMode(FLOATER_SAFE, INPUT_PULLUP);
     pinMode(FLOATER_WARNING, INPUT_PULLUP); 
@@ -323,12 +355,14 @@ void setup() {
 
     initGSM();
     connectToPriorityNetwork();
-    
+
     Serial.println("\n--- Locating Raspberry Pi (rivermonitoring.local) ---");
     MDNS.begin("esp32-node");
     bool found = false;
+
     for (int i = 0; i < 10; i++) {
         mqttIP = MDNS.queryHost("rivermonitoring");
+
         if (mqttIP.toString() != "0.0.0.0") {
             Serial.println("✅ FOUND PI: " + mqttIP.toString());
             found = true; 
@@ -346,12 +380,12 @@ void setup() {
     client.setServer(mqttIP, mqtt_port);
     client.setCallback(callback);
     client.setBufferSize(1024);
-    
     client.setKeepAlive(60);
-    
+
     Serial.println("\n--- Performing Initial Sensor Sanity Check ---");
     float duration = 0;
     int attempts = 0;
+
     while (duration == 0 && attempts < 5) {
         digitalWrite(ULTRASONIC_TRIG, HIGH);
         delayMicroseconds(2);
@@ -365,7 +399,8 @@ void setup() {
     
     float dist = (duration * 0.034 / 2) / 2.54;
     float elev_ft = abs(SENSOR_HEIGHT_INCHES - dist) / 12.0;
-    bool isWeird = (dist > 0 && dist < 8.0) || (dist > SENSOR_HEIGHT_INCHES + 10.0) || (elev_ft < 2.0);
+    bool isWeird = (dist > 0 && dist < 8.0) ||
+                   (dist > SENSOR_HEIGHT_INCHES + 10.0) || (elev_ft < 2.0);
 
     if (duration == 0 || isWeird) {
         consecutive_bad = 2;
@@ -384,7 +419,6 @@ void setup() {
 
     while (!client.connected() && mqttretry < 3) {
         Serial.println("Reconnecting to MQTT...");
-
         if (client.connect("HuloESP32")) {
             Serial.println("✅ MQTT connected!");
 
@@ -399,10 +433,8 @@ void setup() {
 
             char healthBuf[192];
             serializeJson(healthDoc, healthBuf);
-
             client.publish(esp_health_topic, healthBuf);
             Serial.println("📤 Initial Health Status pushed to Dashboard.");
-
             break; 
         } 
         else {
@@ -423,11 +455,12 @@ void loop() {
             client.subscribe(sms_command_topic);
         } else { 
             delay(5000); 
-            return; 
+            return;
         }
     }
     
     client.loop();
+
     if (!settingsReceived || !contactsReceived) {
         static unsigned long lastWaitMsg = 0;
         if(millis() - lastWaitMsg > 5000) {
@@ -465,11 +498,18 @@ void loop() {
             if (pending_settings_msg != last_applied_settings_msg) {
                 Serial.println("📥 Applied New Message [" + String(settings_topic) + "] Payload: " + pending_settings_msg);
                 last_applied_settings_msg = pending_settings_msg;
+                
+                threshold_normal_ft = temp_threshold_normal_ft;
+                threshold_attention_ft = temp_threshold_attention_ft;
+                threshold_critical_ft = temp_threshold_critical_ft;
+                reading_interval_min = temp_reading_interval_min;
+                publish_interval_ms = reading_interval_min*60000UL;
+
+                preferences.putFloat("norm", threshold_normal_ft);
+                preferences.putFloat("attn", threshold_attention_ft);
+                preferences.putFloat("crit", threshold_critical_ft);
+                preferences.putInt("interval", reading_interval_min);
             }
-            threshold_normal_ft = temp_threshold_normal_ft;
-            threshold_attention_ft = temp_threshold_attention_ft;
-            threshold_critical_ft = temp_threshold_critical_ft;
-            reading_interval_min = temp_reading_interval_min;
             newSettingsAvailable = false;
         }
         
@@ -487,6 +527,7 @@ void loop() {
 
         float duration = 0;
         int attempts = 0;
+
         while (duration == 0 && attempts < 3) {
             digitalWrite(ULTRASONIC_TRIG, HIGH);
             delayMicroseconds(2);
@@ -503,20 +544,18 @@ void loop() {
         float elev_ft = abs(SENSOR_HEIGHT_INCHES - dist) / 12.0;
 
         static bool rawAlertTriggered = false;
-        
         if (distcm > 0 && distcm < 301.0 && !rawAlertTriggered) {
             Serial.println("⚠️ GENBOX ALERT: Water reached the Generator Box!");
             String rawMsg = "GENBOX ALERT: Water reached the Generator Box!\nWater at " + String(elev_ft, 1) + " ft.\nPlease pull the sliding frame up.";
-            
             sendBulkSMS(rawMsg, "ALL", elev_ft); 
-            
             rawAlertTriggered = true; 
         } 
         else if (distcm >= 301.0) {
             rawAlertTriggered = false;
         }
        
-        bool isWeird = (dist > 0 && dist < 8.0) || (dist > SENSOR_HEIGHT_INCHES + 10.0) || (elev_ft < 2.0);
+        bool isWeird = (dist > 0 && dist < 8.0) ||
+                       (dist > SENSOR_HEIGHT_INCHES + 10.0) || (elev_ft < 2.0);
 
         if (duration == 0 || isWeird) {
             consecutive_good = 0;
@@ -544,11 +583,13 @@ void loop() {
         bool valid_range = (elev_ft >= 2.0 && elev_ft < threshold_normal_ft);
         bool float_match_threshold = 
             (s == (elev_ft >= threshold_normal_ft)) &&
-            (w == (elev_ft >= threshold_attention_ft)) && 
-            (c == (elev_ft >= threshold_critical_ft));
+            (w == (elev_ft >= 13.0)) && 
+            (c == (elev_ft >= 16.0));
+
         bool validated = (ultraStatus == "OK") && (valid_range || float_match_threshold);
 
-        String range = (elev_ft >= threshold_critical_ft) ? "CRITICAL" : (elev_ft >= threshold_attention_ft) ? "WARNING" : "SAFE";
+        String range = (elev_ft >= threshold_critical_ft) ?
+            "CRITICAL" : (elev_ft >= threshold_attention_ft) ? "WARNING" : "SAFE";
         
         if (validated == true) {
             if (lastPublish == 0 || millis() - lastPublish >= publish_interval_ms) {
@@ -577,7 +618,6 @@ void loop() {
                 
                 char buffer[256];
                 serializeJson(doc, buffer);
-                
                 Serial.print("📡 Sending Sensor Reading: ");
                 Serial.println(buffer);
                 client.publish(mqtt_topic, buffer);
@@ -587,21 +627,24 @@ void loop() {
                     String alertMsg = "";
                     if (range == "CRITICAL") {
                         alertMsg = "Good Day!\n\n"
-                                "The Hulo River level is critical. It is suggested to stop all operations and evacuate immediately.\n\n"
-                                "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n"
-                                "Water Level: " + String(elev_ft, 2) + " FT\n"
-                                "Alert Interpretation: CRITICAL";
+                                   "The Hulo River level is critical. Please stop all operations and evacuate immediately.\n\n" 
+                                   "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n" 
+                                   "Water Level: " + String(elev_ft, 2) + " FT\n"  
+                                   "Alert Interpretation: CRITICAL";
                     } else if (range == "WARNING") {
-                        alertMsg = "Good Day!\n\n"
-                                "The Hulo River level is rising. It is suggested to consult the Coast Guard for a professional assessment.\n\n"
-                                "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n"
-                                "Water Level: " + String(elev_ft, 2) + " FT\n"
-                                "Alert Interpretation: WARNING";
+                        alertMsg = "Good Day!\n\n"  
+                                   "The Hulo River level is rising. Please consult Coast Guard for a professional assessment.\n\n" 
+                                   "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n" 
+                                   "Water Level: " + String(elev_ft, 2) + " FT\n" 
+                                   "Alert Interpretation: WARNING";
                     }
                     sendBulkSMS(alertMsg, range, elev_ft);
                     lastAlertRange = range;
                 } else if (range == "SAFE") {
                     lastAlertRange = "SAFE";
+                }
+                else {
+                    Serial.println("range unchanged, no message sent.");
                 }
 
                 if (lastPublish == 0) {
@@ -618,11 +661,10 @@ void loop() {
         else {
             Serial.println("❌ Validation Error: Reading suppressed.");
             Serial.println("dist Streak (Bad/Good): " + String(consecutive_bad) + "/" + String(consecutive_good) + 
-                " | sensorStatus: " + ultraStatus + " | elev_ft: " + String(elev_ft) + " | distcm: "+distcm + 
-                " | Floaters: s = " + s + " w = " + w + " c = " + c);
+                           " | sensorStatus: " + ultraStatus + " | elev_ft: " + String(elev_ft) + " | distcm: "+distcm + 
+                           " | Floaters: s = " + s + " w = " + w + " c = " + c);
             Serial.println("⚠️ Bad reading dropped. Waiting for next interval or valid recovery.");
         }
-        
         lastSample = millis();
     }
 }

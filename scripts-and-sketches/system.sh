@@ -91,7 +91,7 @@ BASE_DIR="/home/admin/thesis"
 # 1. Start Bridge
 cd "$BASE_DIR" # Ensure we are in the correct root
 # FIX: Use full paths for python execution
-/usr/bin/python3 /home/admin/thesis/scripts-and-sketches/bridge.py > ~/bridge.log 2>&1 &
+/usr/bin/python3 /home/admin/thesis/server/bridge.py > ~/bridge.log 2>&1 &
 echo -e "✅ ${GREEN}Bridge:${NC} Listening for ESP32..."
 
 # 2. Start API
