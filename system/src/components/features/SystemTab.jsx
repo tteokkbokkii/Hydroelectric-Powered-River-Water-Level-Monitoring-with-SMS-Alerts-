@@ -278,7 +278,9 @@ const SystemTab = () => {
                   </div>
                   <div className="data-row">
                     <span>Wi-Fi Signal:</span>
-                    <span className="status-pill">{liveStatus.signal}</span>
+                    <span className="status-pill">
+                      {liveStatus.signal === 'N/A' ? 'HOTSPOT' : liveStatus.signal}
+                    </span>
                   </div>
                   <div className="data-row">
                     <span>Network:</span>

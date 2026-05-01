@@ -83,7 +83,7 @@ const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
       > {/* //2 */}
         
         <div className="live-expected">
-          <p>PREDICTED</p>
+          <p>HOURLY PREDICTION</p>
           <h1
             style={{
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
