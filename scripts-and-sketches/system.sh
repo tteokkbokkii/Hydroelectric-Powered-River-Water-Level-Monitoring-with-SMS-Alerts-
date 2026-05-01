@@ -9,9 +9,9 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # --- PRE-START CLEANUP ---
-pkill -f "python3 bridge.py"
-pkill -f "python3 app.py"
-pkill -f "http.server"
+sudo pkill -f "python3 bridge.py"
+sudo pkill -f "python3 app.py"
+sudo pkill -f "http.server"
 
 clear
 echo -e "${CYAN}==========================================${NC}"
@@ -34,6 +34,9 @@ fi
 
 if [ "$mode" == "1" ]; then
     echo -e "${YELLOW}📡 Activating Hotspot: 'River-Monitor'...${NC}"
+    # NEW: Force disconnect from any existing WiFi first
+    sudo nmcli device disconnect wlan0 > /dev/null 2>&1
+    sleep 2
     # FIX: Tries Hotspot profile first, then River-Monitor, then creates one
     sudo nmcli con up "Hotspot" || sudo nmcli con up "River-Monitor" || sudo nmcli device wifi hotspot ssid River-Monitor password thesis2026
 
