@@ -278,17 +278,36 @@
 
     /* Table Mobile Fixes */
     #history-column1 {
-        height: 400px; /* Changed from min-height to a strict height */
-        display: flex; /* Added to support PrimeReact's flex scroll */
-        flex-direction: column; /* Added to support PrimeReact's flex scroll */
+        height: 400px; 
+        display: flex; 
+        flex-direction: column; 
     }
 
-    /* ---> THIS IS THE ONLY NEW ADDITION YOU REQUESTED <--- */
+    /* Force the outer table container to stretch to 400px */
     #history-column1 .p-datatable {
         flex: 1;
         display: flex;
         flex-direction: column;
-        min-height: 0; /* Prevents the flexbox from blowing past 400px */
+        min-height: 0; 
+    }
+
+    /* Force PrimeReact's internal wrappers to ALSO stretch */
+    #history-column1 .p-datatable-wrapper,
+    #history-column1 .p-datatable-scrollable-view {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    #history-column1 .p-datatable-wrapper {
+        overflow-x: auto; /* Horizontal swiping for columns */
+    }
+
+    #history-column1 .p-datatable-scrollable-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto !important; /* Vertical swiping for rows */
     }
 
     .p-datatable-wrapper {
