@@ -252,8 +252,6 @@ const HistoryTab = () => {
                   value={activeDisplayData}
                   scrollable
                   scrollHeight="flex"
-                  responsiveLayout="stack"
-                  breakpoint="1024px"
                   size="small"
                   emptyMessage="No data found for this date."
                 >

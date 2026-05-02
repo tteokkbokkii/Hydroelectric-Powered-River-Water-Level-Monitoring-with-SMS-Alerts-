@@ -272,14 +272,16 @@
     .content-column {
         width: 100%;
         height: auto;
-        overflow: visible;
+        overflow: hidden;
         border: none; /* Cleaner look for mobile */
         padding: 0;
     }
 
     /* Table Mobile Fixes */
     #history-column1 {
-        min-height: 400px; /* Give the table a base area */
+        height: 400px; /* Changed from min-height to a strict height */
+        display: flex; /* Added to support PrimeReact's flex scroll */
+        flex-direction: column; /* Added to support PrimeReact's flex scroll */
     }
 
     .p-datatable-wrapper {
