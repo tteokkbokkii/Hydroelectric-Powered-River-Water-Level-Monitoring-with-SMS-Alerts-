@@ -99,7 +99,6 @@
     position: relative;
 }
 
-
 #history-panel {
     display: flex;
     justify-content: space-between;
@@ -228,7 +227,7 @@
     #history-column2 .chart-wrapper {
         min-height: 200px;
         flex: 1; 
-        min-height: 0; 
+        min-height: 0;
     }
 }
 
@@ -282,6 +281,14 @@
         height: 400px; /* Changed from min-height to a strict height */
         display: flex; /* Added to support PrimeReact's flex scroll */
         flex-direction: column; /* Added to support PrimeReact's flex scroll */
+    }
+
+    /* ---> THIS IS THE ONLY NEW ADDITION YOU REQUESTED <--- */
+    #history-column1 .p-datatable {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0; /* Prevents the flexbox from blowing past 400px */
     }
 
     .p-datatable-wrapper {
