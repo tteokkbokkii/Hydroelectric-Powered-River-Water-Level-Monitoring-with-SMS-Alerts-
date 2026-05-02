@@ -276,9 +276,9 @@
         padding: 0;
     }
 
-    /* Table Mobile Fixes */
+    /* Table Mobile Fixes - Clean Version */
     #history-column1 {
-        height: 400px; 
+        height: 60vh; /* This MUST be here and match the 60vh in your React code */
         display: flex; 
         flex-direction: column; 
     }
@@ -317,8 +317,8 @@
     /* Chart Mobile Fixes */
     #history-column2 {
         margin-top: 20px;
-        flex: none; /* Prevent flex-grow from collapsing it */
-        height: 400px; /* Force a height for the chart column */
+        flex: none; 
+        height: 50vh; /* This gives the chart 50% of the screen height */
         width: 100%;
         display: block;
     }
