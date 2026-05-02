@@ -11,6 +11,7 @@ import os
 MQTT_TOPIC = "sensor/hulo/reading"
 STATUS_TOPIC = "system/status"
 SETTINGS_TOPIC = "system/settings"
+SETTINGS_UPDATE_TOPIC = "system/settings/update"
 CONTACTS_UPDATE_TOPIC = "contacts/update"
 CONTACTS_LIST_TOPIC = "contacts/list"
 SMS_COMMAND_TOPIC = "sms/command" 
@@ -126,10 +127,12 @@ def publish_contacts(client):
         pass 
 
 def heartbeat_loop(client):
+    # Publish initial states ONCE when the script starts
+    publish_settings(client)
+    publish_contacts(client)
+    
     while True:
         broadcast_status(client)
-        publish_settings(client)
-        publish_contacts(client)
         time.sleep(2)
 
 def on_message(client, userdata, msg):
@@ -169,6 +172,18 @@ def on_message(client, userdata, msg):
         except Exception as e:
             print(f"Error saving contacts: {e}")
             
+    elif msg.topic == SETTINGS_UPDATE_TOPIC:
+        try:
+            settings = json.loads(msg.payload.decode())
+            # 1. Save the new settings to the SD card
+            with open(SETTINGS_FILE, 'w') as f:
+                json.dump(settings, f, indent=2)
+            # 2. Immediately broadcast the new settings to the rest of the system
+            client.publish(SETTINGS_TOPIC, json.dumps(settings), retain=True)
+            print("⚙️ Settings updated and saved via MQTT")
+        except Exception as e:
+            print(f"Error saving settings: {e}")
+
     elif msg.topic == "system/status/esp32":
         last_esp_contact = time.time() 
         try:
@@ -231,6 +246,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
         client.subscribe(MQTT_TOPIC)
         client.subscribe("system/status/esp32")
         client.subscribe(CONTACTS_UPDATE_TOPIC)
+        client.subscribe(SETTINGS_UPDATE_TOPIC)
         client.subscribe(SMS_COMMAND_TOPIC) 
         client.subscribe(SMS_LOG_TOPIC)
     else:

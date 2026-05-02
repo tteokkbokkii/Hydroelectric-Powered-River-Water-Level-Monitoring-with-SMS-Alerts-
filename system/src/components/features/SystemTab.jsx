@@ -223,7 +223,7 @@ const SystemTab = () => {
       if (!response.ok) throw new Error('Failed to save settings');
       
       if (mqttClientRef.current && mqttClientRef.current.connected) {
-        mqttClientRef.current.publish('system/settings', JSON.stringify(payload));
+        mqttClientRef.current.publish('system/settings/update', JSON.stringify(payload));
       }
       
       toast.current.show({ severity: 'success', summary: 'Success', detail: 'Settings saved successfully!', life: 3000 });

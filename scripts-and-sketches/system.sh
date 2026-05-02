@@ -106,6 +106,11 @@ cd "$BASE_DIR/system"
 /usr/bin/python3 -m http.server 8000 --directory dist > ~/web.log 2>&1 &
 echo -e "✅ ${GREEN}UI:${NC}     Ready on Port 8000"
 
+# 4. Start Database Manager (NEW)
+cd "$BASE_DIR/scripts-and-sketches"
+/bin/bash ./databaseManager.sh > ~/manager.log 2>&1 &
+echo -e "✅ ${GREEN}Manager:${NC} Database Automation Active"
+
 # --- OUTPUT SUMMARY ---
 IP_ADDR=$(hostname -I | awk '{print $1}')
 
