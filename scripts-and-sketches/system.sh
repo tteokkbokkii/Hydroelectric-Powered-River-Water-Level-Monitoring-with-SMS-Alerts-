@@ -41,8 +41,23 @@ if [ "$mode" == "1" ]; then
     sudo nmcli con up "Hotspot" || sudo nmcli con up "River-Monitor" || sudo nmcli device wifi hotspot ssid River-Monitor password thesis2026
 
 elif [ "$mode" == "2" ]; then
+    echo -e "${YELLOW}🔄 Preparing Wi-Fi antenna for scanning...${NC}"
+    
+    # 1. Force shut down any active hotspots
+    sudo nmcli connection down "River-Monitor" > /dev/null 2>&1
+    sudo nmcli connection down "Hotspot" > /dev/null 2>&1
+    
+    # 2. Reset the wifi interface
+    sudo nmcli device disconnect wlan0 > /dev/null 2>&1
+    sleep 2
+    
+    # 3. Force a fresh scan of the environment (ignores the old cache)
+    sudo nmcli device wifi rescan > /dev/null 2>&1
+    sleep 3
+
     echo -e "${YELLOW}🔎 Checking for known networks in range...${NC}"
 
+    # Now the scan will actually see the Lab networks!
     SAVED_IN_RANGE=$(nmcli -t -f SSID dev wifi list | grep -Fxf <(nmcli -t -f NAME connection show))
 
     if [ ! -z "$SAVED_IN_RANGE" ]; then
