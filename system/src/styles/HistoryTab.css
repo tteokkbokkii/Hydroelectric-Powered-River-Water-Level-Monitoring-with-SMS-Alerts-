@@ -166,7 +166,6 @@
     .history-page-wrapper .columns-container {
         flex: 1;
         min-height: 0;
-        height: auto;
     }
 
     .history-page-wrapper .content-column {
@@ -176,40 +175,14 @@
         height: 100%;
     }
 
-    /* Force DataTable to fill the column and scroll properly */
     #history-column1 {
         height: 100%;
         display: flex;
         flex-direction: column;
-    }
-
-    .p-datatable {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .p-datatable-wrapper {
         flex: 1;
         min-height: 0;
-        display: flex;
-        flex-direction: column;
     }
 
-    .p-datatable-scrollable-view {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .p-datatable-scrollable-body {
-        flex: 1;
-        overflow-y: auto !important;
-        min-height: 0;
-    }
-
-    /* Empty state */
     .p-datatable-empty-message {
         min-height: 150px;
         display: flex;
@@ -217,9 +190,8 @@
         justify-content: center;
     }
 
-    /* Chart column scroll */
     #history-column2 {
-        overflow-y: hidden; /* Hide the scrollbar completely */
+        overflow-y: hidden; 
         display: flex;
         flex-direction: column;
     }
@@ -233,24 +205,24 @@
 
 @media (max-width: 1024px) {
     .history-page-wrapper {
-        display: block; /* Switch from flex to block to allow natural scrolling */
+        display: block; 
         overflow-y: auto;
         height: auto;
-        padding-bottom: 80px; /* Extra space for the fixed footer on small screens */
+        padding-bottom: 80px; 
     }
 
     .history-page-wrapper .card-wrapper {
         margin: 10px;
-        height: auto; /* Let content dictate height */
+        height: auto; 
         overflow: visible;
     }
 
     .tab-nav {
-        flex-wrap: wrap; /* Allow buttons to wrap if they are too wide */
+        flex-wrap: wrap; 
     }
 
     .nav-item {
-        flex: 1; /* Buttons grow to fill width */
+        flex: 1; 
         padding: 10px 5px;
         font-size: 0.9rem;
         text-align: center;
@@ -262,7 +234,7 @@
     }
 
     .columns-container {
-        flex-direction: column; /* Stack Table and Chart vertically */
+        flex-direction: column; 
         height: auto;
         gap: 30px;
         display: flex;
@@ -272,18 +244,20 @@
         width: 100%;
         height: auto;
         overflow: hidden;
-        border: none; /* Cleaner look for mobile */
+        border: none; 
         padding: 0;
     }
 
-    /* Table Mobile Fixes - Clean Version */
+    /* --- MOBILE DYNAMIC HEIGHT FIXES --- */
     #history-column1 {
-        height: 60vh; /* This MUST be here and match the 60vh in your React code */
+        height: 60vh; /* Scales beautifully across different phone sizes */
+        min-height: 350px; /* The safety net: prevents 0px collapse while "Loading" */
         display: flex; 
         flex-direction: column; 
+        background: #ffffff;
+        border-radius: 8px;
     }
 
-    /* Force the outer table container to stretch to 400px */
     #history-column1 .p-datatable {
         flex: 1;
         display: flex;
@@ -291,47 +265,28 @@
         min-height: 0; 
     }
 
-    /* Force PrimeReact's internal wrappers to ALSO stretch */
-    #history-column1 .p-datatable-wrapper,
-    #history-column1 .p-datatable-scrollable-view {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-    }
-
-    #history-column1 .p-datatable-wrapper {
-        overflow-x: auto; /* Horizontal swiping for columns */
-    }
-
-    #history-column1 .p-datatable-scrollable-body {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto !important; /* Vertical swiping for rows */
-    }
-
     .p-datatable-wrapper {
-        overflow-x: auto; /* Allow horizontal swiping of table columns */
+        overflow-x: auto; 
     }
 
     /* Chart Mobile Fixes */
     #history-column2 {
         margin-top: 20px;
         flex: none; 
-        height: 50vh; /* This gives the chart 50% of the screen height */
+        height: 50vh; /* Scales chart to 50% of screen */
         width: 100%;
         display: block;
     }
 
     .chart-wrapper {
-        height: 100%; /* Now it will take the 400px from the parent */
+        height: 100%; 
         width: 100%;
-        min-height: 350px; /* Safety fallback */
+        min-height: 350px; 
         position: relative;
     }
 
     #history-panel {
-        flex-direction: column; /* Stack the Date Picker and Export button */
+        flex-direction: column; 
         gap: 15px;
         align-items: stretch;
     }
@@ -341,6 +296,6 @@
     }
 
     .export-bttn {
-        width: 100%; /* Easy-to-tap full-width button */
-    }
+        width: 100%; 
 }
+    }

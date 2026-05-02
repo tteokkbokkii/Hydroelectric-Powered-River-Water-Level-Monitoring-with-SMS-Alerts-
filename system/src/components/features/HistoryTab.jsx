@@ -251,7 +251,10 @@ const HistoryTab = () => {
                 <DataTable
                   value={activeDisplayData}
                   scrollable
-                  scrollHeight={window.innerWidth <= 1024 ? "70vh" : "flex"}
+                  /* On mobile (width < 1024), we use 60% of the screen height. 
+                    On monitor, we use flex. */
+                  scrollHeight={window.innerWidth <= 1024 ? "60vh" : "flex"}
+                  style={{ height: '100%' }} 
                   size="small"
                   emptyMessage="No data found for this date."
                 >
