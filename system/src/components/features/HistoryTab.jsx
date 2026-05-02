@@ -251,7 +251,7 @@ const HistoryTab = () => {
                 <DataTable
                   value={activeDisplayData}
                   scrollable
-                  scrollHeight="flex"
+                  scrollHeight={window.innerWidth <= 1024 ? "" : "flex"}
                   size="small"
                   emptyMessage="No data found for this date."
                 >

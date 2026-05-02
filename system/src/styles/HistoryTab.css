@@ -187,7 +187,6 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        background: blue; min-height: 200px !important;
     }
 
     .p-datatable-wrapper {
@@ -195,7 +194,6 @@
         min-height: 0;
         display: flex;
         flex-direction: column;
-        background: red; min-height: 100px !important;
     }
 
     .p-datatable-scrollable-view {
@@ -283,7 +281,6 @@
         height: 400px; 
         display: flex; 
         flex-direction: column; 
-        background: yellow; min-height: 400px;
     }
 
     /* Force the outer table container to stretch to 400px */
