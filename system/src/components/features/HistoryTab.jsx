@@ -151,7 +151,6 @@ const HistoryTab = () => {
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const dateTitle = selectedDate.toLocaleDateString();
 
-    // 1. Actual Table
     const actualTableForPdf = actualData.map(row => [
         row.displayTime,
         `${(Number(row.displayValue) || 0).toFixed(2)} ft.`,
@@ -171,7 +170,6 @@ const HistoryTab = () => {
       headStyles: { fillColor: [0, 114, 206] }
     });
 
-    // 2. Actual Chart
     if (actualChartRef.current) {
         const actualCanvas = await html2canvas(actualChartRef.current, { scale: 2 });
         const actualImg = actualCanvas.toDataURL('image/png');
@@ -181,7 +179,6 @@ const HistoryTab = () => {
         pdf.addImage(actualImg, 'PNG', 10, 25, 270, 130);
     }
 
-    // 3. Predicted Table
     const predictedTableForPdf = predictedData.map(row => [
         row.displayTime,
         `${(Number(row.displayValue) || 0).toFixed(2)} ft.`,
@@ -199,7 +196,6 @@ const HistoryTab = () => {
       headStyles: { fillColor: [0, 114, 206] }
     });
 
-    // 4. Predicted Chart
     if (predictedChartRef.current) {
         const predictedCanvas = await html2canvas(predictedChartRef.current, { scale: 2 });
         const predictedImg = predictedCanvas.toDataURL('image/png');
@@ -280,20 +276,21 @@ const HistoryTab = () => {
             <div className="content-column" id="history-column2">
               <div className='chart-wrapper'>
                 <ResponsiveContainer width="100%" height="100%" minHeight={300}>
-                  {/* MAIN CHART FIXED: bottom margin to 60 */}
-                  <LineChart data={activeDisplayData} margin={{ top: 15, right: 30, left: 25, bottom: 60 }}>
+                  {/* MAIN CHART - Changed bottom margin to 10 */}
+                  <LineChart data={activeDisplayData} margin={{ top: 15, right: 30, left: 25, bottom: 10 }}>
                     <CartesianGrid stroke="#f0f0f0" />
-                    {/* MAIN CHART FIXED: offset to -25 */}
+                    {/* ADDED height={50} and offset={-5} */}
                     <XAxis
                       dataKey="displayTime"
                       minTickGap={30}
                       interval="preserveStartEnd"
                       tick={{ fontSize: 10 }}
                       tickMargin={10}
+                      height={50} 
                       label={{
                         value: 'time (t)',
                         position: 'insideBottom',
-                        offset: -25,
+                        offset: -5,
                         style: {
                           fontStyle: 'italic',
                           fontSize: '10px',
@@ -342,7 +339,6 @@ const HistoryTab = () => {
         </div>
       </div>
 
-      {/* Hidden Off-Screen Charts explicitly mapped for PDF Extraction */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
         
         {/* HIDDEN ACTUAL CHART */}
@@ -356,23 +352,22 @@ const HistoryTab = () => {
           }}
         >
           <ResponsiveContainer width="100%" height="100%">
-            {/* ACTUAL PDF CHART FIXED: bottom margin 60 */}
             <LineChart
               data={actualData}
-              margin={{ top: 15, right: 30, left: 25, bottom: 60 }}
+              margin={{ top: 15, right: 30, left: 25, bottom: 10 }}
             >
               <CartesianGrid stroke="#f0f0f0" />
-              {/* ACTUAL PDF CHART FIXED: offset -25 */}
               <XAxis
                 dataKey="displayTime"
                 minTickGap={30}
                 interval="preserveStartEnd"
                 tick={{ fontSize: 10 }}
                 tickMargin={10}
+                height={50}
                 label={{
                   value: 'time (t)',
                   position: 'insideBottom',
-                  offset: -25,
+                  offset: -5,
                 }}
               />
               <YAxis
@@ -409,23 +404,22 @@ const HistoryTab = () => {
           }}
         >
           <ResponsiveContainer width="100%" height="100%">
-            {/* PREDICTED PDF CHART FIXED: bottom margin 60 */}
             <LineChart
               data={predictedData}
-              margin={{ top: 15, right: 30, left: 25, bottom: 60 }}
+              margin={{ top: 15, right: 30, left: 25, bottom: 10 }}
             >
               <CartesianGrid stroke="#f0f0f0" />
-              {/* PREDICTED PDF CHART FIXED: offset -25 */}
               <XAxis
                 dataKey="displayTime"
                 minTickGap={30}
                 interval="preserveStartEnd"
                 tick={{ fontSize: 10 }}
                 tickMargin={10}
+                height={50}
                 label={{
                   value: 'time (t)',
                   position: 'insideBottom',
-                  offset: -25,
+                  offset: -5,
                 }}
               />
               <YAxis
