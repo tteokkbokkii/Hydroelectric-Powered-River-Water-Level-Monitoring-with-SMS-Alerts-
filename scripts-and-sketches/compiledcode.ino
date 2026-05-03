@@ -342,7 +342,8 @@ float predictLevel() {
     }
     double slope = (history_count * sumXY - sumX * sumY) / (history_count * sumX2 - sumX * sumX);
     double intercept = (sumY - slope * sumX) / history_count;
-    return (float)(intercept + slope * ((rtc.now().unixtime() + 300) - history_time[0]));
+    long future_offset_seconds = reading_interval_min * 60;
+    return (float)(intercept + slope * ((rtc.now().unixtime() + future_offset_seconds) - history_time[0]));
 }
 
 float predictHour() {
@@ -596,7 +597,21 @@ void triggerAnomalyAlert(const char* anomalyReason) {
 }
 
 void loop() {
-    if (WiFi.status() == WL_CONNECTED) {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("⚠️ WiFi Disconnected! Halting normal loop and attempting to reconnect...");
+
+        if (!anomaly_wifi_notified) {
+            triggerAnomalyAlert("WiFi Connection Lost. System offline.");
+            anomaly_wifi_notified = true;
+        }
+
+        connectToPriorityNetwork(looping);
+        
+        if (WiFi.status() == WL_CONNECTED) anomaly_wifi_notified = false;
+
+        delay(5000);
+    } 
+    else {
         looping = true;
         if (!client.connected()) {
             static int mqtt_fail_count = 0;
@@ -871,18 +886,6 @@ void loop() {
             }
             lastSample = millis();
         }
-    } else {
-        Serial.println("⚠️ WiFi Disconnected! Halting normal loop and attempting to reconnect...");
-
-        if (!anomaly_wifi_notified) {
-            triggerAnomalyAlert("WiFi Connection Lost. System offline.");
-            anomaly_wifi_notified = true;
-        }
-
-        connectToPriorityNetwork(looping);
-        
-        if (WiFi.status() == WL_CONNECTED) anomaly_wifi_notified = false;
-
-        delay(5000);
+    }    
     }
 }

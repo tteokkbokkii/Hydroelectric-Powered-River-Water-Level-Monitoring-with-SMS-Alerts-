@@ -102,7 +102,10 @@ function RiverTrend({ history, readingInterval = 5 }) {
               />
               <Tooltip
                 labelFormatter={(label) => `time: ${label}`}
-                formatter={(value, name) => [`${(Number(value) || 0).toFixed(2)} ft.`, name === 'current' ? 'Actual' : 'Predicted']}
+                formatter={(value, name) => [
+                  `${(Number(value) || 0).toFixed(2)} ft.`, 
+                  name === 'current' ? 'Actual' : `Predicted (+${readingInterval} min)`
+                ]}
                 contentStyle={{ borderRadius: '10px', border: '1px solid #ddd', padding: '10px', fontSize: '12px' }}
               />
               <Legend
@@ -110,7 +113,7 @@ function RiverTrend({ history, readingInterval = 5 }) {
                 align='right'
                 iconType='plainline'
                 wrapperStyle={{ top: 10, right: 10, fontSize: '12px' }}
-                formatter={(value) => value === 'current' ? 'Actual' : 'Predicted'}
+                formatter={(value) => value === 'current' ? 'Actual' : `Predicted (+${readingInterval} min)`}
               />
               <Line
                 name="predicted"
