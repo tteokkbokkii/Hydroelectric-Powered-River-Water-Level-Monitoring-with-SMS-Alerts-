@@ -22,11 +22,10 @@ const HistoryTab = () => {
   const [allData, setAllData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const [settings, setSettings] = useState({
     normal: 9.0, attention: 10.0, critical: 11.0, predicting_interval: 60
   });
-
+  
   const actualChartRef = useRef(null);
   const predictedChartRef = useRef(null);
   const scrollPositionRef = useRef(0);
@@ -40,7 +39,7 @@ const HistoryTab = () => {
           normal: data.threshold_normal,
           attention: data.threshold_attention,
           critical: data.threshold_critical,
-          predicting_interval: 60 // Fixed to 60 as requested
+          predicting_interval: 60 
         });
       })
       .catch(err => console.error("Error fetching settings:", err));
@@ -120,6 +119,7 @@ const HistoryTab = () => {
       });
 
       let predTimeStr = "--:--";
+  
       if (row.time) {
         const [hours, minutes, seconds] = row.time.split(':').map(Number);
         const d = new Date();
@@ -132,7 +132,7 @@ const HistoryTab = () => {
       let predStatus = "SAFE";
       if (predVal >= settings.critical) predStatus = "CRITICAL";
       else if (predVal >= settings.attention) predStatus = "WARNING";
-
+      
       predicteds.push({
         ...row,
         displayTime: predTimeStr,
@@ -157,10 +157,12 @@ const HistoryTab = () => {
         `${(Number(row.displayValue) || 0).toFixed(2)} ft.`,
         row.displayStatus
     ]);
+    
     pdf.setFontSize(16);
     pdf.text(`Historical Water Level Data - Hulo Ferry Station`, 14, 15);
     pdf.setFontSize(12);
     pdf.text(`Actual Readings Table - ${dateTitle}`, 14, 22);
+    
     autoTable(pdf, {
       head: [['TIMESTAMP', 'ELEVATION', 'STATUS']],
       body: actualTableForPdf,
@@ -185,6 +187,7 @@ const HistoryTab = () => {
         `${(Number(row.displayValue) || 0).toFixed(2)} ft.`,
         row.displayStatus
     ]);
+    
     pdf.addPage();
     pdf.setFontSize(16);
     pdf.text(`Predicted Readings Table - ${dateTitle}`, 14, 15);
@@ -251,8 +254,6 @@ const HistoryTab = () => {
                 <DataTable
                   value={activeDisplayData}
                   scrollable
-                  /* On mobile (width < 1024), we use 60% of the screen height. 
-                    On monitor, we use flex. */
                   scrollHeight={window.innerWidth <= 1024 ? "60vh" : "flex"}
                   style={{ height: '100%' }} 
                   size="small"
@@ -279,18 +280,20 @@ const HistoryTab = () => {
             <div className="content-column" id="history-column2">
               <div className='chart-wrapper'>
                 <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                  {/* MAIN CHART FIXED: bottom margin to 60 */}
                   <LineChart data={activeDisplayData} margin={{ top: 15, right: 30, left: 25, bottom: 60 }}>
                     <CartesianGrid stroke="#f0f0f0" />
+                    {/* MAIN CHART FIXED: offset to -25 */}
                     <XAxis
-                      height={60}
                       dataKey="displayTime"
                       minTickGap={30}
                       interval="preserveStartEnd"
                       tick={{ fontSize: 10 }}
+                      tickMargin={10}
                       label={{
                         value: 'time (t)',
                         position: 'insideBottom',
-                        offset: 45,
+                        offset: -25,
                         style: {
                           fontStyle: 'italic',
                           fontSize: '10px',
@@ -341,6 +344,8 @@ const HistoryTab = () => {
 
       {/* Hidden Off-Screen Charts explicitly mapped for PDF Extraction */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        
+        {/* HIDDEN ACTUAL CHART */}
         <div
           ref={actualChartRef}
           style={{
@@ -351,20 +356,23 @@ const HistoryTab = () => {
           }}
         >
           <ResponsiveContainer width="100%" height="100%">
+            {/* ACTUAL PDF CHART FIXED: bottom margin 60 */}
             <LineChart
               data={actualData}
-              margin={{ top: 15, right: 30, left: 25, bottom: 35 }}
+              margin={{ top: 15, right: 30, left: 25, bottom: 60 }}
             >
               <CartesianGrid stroke="#f0f0f0" />
+              {/* ACTUAL PDF CHART FIXED: offset -25 */}
               <XAxis
                 dataKey="displayTime"
                 minTickGap={30}
                 interval="preserveStartEnd"
                 tick={{ fontSize: 10 }}
+                tickMargin={10}
                 label={{
                   value: 'time (t)',
                   position: 'insideBottom',
-                  offset: -10,
+                  offset: -25,
                 }}
               />
               <YAxis
@@ -390,6 +398,7 @@ const HistoryTab = () => {
           </ResponsiveContainer>
         </div>
 
+        {/* HIDDEN PREDICTED CHART */}
         <div
           ref={predictedChartRef}
           style={{
@@ -400,20 +409,23 @@ const HistoryTab = () => {
           }}
         >
           <ResponsiveContainer width="100%" height="100%">
+            {/* PREDICTED PDF CHART FIXED: bottom margin 60 */}
             <LineChart
               data={predictedData}
-              margin={{ top: 15, right: 30, left: 25, bottom: 35 }}
+              margin={{ top: 15, right: 30, left: 25, bottom: 60 }}
             >
               <CartesianGrid stroke="#f0f0f0" />
+              {/* PREDICTED PDF CHART FIXED: offset -25 */}
               <XAxis
                 dataKey="displayTime"
                 minTickGap={30}
                 interval="preserveStartEnd"
                 tick={{ fontSize: 10 }}
+                tickMargin={10}
                 label={{
                   value: 'time (t)',
                   position: 'insideBottom',
-                  offset: -10,
+                  offset: -25,
                 }}
               />
               <YAxis
