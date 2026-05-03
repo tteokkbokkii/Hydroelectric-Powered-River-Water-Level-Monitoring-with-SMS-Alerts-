@@ -33,14 +33,14 @@ function RiverTrend({ history, readingInterval = 5 }) {
       }
 
       // Instead of forcing 0 on invalid numbers, return null.
-      // Recharts will use connectNulls={true} to bridge the gap instead of diving to 0.
       const currentVal = (item.distance && item.distance !== "None") ? Number(item.distance) : null;
       const predictedVal = (item.predicted && item.predicted !== "None") ? Number(item.predicted) : null;
 
       return {
         time: displayTime,
         current: currentVal,
-        predicted: predictedVal
+        predicted: predictedVal,
+        isFuture: false // TAG: Identify these as historical points
       };
     });
 
@@ -68,7 +68,8 @@ function RiverTrend({ history, readingInterval = 5 }) {
       formatted.push({
         time: futureTime,
         current: null, 
-        predicted: latest.predicted 
+        predicted: latest.predicted,
+        isFuture: true // TAG: Identify this specifically as the future projection
       });
     }
 
@@ -100,21 +101,32 @@ function RiverTrend({ history, readingInterval = 5 }) {
                 axisLine={{ stroke: '#ccc' }}
                 tickFormatter={(value) => `${value} ft.`}
               />
+              
+              {/* UPDATED TOOLTIP */}
               <Tooltip
                 labelFormatter={(label) => `time: ${label}`}
-                formatter={(value, name) => [
-                  `${(Number(value) || 0).toFixed(2)} ft.`, 
-                  name === 'current' ? 'Actual' : `Predicted (+${readingInterval} min)`
-                ]}
+                formatter={(value, name, props) => {
+                  if (name === 'current') return [`${(Number(value) || 0).toFixed(2)} ft.`, 'Actual'];
+                  
+                  // Check the tag we added to determine the label
+                  const label = props.payload.isFuture 
+                    ? `Predicted (+${readingInterval} min)` 
+                    : 'Predicted';
+                    
+                  return [`${(Number(value) || 0).toFixed(2)} ft.`, label];
+                }}
                 contentStyle={{ borderRadius: '10px', border: '1px solid #ddd', padding: '10px', fontSize: '12px' }}
               />
+              
+              {/* UPDATED LEGEND */}
               <Legend
                 verticalAlign='top'
                 align='right'
                 iconType='plainline'
                 wrapperStyle={{ top: 10, right: 10, fontSize: '12px' }}
-                formatter={(value) => value === 'current' ? 'Actual' : `Predicted (+${readingInterval} min)`}
+                formatter={(value) => value === 'current' ? 'Actual' : 'Predicted'}
               />
+              
               <Line
                 name="predicted"
                 type="monotone"
