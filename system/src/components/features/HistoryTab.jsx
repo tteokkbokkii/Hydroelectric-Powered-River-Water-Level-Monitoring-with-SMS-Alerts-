@@ -273,29 +273,29 @@ const HistoryTab = () => {
               )}
             </div>
 
-            {/* DOM FIX: Added explicit flex column flow to prevent HTML collisions */}
-            <div className="content-column" id="history-column2" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            {/* Guaranteed Layout: Flex column ensures footer STAYS below the chart */}
+            <div className="content-column" id="history-column2" style={{ display: 'flex', flexDirection: 'column' }}>
               
-              {/* DOM FIX: flex: 1 allows chart wrapper to fill available space WITHOUT pushing footer off-screen */}
-              <div className='chart-wrapper' style={{ flex: 1, minHeight: 0, width: '100%' }}>
-                
-                {/* DOM FIX: Lowered minHeight to 250 so the bottom doesn't get chopped off on mobile 50vh */}
-                <ResponsiveContainer width="100%" height="100%" minHeight={250}>
+              {/* flex: 1 allows the wrapper to dynamically take the remaining vertical space */}
+              <div className='chart-wrapper' style={{ flex: 1, minHeight: '200px' }}>
+                <ResponsiveContainer width="100%" height="100%">
                   
-                  {/* MATH FIX: Margin bottom exactly 35 for space */}
-                  <LineChart data={activeDisplayData} margin={{ top: 15, right: 30, left: 25, bottom: 35 }}>
+                  {/* Minimized bottom margin because XAxis height handles the spacing internally */}
+                  <LineChart data={activeDisplayData} margin={{ top: 15, right: 30, left: 25, bottom: 5 }}>
                     <CartesianGrid stroke="#f0f0f0" />
                     
+                    {/* The Surefire Fix: Specific height=50 reserves space. Offset=0 anchors label inside. */}
                     <XAxis
                       dataKey="displayTime"
                       minTickGap={30}
                       interval="preserveStartEnd"
                       tick={{ fontSize: 10 }}
                       tickMargin={10}
+                      height={50} 
                       label={{
                         value: 'time (t)',
                         position: 'insideBottom',
-                        offset: -20, // MATH FIX: Fits perfectly inside the 35px margin without clipping
+                        offset: 0, 
                         style: {
                           fontStyle: 'italic',
                           fontSize: '10px',
@@ -337,8 +337,8 @@ const HistoryTab = () => {
                 </ResponsiveContainer>
               </div>
               
-              {/* DOM FIX: Explicitly spaced footer that stays on screen */}
-              <div className='graph-footer' style={{ marginTop: '10px', flexShrink: 0, textAlign: 'center' }}>
+              {/* flexShrink: 0 prevents the footer from ever being crushed or overlapped */}
+              <div className='graph-footer' style={{ flexShrink: 0, paddingTop: '10px', textAlign: 'center' }}>
                 {activeTab === 'ACTUAL' ? 'Actual Reading' : 'Predicted Reading'} for {selectedDate.toLocaleDateString()}
               </div>
             </div>
@@ -346,7 +346,6 @@ const HistoryTab = () => {
         </div>
       </div>
 
-      {/* Hidden Off-Screen Charts explicitly mapped for PDF Extraction */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
         
         <div
@@ -361,7 +360,7 @@ const HistoryTab = () => {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={actualData}
-              margin={{ top: 15, right: 30, left: 25, bottom: 35 }}
+              margin={{ top: 15, right: 30, left: 25, bottom: 5 }}
             >
               <CartesianGrid stroke="#f0f0f0" />
               <XAxis
@@ -370,10 +369,11 @@ const HistoryTab = () => {
                 interval="preserveStartEnd"
                 tick={{ fontSize: 10 }}
                 tickMargin={10}
+                height={50}
                 label={{
                   value: 'time (t)',
                   position: 'insideBottom',
-                  offset: -20,
+                  offset: 0,
                 }}
               />
               <YAxis
@@ -411,7 +411,7 @@ const HistoryTab = () => {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={predictedData}
-              margin={{ top: 15, right: 30, left: 25, bottom: 35 }}
+              margin={{ top: 15, right: 30, left: 25, bottom: 5 }}
             >
               <CartesianGrid stroke="#f0f0f0" />
               <XAxis
@@ -420,10 +420,11 @@ const HistoryTab = () => {
                 interval="preserveStartEnd"
                 tick={{ fontSize: 10 }}
                 tickMargin={10}
+                height={50}
                 label={{
                   value: 'time (t)',
                   position: 'insideBottom',
-                  offset: -20,
+                  offset: 0,
                 }}
               />
               <YAxis
