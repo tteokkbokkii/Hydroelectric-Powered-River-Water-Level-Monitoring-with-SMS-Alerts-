@@ -887,5 +887,4 @@ void loop() {
             lastSample = millis();
         }
     }    
-    }
 }
