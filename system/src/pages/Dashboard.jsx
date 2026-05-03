@@ -90,12 +90,27 @@ function Dashboard() {
     }
   };
 
+  const [intervals, setIntervals] = useState({ reading: 5 });
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/settings`);
+      const data = await res.json();
+      setIntervals({ reading: data.reading_interval || 5 });
+    } catch (err) {
+      console.error("Error fetching interval settings:", err);
+    }
+  };
+
+
   useEffect(() => {
     fetchData();
+    fetchSettings(); // <--- Add this line
     const interval = setInterval(fetchData, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, []);
 
+  
   // --- STRICT ESCALATION POPUP LOGIC ---
   useEffect(() => {
     if (latestReading && latestReading.range) {
@@ -145,7 +160,7 @@ function Dashboard() {
               predictedLevel={latestReading?.predicted || 0}
               predictedHour={latestReading?.predicted_hour || 0}
             />
-            <RiverTrend history={waterData} />
+            <RiverTrend history={waterData} readingInterval={intervals.reading}/>
             <RecentLogs logs={waterData} />
         </div>
       </div>

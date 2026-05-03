@@ -1,119 +1,91 @@
 import paho.mqtt.client as mqtt
 import json
 import time
-import random
+import threading
 from datetime import datetime, timedelta
+from flask import Flask, jsonify
+from flask_cors import CORS
 
 # --- CONFIGURATION ---
 MQTT_SERVER = "127.0.0.1" 
 MQTT_TOPIC = "sensor/hulo/reading"
-STATUS_TOPIC = "system/status"
-SIGNAL_TOPIC = "system/signal"
+app = Flask(__name__)
+CORS(app) 
 
-client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+# Simulation settings
+CURRENT_INTERVAL = 4  # <--- Change this to 1 or 5 to test different speeds
 
-# Memory for Linear Regression
-history_levels = []
-history_times = []
+# Global storage
+latest_reading = {}
+history_data = []
 
-def calculate_prediction(new_level):
-    """Simple Linear Regression to predict level in 5 minutes"""
-    history_levels.append(new_level)
-    history_times.append(time.time())
+def run_simulation():
+    global latest_reading, history_data
     
-    # Keep only last 5 points for the trend
-    if len(history_levels) > 5:
-        history_levels.pop(0)
-        history_times.pop(0)
+    # Starting level
+    current_val = 10.0 
+    
+    while True:
+        # Determine Range based on your new 26ft scale logic
+        status_range = "SAFE"
+        if current_val >= 11.0: 
+            status_range = "CRITICAL"
+        elif current_val >= 10.0: 
+            status_range = "WARNING"
+
+        # Create a timestamp
+        now = datetime.now()
         
-    if len(history_levels) < 2:
-        return round(new_level + 0.1, 2)
+        reading = {
+            "date": now.strftime("%Y-%m-%d"),
+            "time": now.strftime("%H:%M:%S"),
+            "distance": round(current_val, 2),        
+            "predicted": round(current_val + 0.2, 2), # This is the "Next Reading" prediction
+            "range": status_range,                    
+            "status": "NORMAL THRESHOLD" if status_range == "SAFE" else status_range
+        }
+        
+        latest_reading = reading
+        
+        # Add to history (newest at the top for your dashboard logic)
+        history_data.insert(0, reading)
+        if len(history_data) > 20:
+            history_data.pop()
 
-    # Linear Regression Formula (y = mx + b)
-    n = len(history_levels)
-    sum_x = sum(history_times)
-    sum_y = sum(history_levels)
-    sum_xx = sum(x*x for x in history_times)
-    sum_xy = sum(x*y for x, y in zip(history_times, history_levels))
-    
-    denominator = (n * sum_xx - sum_x**2)
-    if denominator == 0: return round(new_level, 2)
-    
-    slope = (n * sum_xy - sum_x * sum_y) / denominator
-    intercept = (sum_y - slope * sum_x) / n
-    
-    # Predict value 300 seconds (5 mins) into the future
-    prediction = slope * (time.time() + 500) + intercept
-    return round(max(0, prediction), 2)
+        # Optional MQTT Broadcast
+        try:
+            client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+            client.connect(MQTT_SERVER, 1883)
+            client.publish(MQTT_TOPIC, json.dumps(reading))
+            client.disconnect()
+        except:
+            pass
+            
+        print(f"📡 SIMULATOR -> Level: {reading['distance']} ft | Next point expected in {CURRENT_INTERVAL}m")
+        
+        # In a real test, you'd sleep for CURRENT_INTERVAL * 60
+        # For simulation, we sleep for 10 seconds so you can see the chart move
+        time.sleep(10) 
 
-# --- CONNECT TO BROKER ---
-try:
-    client.connect(MQTT_SERVER, 1883)
-    print(f"🚀 Simulator started. Sending data to {MQTT_SERVER}...")
-except Exception as e:
-    print(f"❌ Connection Error: {e}")
-    exit()
+# --- API ENDPOINTS ---
 
-# --- SYSTEM STATUS OBJECT ---
-# Contains keys for both the Footer.jsx logic and SystemTab.jsx UI
-status_msg = {
-    "uptime": "00d 04h 20m",
-    "signal_quality": "EXCELLENT",
-    "network_type": "WIFI",
-    "rpi_online": True,
-    "esp_connected": True,
-    "ultrasonic_active": True,
-    "float_ready": True,
-    "rtc_synced": True,
-    "gsm_status": "READY",
-    "ultrasonic_connected": True, # Required by Footer.jsx
-    "float_connected": True,      # Required by Footer.jsx
-    "reset_reason": "SOFTWARE"    # Set to anything other than POWER_ON
-}
+@app.route('/api/settings', methods=['GET'])
+def get_settings():
+    # This is what Dashboard.jsx calls to set the chart's time offset
+    return jsonify({
+        "threshold_normal": 9.0,
+        "threshold_attention": 10.0,
+        "threshold_critical": 11.0,
+        "reading_interval": CURRENT_INTERVAL  # <--- React reads this!
+    })
 
-# --- LIVE DATA LOOP ---
-current_level = 7.5 # Starting height in feet
+@app.route('/api/data', methods=['GET']) 
+def get_data():
+    return jsonify(history_data if history_data else [latest_reading])
 
-while True:
-    now = datetime.now()
+if __name__ == "__main__":
+    sim_thread = threading.Thread(target=run_simulation, daemon=True)
+    sim_thread.start()
     
-    # 1. Generate realistic water movement
-    # Small random fluctuations to simulate ripples/tide
-    current_level += random.uniform(-0.10, 0.15) 
-    current_level = max(2.0, min(12.0, current_level)) # Stay within physical limits
-    
-    # 2. Calculate trend-based prediction
-    prediction = calculate_prediction(current_level)
-    
-    # 3. Determine Range based on default thresholds
-    status_range = "SAFE"
-    if current_level >= 11.0: 
-        status_range = "CRITICAL"
-    elif current_level >= 10.0: 
-        status_range = "WARNING"
-
-    # 4. Prepare Sensor Payload
-    reading_payload = {
-        "date": now.strftime("%Y-%m-%d"),
-        "time": now.strftime("%H:%M:%S"),
-        "distance": round(current_level, 2),
-        "range": status_range,
-        "predicted": prediction
-    }
-    
-    # 5. Prepare Signal Strength Payload (4 bars = Full)
-    signal_payload = {"bars": 4}
-
-    # 6. PUBLISH TO MQTT
-    # Publish reading
-    client.publish(MQTT_TOPIC, json.dumps(reading_payload))
-    
-    # Publish status (Every loop to ensure Footer stays Green/Normal)
-    client.publish(STATUS_TOPIC, json.dumps(status_msg))
-    
-    # Publish signal bars
-    client.publish(SIGNAL_TOPIC, json.dumps(signal_payload))
-    
-    print(f"📡 {reading_payload['time']} | Level: {reading_payload['distance']} ft. | Prediction: {prediction} ft. | Status: {status_range}")
-    
-    time.sleep(1)
+    print(f"🚀 Simulator Server active. Interval set to: {CURRENT_INTERVAL} mins")
+    app.run(port=5000, host='0.0.0.0', debug=False, use_reloader=False, threaded=True)

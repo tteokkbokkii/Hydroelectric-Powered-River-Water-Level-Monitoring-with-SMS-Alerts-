@@ -3,72 +3,43 @@ import { Toast } from 'primereact/toast';
 import mqtt from 'mqtt';
 import '../../styles/SystemTab.css';
 import { GlobalContext } from './GlobalStateProvider'; 
+
 // ---------- Custom Number Input Component ----------
 const NumberInput = ({ value, onChange, step = 0.1, min, max, unit, decimalPlaces = 2 }) => {
-  const formatValue = (val) => {
-    if (val === undefined || val === null || val === '') return '';
-    const num = parseFloat(val);
-    if (isNaN(num)) return '';
-    return num.toFixed(decimalPlaces);
-  };
+  // 1. Initialize local state with forced decimal formatting
+  const [typingValue, setTypingValue] = useState(
+    value !== undefined && value !== null ? Number(value).toFixed(decimalPlaces) : ''
+  );
 
-  const roundToDecimals = (num) => {
-    const factor = Math.pow(10, decimalPlaces);
-    return Math.round(num * factor) / factor;
-  };
+  // Sync internal state if the parent value changes (handles RESET TO DEFAULT)
+  useEffect(() => {
+    if (value !== undefined && value !== null) {
+      setTypingValue(Number(value).toFixed(decimalPlaces));
+    }
+  }, [value, decimalPlaces]);
 
-  const handleIncrement = () => {
-    let newVal = parseFloat(value) + step;
-    if (max !== undefined && newVal > max) newVal = max;
-    newVal = roundToDecimals(newVal);
-    onChange(newVal);
-  };
-
-  const handleDecrement = () => {
-    let newVal = parseFloat(value) - step;
-    if (min !== undefined && newVal < min) newVal = min;
-    newVal = roundToDecimals(newVal);
-    onChange(newVal);
-  };
-
-  const handleChange = (e) => {
+  // 2. The Bouncer: Blocks letters instantly while allowing typing decimal points
+  const handleInputChange = (e) => {
     const raw = e.target.value;
-    if (raw === '') {
-      onChange('');
-      return;
+    // REGEX: Blocks letters. Only allows numbers and one decimal point.
+    if (raw === '' || /^-?\d*\.?\d*$/.test(raw)) {
+      setTypingValue(raw);
     }
-    let newVal = parseFloat(raw);
-    if (isNaN(newVal)) {
-      onChange('');
-      return;
-    }
-    if (min !== undefined && newVal < min) newVal = min;
-    if (max !== undefined && newVal > max) newVal = max;
-    newVal = roundToDecimals(newVal);
-    onChange(newVal);
   };
 
-  const handleBlur = () => {
-    let currentVal = value;
-    if (currentVal === '' || currentVal === undefined || currentVal === null || isNaN(currentVal)) {
-      const defaultVal = min !== undefined ? min : 0;
-      onChange(defaultVal);
-      return;
-    }
-    const num = parseFloat(currentVal);
+  // 3. The Finalizer: Clamps, rounds, and forces decimal places on Blur or Enter
+  const finalizeValue = (rawInput) => {
+    let num = parseFloat(rawInput);
+    
     if (isNaN(num)) {
-      onChange(min !== undefined ? min : 0);
-      return;
+      num = min !== undefined ? min : 0;
     }
-    let clamped = num;
-    if (min !== undefined && clamped < min) clamped = min;
-    if (max !== undefined && clamped > max) clamped = max;
-    clamped = roundToDecimals(clamped);
-    if (clamped !== num) {
-      onChange(clamped);
-    } else {
-      onChange(roundToDecimals(num));
-    }
+
+    let clamped = Math.max(min ?? -Infinity, Math.min(max ?? Infinity, num));
+    const formattedStr = clamped.toFixed(decimalPlaces);
+    
+    setTypingValue(formattedStr); 
+    onChange(parseFloat(formattedStr)); 
   };
 
   return (
@@ -76,14 +47,23 @@ const NumberInput = ({ value, onChange, step = 0.1, min, max, unit, decimalPlace
       <input
         type="text"
         className="settings-input"
-        value={formatValue(value)}
-        onChange={handleChange}
-        onBlur={handleBlur}
+        value={typingValue}
+        onChange={handleInputChange} 
+        onBlur={() => finalizeValue(typingValue)}
+        onKeyDown={(e) => e.key === 'Enter' && finalizeValue(typingValue)}
       />
       <span className="unit-label">{unit}</span>
       <div className="number-buttons">
-        <button type="button" onClick={handleIncrement} className="number-btn up">▲</button>
-        <button type="button" onClick={handleDecrement} className="number-btn down">▼</button>
+        <button 
+          type="button" 
+          onClick={() => finalizeValue(parseFloat(value || 0) + step)} 
+          className="number-btn up"
+        >▲</button>
+        <button 
+          type="button" 
+          onClick={() => finalizeValue(parseFloat(value || 0) - step)} 
+          className="number-btn down"
+        >▼</button>
       </div>
     </div>
   );
@@ -111,7 +91,7 @@ const SystemTab = () => {
     gsm: '--'
   });
 
-  // Settings state
+  // Settings state (To DO: MUST BE MANUALLY CHECKED LATER)
   const [thresholds, setThresholds] = useState({ normal: 9.0, attention: 10.0, critical: 11.0 });
   const [intervals, setIntervals] = useState({ reading: 5, predicting: 60 });
   const { popupSettings, setPopupSettings } = useContext(GlobalContext);
@@ -144,8 +124,6 @@ const SystemTab = () => {
     mqttClientRef.current = client;
     
     client.on('connect', () => {
-      // We only subscribe to system/status here. 
-      // sensor/hulo/reading is handled by GlobalLayout for emergency alerts.
       client.subscribe('system/status');
     });
 
@@ -244,7 +222,6 @@ const SystemTab = () => {
   return (
     <div className="main-content">
       <Toast ref={toast} />
-      {/* inline styles moved to ../../styles/SystemTab.css */}
 
       <div className="card-wrapper" id="main-profile-card">
         <h1 className="card-heading">SYSTEM</h1>
@@ -355,7 +332,7 @@ const SystemTab = () => {
                       onChange={(val) => handleThresholdChange('critical', val)} 
                       step={0.01} 
                       min={thresholds.attention + 0.01} 
-                      max={12} 
+                      max={26} 
                       unit="ft." 
                     />
                   </div>
@@ -364,39 +341,39 @@ const SystemTab = () => {
                   <h3 className="SysTab-title">INTERVALS</h3>
                   <div className="settings-row">
                     <span>Reading Intervals :</span>
-                    <NumberInput value={intervals.reading} onChange={(val) => handleIntervalChange('reading', val)} step={1} min={1} max={10} unit="mins." decimalPlaces={0} />
+                    <NumberInput value={intervals.reading} onChange={(val) => handleIntervalChange('reading', val)} step={1} min={1} max={5} unit="mins." decimalPlaces={0} />
                   </div>
                 </div>
               </div>
               <div className="settings-column">
                 <div className="content-group">
                   <h3 className="SysTab-title">POP UP NOTIFICATIONS</h3>
-                      <div className="toggle-group">
-                        <div className="toggle-row">
-                        <span>Needs Attention</span>
-                        <label className="switch">
-                          <input 
+                  <div className="toggle-group">
+                    <div className="toggle-row">
+                      <span>Needs Attention</span>
+                      <label className="switch">
+                        <input 
                           type="checkbox" 
                           checked={popupSettings.attention} 
                           onChange={() => handleNotificationChange('attention')} 
-                          />
-                          <span className="slider"></span>
-                        </label>
-                        </div>
-                        <div className="toggle-row">
-                          <span>Highly Critical</span>
-                          <label className="switch">
-                            <input 
-                            type="checkbox" 
-                            checked={popupSettings.critical} 
-                            onChange={() => handleNotificationChange('critical')} 
-                            />
-                            <span className="slider"></span>
-                          </label>
-                        </div>
-                      </div>
+                        />
+                        <span className="slider"></span>
+                      </label>
                     </div>
-                  <div className="settings-actions">
+                    <div className="toggle-row">
+                      <span>Highly Critical</span>
+                      <label className="switch">
+                        <input 
+                          type="checkbox" 
+                          checked={popupSettings.critical} 
+                          onChange={() => handleNotificationChange('critical')} 
+                        />
+                        <span className="slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div className="settings-actions">
                   <button className="action-button save-btn" onClick={saveChanges} disabled={isLoading}>{isLoading ? 'SAVING...' : 'SAVE CHANGES'}</button>
                   <button className="action-button reset-btn" onClick={resetToDefault}>RESET TO DEFAULT</button>
                 </div>
