@@ -4,7 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 
-function RiverTrend({ history }) {
+function RiverTrend({ history, readingInterval = 5 }) {
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
@@ -54,12 +54,13 @@ function RiverTrend({ history }) {
         const [hour, minute] = futureTime.split(':').map(Number);
         if (!isNaN(hour) && !isNaN(minute)) {
           let newHour = hour;
-          let newMinute = minute + 5;
+          let newMinute = minute + Number(readingInterval); 
+
           if (newMinute >= 60) {
-            newHour += 1;
-            newMinute -= 60;
-          }
-          if (newHour >= 24) newHour = 0;
+            newHour = (newHour + Math.floor(newMinute / 60)) % 24;
+            newMinute = newMinute % 60;
+        }
+          
           futureTime = `${newHour.toString().padStart(2,'0')}:${newMinute.toString().padStart(2,'0')}`;
         }
       }
@@ -72,7 +73,7 @@ function RiverTrend({ history }) {
     }
 
     setChartData(formatted);
-  }, [history]);
+  }, [history, readingInterval]);
 
   return (
     <div className="card-container" id="rivertrend">
@@ -92,8 +93,8 @@ function RiverTrend({ history }) {
                 axisLine={{ stroke: '#ccc' }}
               />
               <YAxis
-                domain={[5, 12]}
-                ticks={[5, 6, 7, 8, 9, 10, 11, 12]}
+                domain={[2, 27]}
+                ticks={[3, 9, 12, 15, 21, 24, 27]}
                 tick={{ fontSize: 11, fill: '#666' }}
                 tickMargin={15}
                 axisLine={{ stroke: '#ccc' }}

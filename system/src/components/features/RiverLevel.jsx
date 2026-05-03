@@ -24,7 +24,7 @@ const API_BASE = `http://${currentIP}:5000/api`;
 
 const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
   const minLevel = 5;
-  const maxLevel = 12;
+  const maxLevel = 26
 
   const displayLevel = currentLevel || 0;
   const displayPredicted = predictedHour || predictedLevel || 0;
@@ -63,7 +63,11 @@ const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
     predicted: calibrate(displayPredicted)
   }];
 
-  const getVisualY = (val) => ((maxLevel - val) / (maxLevel - minLevel)) * 80 + 10;
+  const getVisualY = (val) => {
+    const chartHeight = 100;
+    const marginOffset = 5.00; 
+    return ((26 - val) / (21)) * (chartHeight - (marginOffset * 2)) + marginOffset;
+  };
 
   return (
     <div className="card-container" id="riverlevel">
@@ -111,7 +115,7 @@ const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
               data={chartData}
               barGap="-100%"
               barCategoryGap={0}
-              margin={{ top: 0, bottom: 0, left: 0, right: 0 }}
+              margin={{ top: 20, bottom: 20, left: 0, right: 0 }}
             >
               <XAxis
                 hide
@@ -119,7 +123,7 @@ const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
               />
               <YAxis
                 hide
-                domain={[4.125, 12.875]}
+                domain={[5, 26]}
               />
 
               <Bar
@@ -163,63 +167,52 @@ const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
             x1="50%"
             y1={`${getVisualY(calibrate(displayLevel))}%`}
             x2="50%"
-            y2="90%"
+            y2={`${getVisualY(5)}%`} 
             stroke="white"
             strokeOpacity="0.5"
             strokeWidth="2"
-            strokeLinecap="round"
+            strokeLinecap="butt"
           />
           <line
             x1="50%"
-            y1="10%"
+            y1={`${getVisualY(26)}%`} 
             x2="50%"
             y2={`${getVisualY(calibrate(displayLevel))}%`}
             stroke="black"
             strokeWidth="2"
-            strokeLinecap="round"
+            strokeLinecap="butt"
           />
 
-          {Array.from({ length: (maxLevel - minLevel) * 4 + 1 }).map((_, i) => {
-            const val = maxLevel - (i * 0.25);
+          {/* //4 SVG GAUGE OVERLAY */}
+          {Array.from({ length: (maxLevel - minLevel) + 1 }).map((_, i) => {
+            const val = maxLevel - i; // Step by 1.0 (removes the 0.5 congestion)
             const yPos = `${getVisualY(val)}%`;
-            const isWhole = val % 1 === 0;
-            const isHalf = val % 1 === 0.5;
+            
+            const isEven = val % 2 === 0;
 
             const isSubmerged = displayLevel >= val;
             const activeColor = isSubmerged ? "white" : "black";
-
-            //6
             const shadowColor = isSubmerged ? 'rgba(0,45,90,0.8)' : 'rgba(255,255,255,0.8)';
-
-            let xStart, xEnd;
-            if (isWhole) {
-              xStart = "45%";
-              xEnd = "55%";
-            } else if (isHalf) {
-              xStart = "46.5%";
-              xEnd = "53.5%";
-            } else {
-              xStart = "48%";
-              xEnd = "52%";
-            }
 
             return (
               <g key={val}>
                 <line
-                  x1={xStart}
+                  x1={isEven ? "44%" : "47%"}
                   y1={yPos}
-                  x2={xEnd}
+                  x2={isEven ? "56%" : "53%"}
                   y2={yPos}
                   stroke={activeColor}
-                  strokeWidth={isWhole ? '2.5' : '1.5'}
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                 />
-                {isWhole && (
+                
+                {/* Label only the Even Numbers */}
+                {isEven && (
                   <text
-                    x="57%"
+                    x="59%"
                     y={yPos}
                     dy="6"
-                    fontSize="16"
+                    fontSize="18"
                     fontWeight="900"
                     fill={activeColor}
                     style={{

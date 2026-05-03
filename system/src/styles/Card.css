@@ -4,11 +4,24 @@
 }
 
 #riverlevel-contents {
-  min-width: 500px;
+  min-width: 300px; /* Adjusted for mobile */
+  min-height: 400px; /* CRITICAL: This keeps the 5-26ft scale legible on phones */
   height: 100%;
   position: relative;
+  background-color: #002d5a;
 }
 
+/* Ensure the white background behind the ticks stays proportional */
+#riverlevel-contents::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 95%; /* Matches the 5.00 marginOffset */
+  background: white;
+  z-index: 0;
+}
 #riverlevel-card-header {
   display: flex;
   justify-content: space-between;
