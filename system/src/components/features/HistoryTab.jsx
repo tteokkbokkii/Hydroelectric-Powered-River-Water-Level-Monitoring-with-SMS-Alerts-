@@ -305,7 +305,7 @@ const HistoryTab = () => {
                       }}
                     />
                     <YAxis
-                      width={60}                  
+                      width={45}                  
                       domain={[minY, 27]}         
                       ticks={dynamicTicks}        
                       tick={{ fontSize: 10 }}
@@ -358,7 +358,7 @@ const HistoryTab = () => {
                 label={{ value: 'time (t)', position: 'insideBottom', offset: 0 }}
               />
               <YAxis
-                width={60}                  
+                width={45}                  
                 domain={[minY, 27]}         
                 ticks={dynamicTicks}        
                 tick={{ fontSize: 10 }}
@@ -394,7 +394,7 @@ const HistoryTab = () => {
                 label={{ value: 'time (t)', position: 'insideBottom', offset: 0 }}
               />
               <YAxis
-                width={60}                  
+                width={45}                  
                 domain={[minY, 27]}         
                 ticks={dynamicTicks}        
                 tick={{ fontSize: 10 }}
