@@ -208,36 +208,27 @@ const HistoryTab = () => {
     pdf.save(`Hulo_History_${dateTitle.replace(/\//g, '-')}.pdf`);
   };
 
-  // Add this right above your `return (` statement
-
-  const { minY, maxY, dynamicTicks } = useMemo(() => {
-    // 1. Extract all the numerical values from the currently displayed data
+  const { minY, dynamicTicks } = useMemo(() => {
     const dataValues = activeDisplayData
       .map(d => Number(d.displayValue))
       .filter(val => !isNaN(val));
 
-    // 2. Find the absolute min and max of the data (default to your 10-27 range if empty)
     const dataMin = dataValues.length > 0 ? Math.min(...dataValues) : 10;
-    const dataMax = dataValues.length > 0 ? Math.max(...dataValues) : 27;
-
-    // 3. Ensure the thresholds (Normal, Attention, Critical) stay visible on the chart
-    // even if the actual data is much lower or higher than them.
     const lowestPoint = Math.floor(Math.min(dataMin, settings.normal));
-    const highestPoint = Math.ceil(Math.max(dataMax, settings.critical));
-
-    // 4. Add a 1 ft. padding to the top and bottom so the lines don't touch the very edge
-    // (Ensure the minimum never drops below 0)
     const finalMin = Math.max(0, lowestPoint - 1);
-    const finalMax = highestPoint + 1;
-
-    // 5. Generate clean, even ticks for the Y-Axis based on this new dynamic range
+    
+    const finalMax = 27;
     const ticks = [];
-    // We use intervals of 2 (e.g., 10, 12, 14...). Change `i += 2` to `i += 1` if you want more ticks.
+    
     for (let i = finalMin; i <= finalMax; i += 2) {
       ticks.push(i);
     }
 
-    return { minY: finalMin, maxY: finalMax, dynamicTicks: ticks };
+    if (ticks[ticks.length - 1] !== 27) {
+      ticks.push(27);
+    }
+
+    return { minY: finalMin, dynamicTicks: ticks };
   }, [activeDisplayData, settings]);
 
   return (
@@ -287,35 +278,18 @@ const HistoryTab = () => {
                   size="small"
                   emptyMessage="No data found for this date."
                 >
-                  <Column
-                    field="displayTime"
-                    header="TIME"
-                    sortable
-                  />
-                  <Column
-                    field="displayValue"
-                    header="VALUE"
-                    body={(row) => `${(Number(row.displayValue) || 0).toFixed(2)} ft.`}
-                  />
-                  <Column
-                    field="displayStatus"
-                    header="STATUS"
-                  />
+                  <Column field="displayTime" header="TIME" sortable />
+                  <Column field="displayValue" header="VALUE" body={(row) => `${(Number(row.displayValue) || 0).toFixed(2)} ft.`} />
+                  <Column field="displayStatus" header="STATUS" />
                 </DataTable>
               )}
             </div>
 
-            {/* Guaranteed Layout: Flex column ensures footer STAYS below the chart */}
             <div className="content-column" id="history-column2" style={{ display: 'flex', flexDirection: 'column' }}>
-              
-              {/* flex: 1 allows the wrapper to dynamically take the remaining vertical space */}
               <div className='chart-wrapper' style={{ flex: 1, minHeight: '200px' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  
-                  {/* Minimized bottom margin because XAxis height handles the spacing internally */}
                   <LineChart data={activeDisplayData} margin={{ top: 15, right: 30, left: 25, bottom: 5 }}>
                     <CartesianGrid stroke="#f0f0f0" />
-                    
                     <XAxis
                       dataKey="displayTime"
                       minTickGap={30}
@@ -327,36 +301,26 @@ const HistoryTab = () => {
                         value: 'time (t)',
                         position: 'insideBottom',
                         offset: 0, 
-                        style: {
-                          fontStyle: 'italic',
-                          fontSize: '10px',
-                        },
+                        style: { fontStyle: 'italic', fontSize: '10px' },
                       }}
                     />
                     <YAxis
-                      width={60}                  // Keeps the margin safe from text clipping
-                      domain={[minY, maxY]}       // <-- Now dynamically sets BOTH bottom and top
-                      ticks={dynamicTicks}        // <-- Uses our custom scaled ticks
+                      width={60}                  
+                      domain={[minY, 27]}         
+                      ticks={dynamicTicks}        
                       tick={{ fontSize: 10 }}
                       tickFormatter={(v) => `${v} ft.`}
                       label={{
                         value: 'water level (ft.)',
                         angle: -90,
                         position: 'insideLeft',
-                        style: {
-                          textAnchor: 'middle',
-                          fontStyle: 'italic',
-                          fontSize: '10px',
-                        },
+                        style: { textAnchor: 'middle', fontStyle: 'italic', fontSize: '10px' },
                       }}
                     />
                     <Tooltip
                       cursor={{ stroke: '#ccc', strokeWidth: 1 }}
                       labelFormatter={(value) => `time: ${value}`}
-                      formatter={(value) => [
-                        `${(Number(value) || 0).toFixed(2)} ft.`,
-                        'level',
-                      ]}
+                      formatter={(value) => [ `${(Number(value) || 0).toFixed(2)} ft.`, 'level' ]}
                     />
                     {settings.normal > 0 && (
                       <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
@@ -367,18 +331,10 @@ const HistoryTab = () => {
                     {settings.critical > 0 && (
                       <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
                     )}
-                    <Line
-                      type="monotone"
-                      dataKey="displayValue"
-                      stroke={activeTab === 'ACTUAL' ? '#ff8f00' : '#002D5A'}
-                      strokeWidth={2}
-                      dot={false}
-                    />
+                    <Line type="monotone" dataKey="displayValue" stroke={activeTab === 'ACTUAL' ? '#ff8f00' : '#002D5A'} strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-              
-              {/* flexShrink: 0 prevents the footer from ever being crushed or overlapped */}
               <div className='graph-footer' style={{ flexShrink: 0, paddingTop: '10px', textAlign: 'center' }}>
                 {activeTab === 'ACTUAL' ? 'Actual Reading' : 'Predicted Reading'} for {selectedDate.toLocaleDateString()}
               </div>
@@ -388,21 +344,9 @@ const HistoryTab = () => {
       </div>
 
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-        
-        <div
-          ref={actualChartRef}
-          style={{
-            width: '1000px',
-            height: '400px',
-            background: 'white',
-            padding: '20px',
-          }}
-        >
+        <div ref={actualChartRef} style={{ width: '1000px', height: '400px', background: 'white', padding: '20px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={actualData}
-              margin={{ top: 15, right: 30, left: 25, bottom: 5 }}
-            >
+            <LineChart data={actualData} margin={{ top: 15, right: 30, left: 25, bottom: 5 }}>
               <CartesianGrid stroke="#f0f0f0" />
               <XAxis
                 dataKey="displayTime"
@@ -411,23 +355,15 @@ const HistoryTab = () => {
                 tick={{ fontSize: 10 }}
                 tickMargin={10}
                 height={50}
-                label={{
-                  value: 'time (t)',
-                  position: 'insideBottom',
-                  offset: 0,
-                }}
+                label={{ value: 'time (t)', position: 'insideBottom', offset: 0 }}
               />
               <YAxis
-                width={60}                  // Keeps the margin safe from text clipping
-                domain={[minY, maxY]}       // <-- Now dynamically sets BOTH bottom and top
-                ticks={dynamicTicks}        // <-- Uses our custom scaled ticks
+                width={60}                  
+                domain={[minY, 27]}         
+                ticks={dynamicTicks}        
                 tick={{ fontSize: 10 }}
                 tickFormatter={(v) => `${v} ft.`}
-                label={{
-                  value: 'water level (ft.)',
-                  angle: -90,
-                  position: 'insideLeft',
-                }}
+                label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip />
               {settings.normal > 0 && (
@@ -439,31 +375,14 @@ const HistoryTab = () => {
               {settings.critical > 0 && (
                 <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
               )}
-              <Line
-                type="monotone"
-                dataKey="displayValue"
-                stroke="#ff8f00"
-                strokeWidth={2}
-                dot={false}
-              />
+              <Line type="monotone" dataKey="displayValue" stroke="#ff8f00" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        <div
-          ref={predictedChartRef}
-          style={{
-            width: '1000px',
-            height: '400px',
-            background: 'white',
-            padding: '20px',
-          }}
-        >
+        <div ref={predictedChartRef} style={{ width: '1000px', height: '400px', background: 'white', padding: '20px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={predictedData}
-              margin={{ top: 15, right: 30, left: 25, bottom: 5 }}
-            >
+            <LineChart data={predictedData} margin={{ top: 15, right: 30, left: 25, bottom: 5 }}>
               <CartesianGrid stroke="#f0f0f0" />
               <XAxis
                 dataKey="displayTime"
@@ -472,22 +391,15 @@ const HistoryTab = () => {
                 tick={{ fontSize: 10 }}
                 tickMargin={10}
                 height={50}
-                label={{
-                  value: 'time (t)',
-                  position: 'insideBottom',
-                  offset: 0,
-                }}
+                label={{ value: 'time (t)', position: 'insideBottom', offset: 0 }}
               />
               <YAxis
-                domain={[0, maxY]}
-                ticks={[0, 5, 10, 15, 20, 25, 30]}
+                width={60}                  
+                domain={[minY, 27]}         
+                ticks={dynamicTicks}        
                 tick={{ fontSize: 10 }}
                 tickFormatter={(v) => `${v} ft.`}
-                label={{
-                  value: 'water level (ft.)',
-                  angle: -90,
-                  position: 'insideLeft',
-                }}
+                label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip />
               {settings.normal > 0 && (
@@ -499,13 +411,7 @@ const HistoryTab = () => {
               {settings.critical > 0 && (
                 <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
               )}
-              <Line
-                type="monotone"
-                dataKey="displayValue"
-                stroke="#002D5A"
-                strokeWidth={2}
-                dot={false}
-              />
+              <Line type="monotone" dataKey="displayValue" stroke="#002D5A" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

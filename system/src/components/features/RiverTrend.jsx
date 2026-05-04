@@ -4,8 +4,28 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine
 } from 'recharts';
 
+const currentIP = window.location.hostname || 'rivermonitoring.local';
+const API_BASE = `http://${currentIP}:5000/api`;
+
 function RiverTrend({ history, readingInterval = 5 }) {
   const [chartData, setChartData] = useState([]);
+  
+  const [settings, setSettings] = useState({
+    normal: 9.0, attention: 10.0, critical: 11.0
+  });
+
+  useEffect(() => {
+    fetch(`${API_BASE}/settings`)
+      .then(res => res.json())
+      .then(data => {
+        setSettings({
+          normal: data.threshold_normal,
+          attention: data.threshold_attention,
+          critical: data.threshold_critical
+        });
+      })
+      .catch(err => console.error("Error fetching settings:", err));
+  }, []);
 
   useEffect(() => {
     if (!Array.isArray(history) || history.length === 0) {
@@ -13,17 +33,14 @@ function RiverTrend({ history, readingInterval = 5 }) {
       return;
     }
 
-    // 1. Sort safely, providing a fallback if time is missing
     const sorted = [...history].sort((a, b) => {
       const timeA = a.time || "";
       const timeB = b.time || "";
       return timeA.localeCompare(timeB);
     });
     
-    // 2. Take the last 19 readings (newest)
     const last19 = sorted.slice(-19);
     const formatted = last19.map(item => {
-      // Safely extract time, ignoring Python's literal "None" string
       let displayTime = item.time;
       if (item.rtc_time && item.rtc_time !== "None") {
         displayTime = item.rtc_time.split(' ')[1] || item.time;
@@ -32,7 +49,6 @@ function RiverTrend({ history, readingInterval = 5 }) {
         displayTime = "--:--"; 
       }
 
-      // Instead of forcing 0 on invalid numbers, return null.
       const currentVal = (item.distance && item.distance !== "None") ? Number(item.distance) : null;
       const predictedVal = (item.predicted && item.predicted !== "None") ? Number(item.predicted) : null;
 
@@ -40,16 +56,14 @@ function RiverTrend({ history, readingInterval = 5 }) {
         time: displayTime,
         current: currentVal,
         predicted: predictedVal,
-        isFuture: false // TAG: Identify these as historical points
+        isFuture: false 
       };
     });
 
-    // 3. Add a future point safely using the latest reading
     const latest = formatted[formatted.length - 1];
     if (latest && latest.predicted !== null) {
       let futureTime = latest.time;
 
-      // Only attempt to split and add minutes if it's a valid time string
       if (futureTime && futureTime.includes(':')) {
         const [hour, minute] = futureTime.split(':').map(Number);
         if (!isNaN(hour) && !isNaN(minute)) {
@@ -59,7 +73,7 @@ function RiverTrend({ history, readingInterval = 5 }) {
           if (newMinute >= 60) {
             newHour = (newHour + Math.floor(newMinute / 60)) % 24;
             newMinute = newMinute % 60;
-        }
+          }
           
           futureTime = `${newHour.toString().padStart(2,'0')}:${newMinute.toString().padStart(2,'0')}`;
         }
@@ -69,42 +83,35 @@ function RiverTrend({ history, readingInterval = 5 }) {
         time: futureTime,
         current: null, 
         predicted: latest.predicted,
-        isFuture: true // TAG: Identify this specifically as the future projection
+        isFuture: true 
       });
     }
 
     setChartData(formatted);
   }, [history, readingInterval]);
 
-  const { minY, maxY, dynamicTicks } = useMemo(() => {
-    // 1. Extract all the numerical values from the currently displayed data
-    const dataValues = activeDisplayData
-      .map(d => Number(d.displayValue))
-      .filter(val => !isNaN(val));
+  const { minY, dynamicTicks } = useMemo(() => {
+    const dataValues = chartData
+      .flatMap(d => [d.current, d.predicted])
+      .filter(val => val !== null && !isNaN(val));
 
-    // 2. Find the absolute min and max of the data (default to your 10-27 range if empty)
     const dataMin = dataValues.length > 0 ? Math.min(...dataValues) : 10;
-    const dataMax = dataValues.length > 0 ? Math.max(...dataValues) : 27;
-
-    // 3. Ensure the thresholds (Normal, Attention, Critical) stay visible on the chart
-    // even if the actual data is much lower or higher than them.
     const lowestPoint = Math.floor(Math.min(dataMin, settings.normal));
-    const highestPoint = Math.ceil(Math.max(dataMax, settings.critical));
-
-    // 4. Add a 1 ft. padding to the top and bottom so the lines don't touch the very edge
-    // (Ensure the minimum never drops below 0)
     const finalMin = Math.max(0, lowestPoint - 1);
-    const finalMax = highestPoint + 1;
-
-    // 5. Generate clean, even ticks for the Y-Axis based on this new dynamic range
+    
+    const finalMax = 27;
     const ticks = [];
-    // We use intervals of 2 (e.g., 10, 12, 14...). Change `i += 2` to `i += 1` if you want more ticks.
+    
     for (let i = finalMin; i <= finalMax; i += 2) {
       ticks.push(i);
     }
+    
+    if (ticks[ticks.length - 1] !== 27) {
+      ticks.push(27);
+    }
 
-    return { minY: finalMin, maxY: finalMax, dynamicTicks: ticks };
-  }, [activeDisplayData, settings]);  
+    return { minY: finalMin, dynamicTicks: ticks };
+  }, [chartData, settings]);
 
   return (
     <div className="card-container" id="rivertrend">
@@ -124,22 +131,20 @@ function RiverTrend({ history, readingInterval = 5 }) {
                 axisLine={{ stroke: '#ccc' }}
               />
               <YAxis
-                width={60}                  // Keeps the margin safe from text clipping
-                domain={[minY, maxY]}       // <-- Now dynamically sets BOTH bottom and top
-                ticks={dynamicTicks}        // <-- Uses our custom scaled ticks
+                width={60}                  
+                domain={[minY, 27]}         
+                ticks={dynamicTicks}        
                 tick={{ fontSize: 11, fill: '#666' }}
                 tickMargin={15}
                 axisLine={{ stroke: '#ccc' }}
                 tickFormatter={(value) => `${value} ft.`}
               />
               
-              {/* UPDATED TOOLTIP */}
               <Tooltip
                 labelFormatter={(label) => `time: ${label}`}
                 formatter={(value, name, props) => {
                   if (name === 'current') return [`${(Number(value) || 0).toFixed(2)} ft.`, 'Actual'];
                   
-                  // Check the tag we added to determine the label
                   const label = props.payload.isFuture 
                     ? `Predicted (+${readingInterval} min)` 
                     : 'Predicted';
@@ -149,7 +154,6 @@ function RiverTrend({ history, readingInterval = 5 }) {
                 contentStyle={{ borderRadius: '10px', border: '1px solid #ddd', padding: '10px', fontSize: '12px' }}
               />
               
-              {/* UPDATED LEGEND */}
               <Legend
                 verticalAlign='top'
                 align='right'
@@ -163,9 +167,9 @@ function RiverTrend({ history, readingInterval = 5 }) {
               )}
               {settings.attention > 0 && (
                 <ReferenceLine y={settings.attention} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
-                )}
+              )}
               {settings.critical > 0 && (
-              <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
+                <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
               )}
               
               <Line
