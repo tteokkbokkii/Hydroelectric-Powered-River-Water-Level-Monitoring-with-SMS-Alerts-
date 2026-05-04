@@ -11,7 +11,7 @@ function RiverTrend({ history, readingInterval = 5 }) {
   const [chartData, setChartData] = useState([]);
   
   const [settings, setSettings] = useState({
-    normal: 21.0, attention: 24.0, critical: 26.0
+    normal: 16.0, attention: 20.0, critical: 22.0
   });
 
   useEffect(() => {

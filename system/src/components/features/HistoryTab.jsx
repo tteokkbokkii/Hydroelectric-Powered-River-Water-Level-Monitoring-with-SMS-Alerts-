@@ -23,7 +23,7 @@ const HistoryTab = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [settings, setSettings] = useState({
-    normal: 21.0, attention: 24.0, critical: 26.0, predicting_interval: 60
+    normal: 16.0, attention: 20.0, critical: 22.0, predicting_interval: 60
   });
   
   const actualChartRef = useRef(null);
