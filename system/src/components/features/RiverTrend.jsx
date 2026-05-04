@@ -76,6 +76,36 @@ function RiverTrend({ history, readingInterval = 5 }) {
     setChartData(formatted);
   }, [history, readingInterval]);
 
+  const { minY, maxY, dynamicTicks } = useMemo(() => {
+    // 1. Extract all the numerical values from the currently displayed data
+    const dataValues = activeDisplayData
+      .map(d => Number(d.displayValue))
+      .filter(val => !isNaN(val));
+
+    // 2. Find the absolute min and max of the data (default to your 10-27 range if empty)
+    const dataMin = dataValues.length > 0 ? Math.min(...dataValues) : 10;
+    const dataMax = dataValues.length > 0 ? Math.max(...dataValues) : 27;
+
+    // 3. Ensure the thresholds (Normal, Attention, Critical) stay visible on the chart
+    // even if the actual data is much lower or higher than them.
+    const lowestPoint = Math.floor(Math.min(dataMin, settings.normal));
+    const highestPoint = Math.ceil(Math.max(dataMax, settings.critical));
+
+    // 4. Add a 1 ft. padding to the top and bottom so the lines don't touch the very edge
+    // (Ensure the minimum never drops below 0)
+    const finalMin = Math.max(0, lowestPoint - 1);
+    const finalMax = highestPoint + 1;
+
+    // 5. Generate clean, even ticks for the Y-Axis based on this new dynamic range
+    const ticks = [];
+    // We use intervals of 2 (e.g., 10, 12, 14...). Change `i += 2` to `i += 1` if you want more ticks.
+    for (let i = finalMin; i <= finalMax; i += 2) {
+      ticks.push(i);
+    }
+
+    return { minY: finalMin, maxY: finalMax, dynamicTicks: ticks };
+  }, [activeDisplayData, settings]);  
+
   return (
     <div className="card-container" id="rivertrend">
       <h2 className="card-title">RIVER TREND</h2>
@@ -94,8 +124,9 @@ function RiverTrend({ history, readingInterval = 5 }) {
                 axisLine={{ stroke: '#ccc' }}
               />
               <YAxis
-                domain={[2, 27]}
-                ticks={[3, 9, 12, 15, 21, 24, 27]}
+                width={60}                  // Keeps the margin safe from text clipping
+                domain={[minY, maxY]}       // <-- Now dynamically sets BOTH bottom and top
+                ticks={dynamicTicks}        // <-- Uses our custom scaled ticks
                 tick={{ fontSize: 11, fill: '#666' }}
                 tickMargin={15}
                 axisLine={{ stroke: '#ccc' }}
@@ -126,7 +157,7 @@ function RiverTrend({ history, readingInterval = 5 }) {
                 wrapperStyle={{ top: 10, right: 10, fontSize: '12px' }}
                 formatter={(value) => value === 'current' ? 'Actual' : 'Predicted'}
               />
-              
+
               {settings.normal > 0 && (
                 <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
               )}
