@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Calendar } from 'primereact/calendar';
@@ -208,6 +208,19 @@ const HistoryTab = () => {
     pdf.save(`Hulo_History_${dateTitle.replace(/\//g, '-')}.pdf`);
   };
 
+  // 1. Calculate a dynamic max for the Y-Axis so the chart never cuts off high thresholds
+  const maxY = Math.max(13, Math.ceil(settings.critical) + 2);
+
+  // 2. Generate dynamic ticks merging standard intervals with your thresholds
+  const dynamicTicks = useMemo(() => {
+    const baseTicks = [0, 2, 4, 6, 8, 10, 12];
+    const thresholdTicks = [settings.normal, settings.attention, settings.critical];
+    
+    // Combine, remove duplicates, sort ascending, and filter out anything above maxY
+    const allTicks = [...new Set([...baseTicks, ...thresholdTicks])];
+    return allTicks.sort((a, b) => a - b).filter(tick => tick <= maxY);
+  }, [settings, maxY]);
+
   return (
     <div className="history-page-wrapper">
       <div className="card-wrapper" id="main-profile-card">
@@ -284,7 +297,6 @@ const HistoryTab = () => {
                   <LineChart data={activeDisplayData} margin={{ top: 15, right: 30, left: 25, bottom: 5 }}>
                     <CartesianGrid stroke="#f0f0f0" />
                     
-                    {/* The Surefire Fix: Specific height=50 reserves space. Offset=0 anchors label inside. */}
                     <XAxis
                       dataKey="displayTime"
                       minTickGap={30}
@@ -303,8 +315,8 @@ const HistoryTab = () => {
                       }}
                     />
                     <YAxis
-                      domain={[0, 13]}
-                      ticks={[0, 2, 4, 6, 8, 10, 12]}
+                      domain={[0, maxY]}
+                      ticks={[dynamicTicks]}
                       tick={{ fontSize: 10 }}
                       tickFormatter={(v) => `${v} ft.`}
                       label={{
@@ -326,6 +338,8 @@ const HistoryTab = () => {
                         'level',
                       ]}
                     />
+                    {settings.normal > 0 && (
+                
                     <Line
                       type="monotone"
                       dataKey="displayValue"
@@ -377,8 +391,8 @@ const HistoryTab = () => {
                 }}
               />
               <YAxis
-                domain={[0, 13]}
-                ticks={[0, 2, 4, 6, 8, 10, 12]}
+                domain={[0, maxY]}
+                ticks={[dynamicTicks]}
                 tick={{ fontSize: 10 }}
                 tickFormatter={(v) => `${v} ft.`}
                 label={{
@@ -388,6 +402,15 @@ const HistoryTab = () => {
                 }}
               />
               <Tooltip />
+              {settings.normal > 0 && (
+                <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
+              )}
+              {settings.attention > 0 && (
+                <ReferenceLine y={settings.attention} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
+              )}
+              {settings.critical > 0 && (
+                <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
+              )}
               <Line
                 type="monotone"
                 dataKey="displayValue"
@@ -428,8 +451,8 @@ const HistoryTab = () => {
                 }}
               />
               <YAxis
-                domain={[0, 13]}
-                ticks={[0, 2, 4, 6, 8, 10, 12]}
+                domain={[0, maxY]}
+                ticks={[dynamicTicks]}
                 tick={{ fontSize: 10 }}
                 tickFormatter={(v) => `${v} ft.`}
                 label={{
@@ -439,6 +462,15 @@ const HistoryTab = () => {
                 }}
               />
               <Tooltip />
+              ettings.normal > 0 && (
+                <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
+              )}
+              {settings.attention > 0 && (
+                <ReferenceLine y={settings.attention} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
+              )}
+              {settings.critical > 0 && (
+                <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
+              )}
               <Line
                 type="monotone"
                 dataKey="displayValue"
