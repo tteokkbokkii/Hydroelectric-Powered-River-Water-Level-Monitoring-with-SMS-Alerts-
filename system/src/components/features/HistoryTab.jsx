@@ -316,7 +316,7 @@ const HistoryTab = () => {
                     />
                     <YAxis
                       domain={[0, maxY]}
-                      ticks={[dynamicTicks]}
+                      ticks={[0, 5, 10, 15, 20, 25, 30]}
                       tick={{ fontSize: 10 }}
                       tickFormatter={(v) => `${v} ft.`}
                       label={{
@@ -399,7 +399,7 @@ const HistoryTab = () => {
               />
               <YAxis
                 domain={[0, maxY]}
-                ticks={[dynamicTicks]}
+                ticks={[0, 5, 10, 15, 20, 25, 30]}
                 tick={{ fontSize: 10 }}
                 tickFormatter={(v) => `${v} ft.`}
                 label={{
@@ -459,7 +459,7 @@ const HistoryTab = () => {
               />
               <YAxis
                 domain={[0, maxY]}
-                ticks={[dynamicTicks]}
+                ticks={[0, 5, 10, 15, 20, 25, 30]}
                 tick={{ fontSize: 10 }}
                 tickFormatter={(v) => `${v} ft.`}
                 label={{
