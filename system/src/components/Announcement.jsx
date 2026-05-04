@@ -13,7 +13,7 @@ const Announcement = () => {
   });
   const [thresholds, setThresholds] = useState(() => {
     const saved = localStorage.getItem('announcement_thresholds');
-    return saved ? JSON.parse(saved) : { normal: 9.0, attention: 10.0, critical: 11.0 };
+    return saved ? JSON.parse(saved) : { normal: 21.0, attention: 24.0, critical: 26.0 };
   });
 
   const [message, setMessage] = useState('RIVER ELEVATION AT -- FT. | NORMAL');
@@ -31,9 +31,9 @@ const Announcement = () => {
           .then(res => res.json())
           .then(data => {
             setThresholds({
-              normal: parseFloat(data.threshold_normal) || 9.0,
-              attention: parseFloat(data.threshold_attention) || 10.0,
-              critical: parseFloat(data.threshold_critical) || 11.0
+              normal: parseFloat(data.threshold_normal) || 21.0,
+              attention: parseFloat(data.threshold_attention) || 24.0,
+              critical: parseFloat(data.threshold_critical) || 26.0
             });
           })
           .catch(err => console.error('Error fetching settings:', err));
