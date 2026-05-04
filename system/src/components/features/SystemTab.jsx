@@ -213,7 +213,7 @@ const SystemTab = () => {
   };
 
   const resetToDefault = () => {
-    setThresholds({ normal: 9.0, attention: 10.0, critical: 11.0 });
+    setThresholds({ normal: 21.0, attention: 25.0, critical: 26.0 });
     setIntervals({ reading: 5, predicting: 60 });
     setPopupSettings({ attention: true, critical: true });
     toast.current.show({ severity: 'info', summary: 'Reset', detail: 'Settings reset to defaults. Click SAVE CHANGES to apply.', life: 4000 });
