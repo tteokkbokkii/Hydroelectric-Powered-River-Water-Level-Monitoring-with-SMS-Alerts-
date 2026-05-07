@@ -7,6 +7,7 @@
 #include <WiFiManager.h>
 #include <Preferences.h>
 #include <esp_task_wdt.h>
+#include <NewPing.h>
 
 #define ULTRASONIC_TRIG     13
 #define ULTRASONIC_ECHO     14
@@ -17,8 +18,12 @@
 #define MODEM_RX            16
 #define MODEM_PWRKEY        4
 
-#define SENSOR_HEIGHT_INCHES 300.0
-#define SENSOR_HEIGHT_CM 762.0
+//#define SENSOR_HEIGHT_INCHES 300.0 //101.0
+#define genbox 69
+#define shallow_pontoon_diff 2.83
+#define SENSOR_HEIGHT_CM 380.0
+#define SENSOR_HEIGHT_INCHES (SENSOR_HEIGHT_CM / 2.54)
+NewPing sonar(ULTRASONIC_TRIG, ULTRASONIC_ECHO, SENSOR_HEIGHT_CM);
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -34,10 +39,9 @@ const char* sms_command_topic = "sms/command";
 const char* esp_health_topic = "system/status/esp32";
 const char* sms_log_topic = "sms/log";
 
-float threshold_normal_ft = 20.0, threshold_attention_ft = 22.0, threshold_critical_ft = 24.0;
+float threshold_normal_ft = 16.0, threshold_attention_ft = 20.0, threshold_critical_ft = 22.0;
 int reading_interval_min = 5;
-
-float actual_floater_warn = 26, actual_floater_crit = 29;
+float actual_floater_warn = 20.0, actual_floater_crit = 22.0;
 
 float distcm = SENSOR_HEIGHT_CM;
 float temp_threshold_normal_ft = threshold_normal_ft;
@@ -47,6 +51,8 @@ int temp_reading_interval_min = reading_interval_min;
 
 bool settingsReceived = false, contactsReceived = false, gsmReady = false, looping = false;
 String lastAlertRange = "";
+
+static bool rawAlertTriggered;
 
 struct Contact {
     String name;
@@ -74,7 +80,7 @@ int consecutive_good = 0;
 bool anomaly_wifi_notified = false;
 bool anomaly_mqtt_notified = false;
 bool anomaly_sensor_notified = false;
-bool anomaly_validation_notified = false;
+bool ultraAnomalySMS = false;
 int consecutive_validation_fails = 0;
 
 String ultraStatus = "OK";
@@ -89,12 +95,16 @@ float smaBuffer[5];
 int smaIndex = 0;
 
 void connectToPriorityNetwork(bool looping) {
+    // 2. Temporarily detach the Watchdog so the WiFi loops and Portal don't crash
+    esp_task_wdt_delete(NULL);
+
     struct Network {
         const char* ssid;
         const char* pass;
     };
     Network list[] = {
         {"River-Monitor", "thesis2026"},
+        {"asdfgh1", "asdfgh123"},
         {"Raspberry-Fi", "Hulo2026"},
     };
 
@@ -117,19 +127,27 @@ void connectToPriorityNetwork(bool looping) {
 
         if (WiFi.status() == WL_CONNECTED) {
             Serial.printf("\n✅ WiFi Connected! IP: %s\n", WiFi.localIP().toString().c_str());
+            
+            // Re-attach Watchdog before exiting the function successfully
+            esp_task_wdt_add(NULL); 
             return;
         }
         Serial.println("\n❌ Network not found.");
     }
+    
     if (looping == false) {
         WiFiManager wm;
+        wm.setConfigPortalTimeout(180); // 3-minute timeout
+        
         if (!wm.startConfigPortal("Hulo-Sensor-Setup", "hulo2026")) {
-            delay(3000);
-            ESP.restart();
+            Serial.println("⚠️ Setup portal timed out.");
         }
     } else if (looping == true) {
-        ESP.restart();
+        Serial.println("⚠️ Background reconnect failed.");
     }
+
+    // 4. Re-attach Watchdog after the WiFi Portal successfully connects (or times out)
+    esp_task_wdt_add(NULL); 
 }
 
 String getCommandResponse(uint32_t waitTime) {
@@ -155,7 +173,6 @@ String getCommandResponse(uint32_t waitTime) {
 
 void sendBulkSMS(String text, String targetLevel, float current_water_level) {
     if (!gsmReady) return;
-
     Serial.println("\n--- Starting Bulk SMS Dispatch for: " + targetLevel + " ---");
     Serial2.println("AT+CMGF=1");
     delay(500);
@@ -172,11 +189,9 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
 
         bool isSent = false;
         int retryCount = 0;
-
         while (!isSent && retryCount < 3) {
             if (retryCount > 0) {
                 Serial.println("🔄 Retrying message to [" + contacts[i].phone + "] (Attempt " + String(retryCount + 1) + ")...");
-
                 unsigned long retryWait = millis();
                 while (millis() - retryWait < 3000) {
                     esp_task_wdt_reset();
@@ -190,7 +205,6 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
             Serial2.print("AT+CMGS=\"");
             Serial2.print(contacts[i].phone);
             Serial2.println("\"");
-
             unsigned long waitStart = millis();
             bool promptReceived = false;
 
@@ -215,12 +229,17 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
                     esp_task_wdt_reset();
                 }
 
-                String confirm = getCommandResponse(5000);
-
+                String confirm = getCommandResponse(10000);
+                Serial.print("Modem Reply: ");
+                Serial.println(confirm);
                 if (confirm.indexOf("+CMGS") != -1 || confirm.indexOf("OK") != -1) {
                     Serial.println("✅ Sent.");
-
-                    StaticJsonDocument<256> logDoc;
+                    
+                    // --- NEW MODEM COOLDOWN ---
+                    vTaskDelay(pdMS_TO_TICKS(4000)); 
+                    // --------------------------
+                    
+                    JsonDocument logDoc;
                     logDoc["type"] = "ALERT";
                     logDoc["level"] = targetLevel;
                     logDoc["water_level"] = current_water_level;
@@ -270,13 +289,12 @@ void initGSM() {
     
     unsigned long gsmWait = millis();
     while (millis() - gsmWait < 20000) {
-        esp_task_wdt_reset(); // Pet the watchdog while waiting
+        esp_task_wdt_reset();
         delay(10);
     }
 
     Serial2.println("ATE0");
     getCommandResponse(1000);
-
     Serial2.println("AT+CMGF=1");
     String cmgfRes = getCommandResponse(1000);
 
@@ -298,9 +316,8 @@ void initGSM() {
 
 void addToHistory(float lvl) {
     static int consecutive_outliers = 0;
-
     if (lastValidElev != -1.0) {
-        if (abs(lvl - lastValidElev) > 3.0) {
+        if (fabs(lvl - lastValidElev) > 3.0) {
             consecutive_outliers++;
             Serial.println("⚠️ Outlier rejected. Streak: " + String(consecutive_outliers));
 
@@ -331,7 +348,6 @@ void addToHistory(float lvl) {
 
 float predictLevel() {
     if (history_count < 2) return (history_count == 1) ? history_level[0] : 0.0;
-
     double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
     for (int i = 0; i < history_count; i++) {
         double x = (double)(history_time[i] - history_time[0]);
@@ -348,7 +364,6 @@ float predictLevel() {
 
 float predictHour() {
     if (history_count < 3) return predictLevel();
-
     double sumX = 0, sumY = 0, sumX2 = 0, sumX3 = 0, sumX4 = 0, sumXY = 0, sumX2Y = 0;
     for (int i = 0; i < history_count; i++) {
         double x = (double)(history_time[i] - history_time[0]);
@@ -436,20 +451,22 @@ void setup() {
     setCpuFrequencyMhz(80);
     delay(2000);
 
-    esp_task_wdt_config_t wdt_config = {
-        .timeout_ms = 30000,
-        .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,
-        .trigger_panic = true
-    };
-    if (esp_task_wdt_init(&wdt_config) != ESP_OK) {
-        esp_task_wdt_reconfigure(&wdt_config);
-    }
-    esp_task_wdt_add(NULL);
+    // 1. Override the ESP32's hidden default Watchdog
+    esp_task_wdt_deinit();
     
+    // Initialize our custom 30-second WDT (v3.x syntax)
+    esp_task_wdt_config_t twdt_config = {
+        .timeout_ms = 30000,
+        .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,    // Bitmask of all cores
+        .trigger_panic = true,
+    };
+    esp_task_wdt_init(&twdt_config);
+    esp_task_wdt_add(NULL); // Attach the main loop to the Watchdog right away
+
     preferences.begin("hulo_settings", false);
-    threshold_normal_ft = preferences.getFloat("norm", 9.0);
-    threshold_attention_ft = preferences.getFloat("attn", 10.0);
-    threshold_critical_ft = preferences.getFloat("crit", 11.0);
+    threshold_normal_ft = preferences.getFloat("norm", 16.0);
+    threshold_attention_ft = preferences.getFloat("attn", 20.0);
+    threshold_critical_ft = preferences.getFloat("crit", 22.0);
     reading_interval_min = preferences.getInt("interval", 5);
 
     temp_threshold_normal_ft = threshold_normal_ft;
@@ -459,7 +476,7 @@ void setup() {
 
     Serial.println("\n--- Loaded Settings from Flash Memory ---");
     Serial.println("Normal: " + String(threshold_normal_ft) + " | Attn: " + String(threshold_attention_ft) + " | Crit: " + String(threshold_critical_ft));
-    
+
     String savedContacts = preferences.getString("contacts", "");
     if (savedContacts != "") {
         JsonDocument doc;
@@ -480,13 +497,14 @@ void setup() {
         }
     }
 
-    pinMode(ULTRASONIC_TRIG, OUTPUT);
-    digitalWrite(ULTRASONIC_TRIG, LOW);
-    pinMode(ULTRASONIC_ECHO, INPUT);
+    //pinMode(ULTRASONIC_TRIG, OUTPUT);
+    //digitalWrite(ULTRASONIC_TRIG, LOW);
+    //pinMode(ULTRASONIC_ECHO, INPUT);
 
     pinMode(FLOATER_SAFE, INPUT_PULLUP);
     pinMode(FLOATER_WARNING, INPUT_PULLUP);
     pinMode(FLOATER_CRITICAL, INPUT_PULLUP);
+
     delay(200);
 
     Wire.begin();
@@ -518,25 +536,24 @@ void setup() {
     client.setCallback(callback);
     client.setBufferSize(1024);
     client.setKeepAlive(60);
-    
+
     Serial.println("\n--- Performing Initial Sensor Sanity Check ---");
     float duration = 0;
     int attempts = 0;
-    
     while (duration == 0 && attempts < 5) {
-        digitalWrite(ULTRASONIC_TRIG, HIGH);
-        delayMicroseconds(20);
-        digitalWrite(ULTRASONIC_TRIG, LOW);
-
-        duration = pulseIn(ULTRASONIC_ECHO, HIGH, 30000);
+        // ping_median(5) takes 5 rapid readings, discards the highest and lowest spikes, 
+        // and averages the rest. It returns the time in microseconds.
+        duration = sonar.ping_median(5); 
+        
         if (duration == 0) delay(50);
         attempts++;
     }
 
-    float dist = (duration * 0.034 / 2) / 2.54;
-    float elev_ft = abs(SENSOR_HEIGHT_INCHES - dist) / 12.0;
+    float dist = (duration * 0.034 / 2);
+    float elev_ft = (fabs((SENSOR_HEIGHT_CM/2.54) - 2 - dist) / 12.0) + 12.0;
 
-    bool isWeird = (dist > 0 && dist < 9.0) || (dist > SENSOR_HEIGHT_INCHES + 10.0) || (elev_ft < 2.0);
+    bool isWeird = (dist > 0 && dist < 9.0) ||
+                   (dist > SENSOR_HEIGHT_INCHES + 10.0) || (elev_ft < 2.0);
 
     if (duration == 0 || isWeird) {
         consecutive_bad = 2;
@@ -561,7 +578,7 @@ void setup() {
             client.subscribe(settings_topic);
             client.subscribe("contacts/list");
             client.subscribe(sms_command_topic);
-            
+
             JsonDocument healthDoc;
             healthDoc["online"] = true;
             healthDoc["ultrasonic"] = ultraStatus;
@@ -570,6 +587,7 @@ void setup() {
             char healthBuf[256];
             serializeJson(healthDoc, healthBuf);
             client.publish(esp_health_topic, healthBuf, true);
+
             Serial.println("📤 Initial Health Status pushed to Dashboard.");
             break;
         } else {
@@ -586,31 +604,50 @@ void triggerAnomalyAlert(const char* anomalyReason) {
     if (!gsmReady) return;
 
     Serial.println("🚨 TRIGGERING ANOMALY SMS ALERT 🚨");
-
+    Serial.println(anomalyReason);
     char smsBuffer[160];
-
     snprintf(smsBuffer, sizeof(smsBuffer),
-             "⚠️ HULO SYSTEM ANOMALY ⚠️\nIssue: %s\nAction Req: Check system.",
+             "System Issue: %s",
              anomalyReason);
-
     sendBulkSMS(smsBuffer, "ALL", lastValidElev);
 }
 
 void loop() {
+    esp_task_wdt_reset();
+
+    // --- HALT AND RECONNECT BLOCK ---
     if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("⚠️ WiFi Disconnected! Halting normal loop and attempting to reconnect...");
+        Serial.println("⚠️ WiFi Disconnected! prioritizing reconnection...");
 
         if (!anomaly_wifi_notified) {
-            triggerAnomalyAlert("WiFi Connection Lost. System offline.");
+            triggerAnomalyAlert("WiFi Connection Lost");
             anomaly_wifi_notified = true;
         }
 
-        connectToPriorityNetwork(looping);
-        
-        if (WiFi.status() == WL_CONNECTED) anomaly_wifi_notified = false;
+        // Trap the system in this loop until WiFi connects
+        while (WiFi.status() != WL_CONNECTED) {
+            esp_task_wdt_reset(); // Pet the watchdog so it doesn't crash while trapped!
+            
+            Serial.println("🔄 Attempting to reconnect to WiFi...");
+            connectToPriorityNetwork(true); // Send 'true' because we are in the main loop
+            
+            if (WiFi.status() == WL_CONNECTED) {
+                break; // Escape the trap!
+            }
 
-        delay(5000);
+            Serial.println("❌ Reconnect failed. Retrying in 10 seconds...");
+            // Safe 10-second delay that keeps the background processes alive
+            for (int i = 0; i < 100; i++) {
+                vTaskDelay(pdMS_TO_TICKS(100));
+                esp_task_wdt_reset();
+            }
+        }
+
+        Serial.println("✅ WiFi Restored! Resuming normal operations.");
+        anomaly_wifi_notified = false;
     } 
+    // --- END HALT AND RECONNECT BLOCK ---
+    
     else {
         looping = true;
         if (!client.connected()) {
@@ -619,7 +656,6 @@ void loop() {
 
             if (millis() - lastMqttRetry > 5000 || lastMqttRetry == 0) {
                 lastMqttRetry = millis();
-
                 if (client.connect("HuloESP32")) {
                     mqtt_fail_count = 0;
                     if (anomaly_mqtt_notified) anomaly_mqtt_notified = false;
@@ -631,7 +667,7 @@ void loop() {
                 } else {
                     mqtt_fail_count++;
                     if (mqtt_fail_count >= 3 && !anomaly_mqtt_notified) {
-                        triggerAnomalyAlert("MQTT Broker Unreachable. Dashboard offline.");
+                        triggerAnomalyAlert("MQTT Broker Unreachable.");
                         anomaly_mqtt_notified = true;
                     }
                     Serial.println("⚠️ MQTT Offline. Bypassing to maintain sensor operations...");
@@ -640,8 +676,6 @@ void loop() {
         } else {
             client.loop();
         }
-
-        client.loop();
 
         static unsigned long syncStartTime = 0;
         static bool syncTimerStarted = false;
@@ -674,7 +708,7 @@ void loop() {
 
         const unsigned long SAMPLE_INTERVAL = 5000;
         unsigned long publish_interval_ms = reading_interval_min * 60000UL;
-        
+
         if (millis() - lastTick > 1000 && lastPublish != 0) {
             long elapsed = millis() - lastPublish;
             long secondsLeft = 0;
@@ -702,7 +736,7 @@ void loop() {
                     threshold_critical_ft = temp_threshold_critical_ft;
                     reading_interval_min = temp_reading_interval_min;
                     publish_interval_ms = reading_interval_min * 60000UL;
-
+                    
                     preferences.putFloat("norm", threshold_normal_ft);
                     preferences.putFloat("attn", threshold_attention_ft);
                     preferences.putFloat("crit", threshold_critical_ft);
@@ -729,11 +763,9 @@ void loop() {
             int attempts = 0;
 
             while (duration == 0 && attempts < 3) {
-                digitalWrite(ULTRASONIC_TRIG, HIGH);
-                delayMicroseconds(20);
-                digitalWrite(ULTRASONIC_TRIG, LOW);
-
-                duration = pulseIn(ULTRASONIC_ECHO, HIGH, 30000);
+                // Take 5 median samples to guarantee stability before processing logic
+                duration = sonar.ping_median(5);
+                
                 if (duration == 0) {
                     Serial.println("⚠️ Ultrasonic read timeout! Sensor hardware error or disconnected.");
                     delay(50);
@@ -743,19 +775,21 @@ void loop() {
 
             distcm = (duration * 0.034 / 2);
             float dist = distcm / 2.54;
-            float elev_ft = abs(SENSOR_HEIGHT_INCHES - dist) / 12.0;
+            float shallow_ft = (fabs(SENSOR_HEIGHT_INCHES - dist) / 12.0);
+            float elev_ft = shallow_ft - shallow_pontoon_diff + 12;
 
-            static bool rawAlertTriggered = false;
-            if (distcm > 0 && distcm < 301.0 && !rawAlertTriggered) {
+            if (distcm > 25 && distcm < genbox && !rawAlertTriggered) {
                 Serial.println("⚠️ GENBOX ALERT: Water reached the Generator Box!");
                 String rawMsg = "GENBOX ALERT: Water reached the Generator Box!\nWater at " + String(elev_ft, 1) + " ft.\nPlease pull the sliding frame up.";
+                Serial.println(rawMsg);
                 sendBulkSMS(rawMsg, "ALL", elev_ft);
                 rawAlertTriggered = true;
-            } else if (distcm >= 301.0) {
+            } else if (distcm >= genbox) {
                 rawAlertTriggered = false;
             }
 
-            bool isWeird = (dist > 0 && dist < 9.0) || (dist > SENSOR_HEIGHT_INCHES + 10.0) || (elev_ft < 2.0);
+            bool isWeird = (dist > 0 && dist < 9.0) ||
+                           (dist > SENSOR_HEIGHT_INCHES + 10.0) || (elev_ft < 2.0);
 
             if (duration == 0 || isWeird) {
                 consecutive_good = 0;
@@ -768,13 +802,13 @@ void loop() {
             }
 
             if (ultraStatus == "ERROR" && !anomaly_sensor_notified) {
-                triggerAnomalyAlert("Ultrasonic sensor hardware fault or persistent dead zones.");
+                triggerAnomalyAlert("Ultrasonic sensor dead zones.");
                 anomaly_sensor_notified = true;
             } else if (ultraStatus == "OK" && anomaly_sensor_notified) {
                 anomaly_sensor_notified = false;
             }
 
-            StaticJsonDocument<128> healthDoc;
+            JsonDocument healthDoc;
             healthDoc["online"] = true;
             healthDoc["ultrasonic"] = ultraStatus;
             healthDoc["float"] = "OK";
@@ -787,19 +821,19 @@ void loop() {
             bool w = !digitalRead(FLOATER_WARNING);
             bool c = !digitalRead(FLOATER_CRITICAL);
 
-            bool valid_range = (elev_ft >= 2.0 && elev_ft < threshold_normal_ft);
+            bool valid_range = (elev_ft >= 10.0 && elev_ft < threshold_normal_ft);
             bool float_match_threshold =
-                (s == (elev_ft >= threshold_normal_ft)) &&
-                (w == (elev_ft >= actual_floater_warn)) &&
-                (c == (elev_ft >= actual_floater_crit));
-            
+                (!s || (elev_ft < threshold_attention_ft)) &&
+                (w == (elev_ft >= threshold_attention_ft)) &&
+                (c == (elev_ft >= threshold_critical_ft));
+
             bool validated = (ultraStatus == "OK") && (valid_range || float_match_threshold);
 
-            String range = (elev_ft >= threshold_critical_ft) ? "CRITICAL" : (elev_ft >= threshold_attention_ft) ? "WARNING" : "SAFE";
+            String range = (elev_ft >= threshold_critical_ft) ?
+                           "CRITICAL" : (elev_ft >= threshold_attention_ft) ? "WARNING" : "SAFE";
 
             if (validated == true) {
                 consecutive_validation_fails = 0;
-                anomaly_validation_notified = false;
 
                 if (lastPublish == 0 || millis() - lastPublish >= publish_interval_ms) {
 
@@ -814,12 +848,12 @@ void loop() {
 
                     float raw_pred = predictLevel();
                     if (raw_pred < 1.5) raw_pred = 1.5;
-                    if (raw_pred > 12.0) raw_pred = 12.0;
+                    if (raw_pred > threshold_critical_ft + 2) raw_pred = threshold_critical_ft + 2;
                     float rounded_pred = round(raw_pred * 100.0) / 100.0;
 
                     float raw_pred_hour = predictHour();
                     if (raw_pred_hour < 1.5) raw_pred_hour = 1.5;
-                    if (raw_pred_hour > 12.0) raw_pred_hour = 12.0;
+                    if (raw_pred_hour > threshold_critical_ft + 2) raw_pred_hour = threshold_critical_ft + 2;
                     float rounded_pred_hour = round(raw_pred_hour * 100.0) / 100.0;
 
                     JsonDocument doc;
@@ -830,6 +864,7 @@ void loop() {
                     doc["predicted_hour"] = rounded_pred_hour;
                     doc["date"] = dateBuf;
                     doc["time"] = timeBuf;
+                    doc["shallow_ft"] = shallow_ft;
 
                     char buffer[256];
                     serializeJson(doc, buffer);
@@ -841,14 +876,14 @@ void loop() {
                     if (range != lastAlertRange && range != "SAFE") {
                         String alertMsg = "";
                         if (range == "CRITICAL") {
-                            alertMsg = "Good Day!\n\n"
-                                       "The Hulo River level is critical. Please stop all operations and evacuate immediately.\n\n"
+                            alertMsg = "Good Day!\n"
+                                       "The Hulo River level is critical.\n"
                                        "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n"
                                        "Water Level: " + String(elev_ft, 2) + " FT\n"
                                        "Alert Interpretation: CRITICAL";
                         } else if (range == "WARNING") {
-                            alertMsg = "Good Day!\n\n"
-                                       "The Hulo River level is rising. Please consult Coast Guard for a professional assessment.\n\n"
+                            alertMsg = "Good Day!\n"
+                                       "The Hulo River level is rising.\n"
                                        "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n"
                                        "Water Level: " + String(elev_ft, 2) + " FT\n"
                                        "Alert Interpretation: WARNING";
@@ -873,18 +908,22 @@ void loop() {
                 }
             } else {
                 consecutive_validation_fails++;
-                if (consecutive_validation_fails >= 5 && !anomaly_validation_notified) {
-                    triggerAnomalyAlert("Sensor validation mismatch. Ultrasonic readings continuously contradict floater switches.");
-                    anomaly_validation_notified = true;
+                if (consecutive_validation_fails >= 5 && !ultraAnomalySMS) {
+                    triggerAnomalyAlert("Sensor validation mismatch.");
+                    ultraAnomalySMS = true;
                 }
-
-                Serial.println("❌ Validation Error: Reading suppressed.");
+                else{
+                    ultraAnomalySMS = false;
+                }
+                Serial.println("❌ Validation Error.");
                 Serial.println("dist Streak (Bad/Good): " + String(consecutive_bad) + "/" + String(consecutive_good) +
                                " | sensorStatus: " + ultraStatus + " | elev_ft: " + String(elev_ft) + " | distcm: " + String(distcm) +
-                               " | Floaters: s = " + String(s) + " w = " + String(w) + " c = " + String(c));
-                Serial.println("⚠️ Bad reading dropped. Waiting for next interval or valid recovery.");
+                               " | Floaters: s = " + String(s) + " w = " + String(w) + " c = " + String(c) +
+                               "\n | vrange: "+String(valid_range)+" ultraStatus: "+ultraStatus+ " floatmatch: "+ String(float_match_threshold));
+                Serial.println("Waiting for next interval or valid recovery.");
             }
             lastSample = millis();
         }
     }    
+    vTaskDelay(pdMS_TO_TICKS(10));
 }
