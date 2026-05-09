@@ -73,6 +73,11 @@ const currentIP = window.location.hostname || 'rivermonitoring.local';
 const API_BASE = `http://${currentIP}:5000/api`;
 const MQTT_BROKER = `ws://${currentIP}:9001`;
 
+const SEASON_CONFIG = {
+  DRY: { normal: 4.0, attention: 7.0, critical: 22.0, normalMax: 4.0, attentionMax: 7.0 },
+  WET: { normal: 5.0, attention: 9.0, critical: 22.0, normalMax: 5.0, attentionMax: 9.0 }
+};
+
 const SystemTab = () => {
   const [activeTab, setActiveTab] = useState('ABOUT');
   
@@ -97,6 +102,7 @@ const SystemTab = () => {
   const { popupSettings, setPopupSettings } = useContext(GlobalContext);
   
   const [isLoading, setIsLoading] = useState(false);
+  const [season, setSeason] = useState('DRY');
   const mqttClientRef = useRef(null);
   const toast = useRef(null);
 
@@ -182,6 +188,16 @@ const SystemTab = () => {
     setPopupSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
   
+  const handleSeasonToggle = (selectedSeason) => {
+    setSeason(selectedSeason);
+    const config = SEASON_CONFIG[selectedSeason];
+    setThresholds({
+      normal: config.normal,
+      attention: config.attention,
+      critical: config.critical
+    });
+  };
+
   const saveChanges = async () => {
     setIsLoading(true);
     try {
@@ -189,7 +205,8 @@ const SystemTab = () => {
         threshold_normal: thresholds.normal,
         threshold_attention: thresholds.attention,
         threshold_critical: thresholds.critical,
-        reading_interval: intervals.reading
+        reading_interval: intervals.reading,
+        current_season: season
       };
       
       const response = await fetch(`${API_BASE}/settings`, {
@@ -213,10 +230,20 @@ const SystemTab = () => {
   };
 
   const resetToDefault = () => {
-    setThresholds({ normal: 16.0, attention: 20.0, critical: 22.0 });
+    const seasonalDefaults = SEASON_CONFIG[season];
+    setThresholds({ 
+      normal: seasonalDefaults.normal, 
+      attention: seasonalDefaults.attention, 
+      critical: seasonalDefaults.critical 
+    });
     setIntervals({ reading: 5, predicting: 60 });
     setPopupSettings({ attention: true, critical: true });
-    toast.current.show({ severity: 'info', summary: 'Reset', detail: 'Settings reset to defaults. Click SAVE CHANGES to apply.', life: 4000 });
+    toast.current.show({ 
+      severity: 'info', 
+      summary: 'Reset', 
+      detail: `Settings reset to ${season.toLowerCase()} season defaults. Click SAVE CHANGES to apply.`, 
+      life: 4000 
+    });
   };
 
   return (
@@ -303,6 +330,7 @@ const SystemTab = () => {
               <div className="settings-column border-right">
                 <div className="content-group">
                   <h3 className="SysTab-title">SENSOR THRESHOLDS</h3>
+                    <hr style={{ marginBottom: '20px', opacity: '0.2' }} />
                   <div className="settings-row">
                     <span>Normal Thresholds :</span>
                     <NumberInput 
@@ -310,7 +338,7 @@ const SystemTab = () => {
                       onChange={(val) => handleThresholdChange('normal', val)} 
                       step={0.01} 
                       min={0} 
-                      max={thresholds.attention - 0.01} 
+                      max={Math.min(thresholds.attention - 0.01, SEASON_CONFIG[season].normalMax)}
                       unit="ft." 
                     />
                   </div>
@@ -321,7 +349,7 @@ const SystemTab = () => {
                       onChange={(val) => handleThresholdChange('attention', val)} 
                       step={0.01} 
                       min={thresholds.normal + 0.01} 
-                      max={thresholds.critical - 0.01} 
+                      max={Math.min(thresholds.critical - 0.01, SEASON_CONFIG[season].attentionMax)}
                       unit="ft." 
                     />
                   </div>
@@ -373,6 +401,29 @@ const SystemTab = () => {
                     </div>
                   </div>
                 </div>
+                  <div className="content-group mt-20">
+                  <h3 className="SysTab-title">SEASONAL MODE</h3>
+                  <div className="custom-radio-group">
+                    <label className="radio-container">
+                      <input 
+                        type="radio" 
+                        checked={season === 'DRY'} 
+                        onChange={() => handleSeasonToggle('DRY')} 
+                      />
+                      <span className="radio-checkmark"></span>
+                      Dry Season
+                    </label>
+                    <label className="radio-container">
+                      <input 
+                        type="radio" 
+                        checked={season === 'WET'} 
+                        onChange={() => handleSeasonToggle('WET')} 
+                      />
+                      <span className="radio-checkmark"></span>
+                      Wet Season
+                    </label>
+                  </div>
+                  </div>
                 <div className="settings-actions">
                   <button className="action-button save-btn" onClick={saveChanges} disabled={isLoading}>{isLoading ? 'SAVING...' : 'SAVE CHANGES'}</button>
                   <button className="action-button reset-btn" onClick={resetToDefault}>RESET TO DEFAULT</button>
