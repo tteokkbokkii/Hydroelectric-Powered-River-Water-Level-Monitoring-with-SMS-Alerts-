@@ -7,7 +7,7 @@ import {
 const currentIP = window.location.hostname || 'rivermonitoring.local';
 const API_BASE = `http://${currentIP}:5000/api`;
 
-function RiverTrend({ history, readingInterval = 5 }) {
+function RiverTrend({ history, readingInterval }) {
   const [chartData, setChartData] = useState([]);
   
   const [settings, setSettings] = useState({
@@ -34,7 +34,6 @@ function RiverTrend({ history, readingInterval = 5 }) {
     }
 
     const sorted = [...history].sort((a, b) => {
-      // Grab the full date-time string if available, otherwise fallback to 'time'
       const timeA = (a.rtc_time && a.rtc_time !== "None") ? a.rtc_time : (a.time || "");
       const timeB = (b.rtc_time && b.rtc_time !== "None") ? b.rtc_time : (b.time || "");
       
