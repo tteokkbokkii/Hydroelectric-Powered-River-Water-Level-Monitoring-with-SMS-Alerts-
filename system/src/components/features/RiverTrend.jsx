@@ -34,8 +34,10 @@ function RiverTrend({ history, readingInterval = 5 }) {
     }
 
     const sorted = [...history].sort((a, b) => {
-      const timeA = a.time || "";
-      const timeB = b.time || "";
+      // Grab the full date-time string if available, otherwise fallback to 'time'
+      const timeA = (a.rtc_time && a.rtc_time !== "None") ? a.rtc_time : (a.time || "");
+      const timeB = (b.rtc_time && b.rtc_time !== "None") ? b.rtc_time : (b.time || "");
+      
       return timeA.localeCompare(timeB);
     });
     
