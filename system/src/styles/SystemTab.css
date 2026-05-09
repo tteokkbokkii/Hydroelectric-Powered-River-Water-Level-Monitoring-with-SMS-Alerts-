@@ -11,8 +11,9 @@
   flex-direction: column;
   background-color: #f0f2f5;
   min-height: 0;
-  padding-bottom: 50px;
+  padding-bottom: 20px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .card-wrapper {
@@ -28,6 +29,75 @@
   box-sizing: border-box;
   overflow: hidden;
   min-height: 0;
+}
+
+/* Modern Seasonal Radio Buttons */
+.custom-radio-group {
+  display: flex;
+  gap: 24px;
+  margin-top: 10px;
+  margin-bottom: 5px; /* Reduced to fix awkward spacing */
+}
+
+.radio-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 28px;
+  cursor: pointer;
+  font-family: 'InterMedium', sans-serif;
+  font-size: 0.85rem;
+  color: #444;
+  user-select: none;
+}
+
+/* Hide default radio */
+.radio-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Custom checkmark circle */
+.radio-checkmark {
+  position: absolute;
+  left: 0;
+  height: 18px;
+  width: 18px;
+  background-color: #e5e7eb;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.radio-container:hover input ~ .radio-checkmark {
+  background-color: #d1d5db;
+}
+
+/* Active state (Navy) */
+.radio-container input:checked ~ .radio-checkmark {
+  background-color: #002D5A;
+}
+
+/* Inner white dot */
+.radio-checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+  top: 5px;
+  left: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: white;
+}
+
+.radio-container input:checked ~ .radio-checkmark:after {
+  display: block;
+}
+
+/* Fix spacing before action buttons */
+.settings-actions {
+  margin-top: 25px !important; /* Overrides the large 40px margin */
 }
 
 .system-grid {
@@ -397,6 +467,7 @@ input:checked + .slider:before {
   flex: 1;
   overflow-y: auto;
   padding-right: 4px;
+  min-height: 0;
 }
 
 .custom-number-input {
