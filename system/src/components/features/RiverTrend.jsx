@@ -141,12 +141,13 @@ function RiverTrend({ history, readingInterval }) {
               />
               <YAxis
                 width={60}                  
-                domain={[minY, 27]}         
+                domain={[minY, maxY]}       
                 ticks={dynamicTicks}        
                 tick={{ fontSize: 11, fill: '#666' }}
                 tickMargin={15}
                 axisLine={{ stroke: '#ccc' }}
                 tickFormatter={(value) => `${value} ft.`}
+                allowDataOverflow={true} 
               />
               
               <Tooltip
