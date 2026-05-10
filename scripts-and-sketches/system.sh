@@ -27,8 +27,9 @@ echo -e "2) ${BLUE}LAB MODE${NC}   (External WiFi)"
 read -t 120 -n 1 -p "Selection [1-2] (Auto-default to FIELD MODE in 120s): " mode
 echo "" # Move to a new line after input
 
-if [ -z "$mode" ]; then
-    echo -e "\n${RED}No input detected. Resuming Field Mode for autonomous monitoring...${NC}"
+# If the input is NOT "1" and NOT "2" (handles empty input AND terminal garbage)
+if [[ "$mode" != "1" && "$mode" != "2" ]]; then
+    echo -e "\n${RED}Invalid or no input detected. Resuming Field Mode for autonomous monitoring...${NC}"
     mode="1"
 fi
 
