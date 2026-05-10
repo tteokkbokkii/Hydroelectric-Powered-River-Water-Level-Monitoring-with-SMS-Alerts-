@@ -34,17 +34,21 @@ function RiverTrend({ history, readingInterval }) {
     }
 
     const sorted = [...history].sort((a, b) => {
-      // Use rtc_time if available, otherwise fallback to time
-      const timeStrA = (a.rtc_time && a.rtc_time !== "None") ? a.rtc_time : (a.time || "");
-      const timeStrB = (b.rtc_time && b.rtc_time !== "None") ? b.rtc_time : (b.time || "");
+      // Combine 'date' and 'time' into an ISO 8601 string (e.g., "2026-05-10T05:41:59")
+      // Keep rtc_time as a fallback just in case other endpoints use it
+      const dateTimeA = (a.date && a.time) ? `${a.date}T${a.time}` : (a.rtc_time && a.rtc_time !== "None" ? a.rtc_time : a.time || "");
+      const dateTimeB = (b.date && b.time) ? `${b.date}T${b.time}` : (b.rtc_time && b.rtc_time !== "None" ? b.rtc_time : b.time || "");
 
       // Convert to Date objects and get timestamps
-      const dateA = new Date(timeStrA).getTime();
-      const dateB = new Date(timeStrB).getTime();
+      const dateA = new Date(dateTimeA).getTime();
+      const dateB = new Date(dateTimeB).getTime();
 
-      // If dates cannot be parsed correctly, fallback to alphabetical string comparison
+      // If dates cannot be parsed correctly, fallback to alphabetical string comparison 
+      // of the combined date and time
       if (isNaN(dateA) || isNaN(dateB)) {
-        return timeStrA.localeCompare(timeStrB);
+        const fallbackA = (a.date && a.time) ? `${a.date} ${a.time}` : (a.time || "");
+        const fallbackB = (b.date && b.time) ? `${b.date} ${b.time}` : (b.time || "");
+        return fallbackA.localeCompare(fallbackB);
       }
 
       // Sort chronologically (oldest to newest)
