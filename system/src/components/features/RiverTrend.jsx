@@ -34,6 +34,81 @@ function RiverTrend({ history, readingInterval }) {
     }
 
     const sorted = [...history].sort((a, b) => {
+      // Use rtc_time if available, otherwise fallback to time
+      const timeStrA = (a.rtc_time && a.rtc_time !== "None") ? a.rtc_time : (a.time || "");
+      const timeStrB = (b.rtc_time && b.rtc_time !== "None") ? b.rtc_time : (b.time || "");
+
+      // Convert to Date objects and get timestamps
+      const dateA = new Date(timeStrA).getTime();
+      const dateB = new Date(timeStrB).getTime();
+
+      // If dates cannot be parsed correctly, fallback to alphabetical string comparison
+      if (isNaN(dateA) || isNaN(dateB)) {
+        return timeStrA.localeCompare(timeStrB);
+      }
+
+      // Sort chronologically (oldest to newest)
+      return dateA - dateB;
+    });
+    
+    const last19 = sorted.slice(-19);
+    const formatted = last19.map(item => {
+      let displayTime = item.time;
+      if (item.rtc_time && item.rtc_time !== "None") {
+        displayTime = item.rtc_time.split(' ')[1] || item.time;
+      }
+      if (!displayTime || displayTime === "None") {
+        displayTime = "--:--"; 
+      }
+
+      const currentVal = (item.distance && item.distance !== "None") ? Number(item.distance) : null;
+      const predictedVal = (item.predicted && item.predicted !== "None") ? Number(item.predicted) : null;
+
+      return {
+        time: displayTime,
+        current: currentVal,
+        predicted: predictedVal,
+        isFuture: false 
+      };
+    });
+
+    const latest = formatted[formatted.length - 1];
+    if (latest && latest.predicted !== null) {
+      let futureTime = latest.time;
+      if (futureTime && futureTime.includes(':')) {
+        const [hour, minute] = futureTime.split(':').map(Number);
+        if (!isNaN(hour) && !isNaN(minute)) {
+          let newHour = hour;
+          let newMinute = minute + Number(readingInterval); 
+
+          if (newMinute >= 60) {
+            newHour = (newHour + Math.floor(newMinute / 60)) % 24;
+            newMinute = newMinute % 60;
+          }
+          
+          futureTime = `${newHour.toString().padStart(2,'0')}:${newMinute.toString().padStart(2,'0')}`;
+        }
+      }
+      
+      formatted.push({
+        time: futureTime,
+        current: null, 
+        predicted: latest.predicted,
+        isFuture: true 
+      });
+    }
+
+    setChartData(formatted);
+  }, [history, readingInterval]);
+
+/*
+  useEffect(() => {
+    if (!Array.isArray(history) || history.length === 0) {
+      setChartData([]);
+      return;
+    }
+
+    const sorted = [...history].sort((a, b) => {
       const timeA = (a.rtc_time && a.rtc_time !== "None") ? a.rtc_time : (a.time || "");
       const timeB = (b.rtc_time && b.rtc_time !== "None") ? b.rtc_time : (b.time || "");
       
@@ -90,7 +165,7 @@ function RiverTrend({ history, readingInterval }) {
 
     setChartData(formatted);
   }, [history, readingInterval]);
-
+*/
   const { minY, dynamicTicks } = useMemo(() => {
     const dataValues = chartData
       .flatMap(d => [d.current, d.predicted])
