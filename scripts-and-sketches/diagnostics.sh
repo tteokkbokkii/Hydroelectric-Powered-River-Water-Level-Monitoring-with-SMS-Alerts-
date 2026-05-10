@@ -34,8 +34,8 @@ bash /home/admin/thesis/scripts-and-sketches/databaseHealth.sh
 echo -e "\n[3] EXTERNAL DRIVE STATUS:"
 USB_DEV=$(lsblk -no NAME,MOUNTPOINT | grep -E "sda1|sdb1" | awk '$2=="" {print "/dev/"$1}')
 if [ ! -z "$USB_DEV" ]; then
-    sudo mkdir -p /media/admin/MULTIBOOT
-    sudo mount "$USB_DEV" /media/admin/MULTIBOOT > /dev/null 2>&1
+    sudo mkdir -p /media/admin/USB-BACKUP
+    sudo mount "$USB_DEV" /media/admin/USB-BACKUP > /dev/null 2>&1
 fi
 
 if [ -d "/media/admin/USB-BACKUP" ]; then
