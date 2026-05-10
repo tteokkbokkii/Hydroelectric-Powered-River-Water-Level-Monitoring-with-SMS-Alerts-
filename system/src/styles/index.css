@@ -189,6 +189,26 @@ html, body {
 
 /* Make dashboard grid responsive */
 @media (max-width: 1024px) {
+  /* 1. Unlock the root container */
+  #root {
+    height: auto !important;
+    min-height: 100vh;
+    overflow: visible !important;
+  }
+
+  /* 2. Ensure html and body allow scrolling */
+  html, body {
+    overflow-y: auto !important;
+    height: auto !important;
+  }
+
+  /* 3. Adjust main content to flow with the root */
+  .main-content {
+    overflow-y: visible !important; 
+    height: auto !important;
+    min-height: calc(100vh - 120px); /* Adjust based on Header/Footer height */
+  }
+
   .dashboard-grid {
     grid-template-columns: 1fr !important;
     grid-template-rows: auto auto auto !important;
