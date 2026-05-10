@@ -208,27 +208,30 @@ const HistoryTab = () => {
     pdf.save(`Hulo_History_${dateTitle.replace(/\//g, '-')}.pdf`);
   };
 
-  const { minY, dynamicTicks } = useMemo(() => {
+  const { minY, maxY, dynamicTicks } = useMemo(() => {
     const dataValues = activeDisplayData
       .map(d => Number(d.displayValue))
       .filter(val => !isNaN(val));
 
+    // Calculate minimum
     const dataMin = dataValues.length > 0 ? Math.min(...dataValues) : 10;
     const lowestPoint = Math.floor(Math.min(dataMin, settings.normal));
     const finalMin = Math.max(0, lowestPoint - 1);
     
-    const finalMax = 27;
+    // Calculate maximum: Highest between Critical Setting and actual Data, plus 1
+    const dataMax = dataValues.length > 0 ? Math.max(...dataValues) : 26;
+    const absoluteHighest = Math.max(settings.critical, dataMax);
+    const finalMax = Math.ceil(absoluteHighest) + 1;
+    
     const ticks = [];
     
-    for (let i = finalMin; i <= finalMax; i += 2) {
+    // Generate ticks in exact increments of 1 foot
+    for (let i = finalMin; i <= finalMax; i += 1) {
       ticks.push(i);
     }
 
-    if (ticks[ticks.length - 1] !== 27) {
-      ticks.push(27);
-    }
-
-    return { minY: finalMin, dynamicTicks: ticks };
+    // Return the dynamically calculated maxY alongside the others
+    return { minY: finalMin, maxY: finalMax, dynamicTicks: ticks };
   }, [activeDisplayData, settings]);
 
   return (
@@ -306,10 +309,11 @@ const HistoryTab = () => {
                     />
                     <YAxis
                       width={45}                  
-                      domain={[minY, 27]}         
+                      domain={[minY, maxY]} 
                       ticks={dynamicTicks}        
                       tick={{ fontSize: 10 }}
                       tickFormatter={(v) => `${v} ft.`}
+                      allowDataOverflow={true} 
                       label={{
                         value: 'water level (ft.)',
                         angle: -90,
@@ -359,10 +363,11 @@ const HistoryTab = () => {
               />
               <YAxis
                 width={45}                  
-                domain={[minY, 27]}         
+                domain={[minY, maxY]} 
                 ticks={dynamicTicks}        
                 tick={{ fontSize: 10 }}
                 tickFormatter={(v) => `${v} ft.`}
+                allowDataOverflow={true} 
                 label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip />
@@ -395,10 +400,11 @@ const HistoryTab = () => {
               />
               <YAxis
                 width={45}                  
-                domain={[minY, 27]}         
+                domain={[minY, maxY]} // <--- Changed '27' to 'maxY'      
                 ticks={dynamicTicks}        
                 tick={{ fontSize: 10 }}
                 tickFormatter={(v) => `${v} ft.`}
+                allowDataOverflow={true} // <--- Added this to force zoom
                 label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip />
