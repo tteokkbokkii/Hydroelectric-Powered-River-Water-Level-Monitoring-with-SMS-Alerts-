@@ -97,7 +97,7 @@ const SystemTab = () => {
   });
 
   // Settings state (To DO: MUST BE MANUALLY CHECKED LATER)
-  const [thresholds, setThresholds] = useState({ normal: 16.0, attention: 20.0, critical: 22.0 });
+  const [thresholds, setThresholds] = useState({ normal: 8.0, attention: 10.0, critical: 12.0 });
   const [intervals, setIntervals] = useState({ reading: 5, predicting: 60 });
   const { popupSettings, setPopupSettings } = useContext(GlobalContext);
   
@@ -112,9 +112,9 @@ const SystemTab = () => {
       .then(res => res.json())
       .then(data => {
         setThresholds({
-          normal: parseFloat(data.threshold_normal) || 16.0,
-          attention: parseFloat(data.threshold_attention) || 20.0,
-          critical: parseFloat(data.threshold_critical) || 22.0
+          normal: parseFloat(data.threshold_normal) || 8.0,
+          attention: parseFloat(data.threshold_attention) || 10.0,
+          critical: parseFloat(data.threshold_critical) || 12.0
         });
         setIntervals({
           reading: data.reading_interval,

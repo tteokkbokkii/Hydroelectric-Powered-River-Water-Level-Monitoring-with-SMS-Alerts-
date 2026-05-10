@@ -11,7 +11,7 @@ function RiverTrend({ history, readingInterval }) {
   const [chartData, setChartData] = useState([]);
   
   const [settings, setSettings] = useState({
-    normal: 16.0, attention: 20.0, critical: 22.0
+    normal: 8.0, attention: 10.0, critical: 12.0
   });
 
   useEffect(() => {
@@ -34,24 +34,16 @@ function RiverTrend({ history, readingInterval }) {
     }
 
     const sorted = [...history].sort((a, b) => {
-      // Combine 'date' and 'time' into an ISO 8601 string (e.g., "2026-05-10T05:41:59")
-      // Keep rtc_time as a fallback just in case other endpoints use it
-      const dateTimeA = (a.date && a.time) ? `${a.date}T${a.time}` : (a.rtc_time && a.rtc_time !== "None" ? a.rtc_time : a.time || "");
-      const dateTimeB = (b.date && b.time) ? `${b.date}T${b.time}` : (b.rtc_time && b.rtc_time !== "None" ? b.rtc_time : b.time || "");
+      const timeStrA = (a.rtc_time && a.rtc_time !== "None") ? a.rtc_time : (a.time || "");
+      const timeStrB = (b.rtc_time && b.rtc_time !== "None") ? b.rtc_time : (b.time || "");
 
-      // Convert to Date objects and get timestamps
-      const dateA = new Date(dateTimeA).getTime();
-      const dateB = new Date(dateTimeB).getTime();
+      const dateA = new Date(timeStrA).getTime();
+      const dateB = new Date(timeStrB).getTime();
 
-      // If dates cannot be parsed correctly, fallback to alphabetical string comparison 
-      // of the combined date and time
       if (isNaN(dateA) || isNaN(dateB)) {
-        const fallbackA = (a.date && a.time) ? `${a.date} ${a.time}` : (a.time || "");
-        const fallbackB = (b.date && b.time) ? `${b.date} ${b.time}` : (b.time || "");
-        return fallbackA.localeCompare(fallbackB);
+        return timeStrA.localeCompare(timeStrB);
       }
 
-      // Sort chronologically (oldest to newest)
       return dateA - dateB;
     });
     
@@ -105,72 +97,7 @@ function RiverTrend({ history, readingInterval }) {
     setChartData(formatted);
   }, [history, readingInterval]);
 
-/*
-  useEffect(() => {
-    if (!Array.isArray(history) || history.length === 0) {
-      setChartData([]);
-      return;
-    }
-
-    const sorted = [...history].sort((a, b) => {
-      const timeA = (a.rtc_time && a.rtc_time !== "None") ? a.rtc_time : (a.time || "");
-      const timeB = (b.rtc_time && b.rtc_time !== "None") ? b.rtc_time : (b.time || "");
-      
-      return timeA.localeCompare(timeB);
-    });
-    
-    const last19 = sorted.slice(-19);
-    const formatted = last19.map(item => {
-      let displayTime = item.time;
-      if (item.rtc_time && item.rtc_time !== "None") {
-        displayTime = item.rtc_time.split(' ')[1] || item.time;
-      }
-      if (!displayTime || displayTime === "None") {
-        displayTime = "--:--"; 
-      }
-
-      const currentVal = (item.distance && item.distance !== "None") ? Number(item.distance) : null;
-      const predictedVal = (item.predicted && item.predicted !== "None") ? Number(item.predicted) : null;
-
-      return {
-        time: displayTime,
-        current: currentVal,
-        predicted: predictedVal,
-        isFuture: false 
-      };
-    });
-
-    const latest = formatted[formatted.length - 1];
-    if (latest && latest.predicted !== null) {
-      let futureTime = latest.time;
-
-      if (futureTime && futureTime.includes(':')) {
-        const [hour, minute] = futureTime.split(':').map(Number);
-        if (!isNaN(hour) && !isNaN(minute)) {
-          let newHour = hour;
-          let newMinute = minute + Number(readingInterval); 
-
-          if (newMinute >= 60) {
-            newHour = (newHour + Math.floor(newMinute / 60)) % 24;
-            newMinute = newMinute % 60;
-          }
-          
-          futureTime = `${newHour.toString().padStart(2,'0')}:${newMinute.toString().padStart(2,'0')}`;
-        }
-      }
-      
-      formatted.push({
-        time: futureTime,
-        current: null, 
-        predicted: latest.predicted,
-        isFuture: true 
-      });
-    }
-
-    setChartData(formatted);
-  }, [history, readingInterval]);
-*/
-  const { minY, dynamicTicks } = useMemo(() => {
+  const { minY, maxY, dynamicTicks } = useMemo(() => {
     const dataValues = chartData
       .flatMap(d => [d.current, d.predicted])
       .filter(val => val !== null && !isNaN(val));
@@ -179,18 +106,20 @@ function RiverTrend({ history, readingInterval }) {
     const lowestPoint = Math.floor(Math.min(dataMin, settings.normal));
     const finalMin = Math.max(0, lowestPoint - 1);
     
-    const finalMax = 27;
+    const dataMax = dataValues.length > 0 ? Math.max(...dataValues) : 26;
+    const finalMax = Math.ceil(dataMax) + 1;
+    
     const ticks = [];
     
     for (let i = finalMin; i <= finalMax; i += 2) {
       ticks.push(i);
     }
     
-    if (ticks[ticks.length - 1] !== 27) {
-      ticks.push(27);
+    if (ticks.length > 0 && ticks[ticks.length - 1] !== finalMax) {
+      ticks.push(finalMax);
     }
 
-    return { minY: finalMin, dynamicTicks: ticks };
+    return { minY: finalMin, maxY: finalMax, dynamicTicks: ticks };
   }, [chartData, settings]);
 
   return (

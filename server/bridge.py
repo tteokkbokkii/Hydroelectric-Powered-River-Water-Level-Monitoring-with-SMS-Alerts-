@@ -32,9 +32,9 @@ def get_settings():
             return json.load(f)
     except FileNotFoundError:
         return {
-            "threshold_normal": 16.0,
-            "threshold_attention": 20.0,
-            "threshold_critical": 22.0,
+            "threshold_normal": 8.0,
+            "threshold_attention": 10.0,
+            "threshold_critical": 12.0,
             "reading_interval": 5,
             "predicting_interval": 60
         }
