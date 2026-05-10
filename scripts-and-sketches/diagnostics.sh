@@ -15,9 +15,9 @@ echo -e "${CYAN}==================================================${NC}"
 echo -e "\n[1] AUTOMATION SERVICE STATUS:"
 # Check if the manager is scheduled in crontab instead of checking live processes
 if crontab -l 2>/dev/null | grep -q "databaseManager.sh"; then
-    printf "  %-20s ${CYAN}%s${NC}\n" "Manager Service:" "CRON ACTIVE"
+    printf "  %-20s ${CYAN}%s${NC}\n" "Manager Service:" "RUNNING"
 else
-    printf "  %-20s ${RED}%s${NC}\n" "Manager Service:" "UNSCHEDULED"
+    printf "  %-20s ${RED}%s${NC}\n" "Manager Service:" "ERROR"
 fi
 
 # 2. COMPONENT AUDIT

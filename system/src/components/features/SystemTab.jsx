@@ -74,8 +74,8 @@ const API_BASE = `http://${currentIP}:5000/api`;
 const MQTT_BROKER = `ws://${currentIP}:9001`;
 
 const SEASON_CONFIG = {
-  DRY: { normal: 4.0, attention: 7.0, critical: 22.0, normalMax: 4.0, attentionMax: 7.0 },
-  WET: { normal: 5.0, attention: 9.0, critical: 22.0, normalMax: 5.0, attentionMax: 9.0 }
+  DRY: { normal: 8.0, attention: 9.0, critical: 10.0, normalMax: 4.0, attentionMax: 7.0 },
+  WET: { normal: 8.0, attention: 10.0, critical: 12.0, normalMax: 5.0, attentionMax: 9.0 }
 };
 
 const SystemTab = () => {

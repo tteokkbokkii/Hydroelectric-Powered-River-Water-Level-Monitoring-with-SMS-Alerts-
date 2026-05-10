@@ -10,7 +10,7 @@ USB_DEST="$USB_MOUNT/thesis_backups"
 LOG_FILE="/home/admin/thesis/maintenance.log"
 
 # --- THRESHOLDS ---
-SIZE_LIMIT=500      # 100MB (in KB)
+SIZE_LIMIT=100000      # 100MB (in KB)
 SD_FREE_LIMIT=5000000   # 5GB (in KB)
 
 # 1. AUTOMATIC USB SYNC (Verification Step)
@@ -34,8 +34,8 @@ if [ -f "$DB_PATH" ]; then
         if [ -d "$USB_MOUNT" ]; then
             # "When the USB is plugged in, the system offloads the data..."
             TIMESTAMP=$(date +%Y%m%d_%H%M)
-            mv "$DB_PATH" "$USB_DEST/offload_$TIMESTAMP.db"
-            touch "$DB_PATH"
+            sqlite3 "$DB_PATH" ".backup '$USB_DEST/offload_$TIMESTAMP.db'"
+            rm "$DB_PATH"
             echo "[$(date)] DATABASE: 100MB exceeded. Data offloaded to USB." >> "$LOG_FILE"
         else
             # "If the USB is not found, the script instead triggers a storage cleanup."
