@@ -12,7 +12,8 @@ for FILE in "${FILES[@]}"; do
         fi
     fi
 done
-sudo rm -rf /tmp/*
+
+find /tmp -mindepth 1 -maxdepth 1 ! -name "tmux-*" -exec rm -rf {} + 2>/dev/null
 
 if [ "$MAINTENANCE_DONE" = true ]; then
     echo -e "\e[33mCLEANED\e[0m"

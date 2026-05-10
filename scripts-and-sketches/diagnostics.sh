@@ -13,10 +13,11 @@ echo -e "${CYAN}==================================================${NC}"
 
 # 1. CORE AUTOMATION CHECK
 echo -e "\n[1] AUTOMATION SERVICE STATUS:"
-if pgrep -fl "databaseManager.sh" > /dev/null; then
-    printf "  %-20s ${CYAN}%s${NC}\n" "Manager Service:" "RUNNING"
+# Check if the manager is scheduled in crontab instead of checking live processes
+if crontab -l 2>/dev/null | grep -q "databaseManager.sh"; then
+    printf "  %-20s ${CYAN}%s${NC}\n" "Manager Service:" "CRON ACTIVE"
 else
-    printf "  %-20s ${RED}%s${NC}\n" "Manager Service:" "STOPPED"
+    printf "  %-20s ${RED}%s${NC}\n" "Manager Service:" "UNSCHEDULED"
 fi
 
 # 2. COMPONENT AUDIT
