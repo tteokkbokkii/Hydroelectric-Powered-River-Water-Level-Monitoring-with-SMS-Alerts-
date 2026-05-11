@@ -18,7 +18,7 @@
 #define MODEM_RX            16
 #define MODEM_PWRKEY        4
 
-#define genbox 69
+#define genbox 10
 #define shallow_pontoon_diff 6.7
 #define SENSOR_HEIGHT_CM 386.0
 #define SENSOR_HEIGHT_INCHES (SENSOR_HEIGHT_CM / 2.54)
@@ -121,7 +121,7 @@ void connectToPriorityNetwork(bool isLooping) {
 
         int retry = 0;
         while (WiFi.status() != WL_CONNECTED && retry < 10) {
-            delay(500);
+            delay(750);
             Serial.print(".");
             retry++;
         }
@@ -601,16 +601,13 @@ void setup() {
     Serial.println("--- Setup Complete ---\n");
 }
 
-void triggerAnomalyAlert(const char* anomalyReason) {
-    if (!gsmReady) return;
-
-    Serial.println("🚨 TRIGGERING ANOMALY SMS ALERT 🚨");
-    Serial.println(anomalyReason);
-    char smsBuffer[160];
-    snprintf(smsBuffer, sizeof(smsBuffer),
-             "System Issue: %s",
-             anomalyReason);
-    sendBulkSMS(smsBuffer, "ALL", lastValidElev);
+void triggerAnomalyAlert(String reason) {
+    // 1. Format the alert message
+    String alertMsg = "SYSTEM NOTIFICATION:\n" + reason + "\nPlease check the sensor.";
+    
+    // 2. Pass it to your existing dynamic SMS function!
+    // "ALL" ensures it texts all designated admins, and lastValidElev provides the water level.
+    sendBulkSMS(alertMsg, "ALL", lastValidElev); 
 }
 
 void loop() {
@@ -766,16 +763,6 @@ void loop() {
             float shallow_ft = ((fabs(SENSOR_HEIGHT_CM - dist))/2.54 / 12.0);
             float elev_ft = shallow_ft + shallow_pontoon_diff;
 
-            if (dist > 25 && dist < genbox && !rawAlertTriggered) {
-                Serial.println("⚠️ GENBOX ALERT: Water reached the Generator Box!");
-                String rawMsg = "GENBOX ALERT: Water reached the Generator Box!\nWater at " + String(elev_ft, 1) + " ft.\nPlease pull the sliding frame up.";
-                Serial.println(rawMsg);
-                sendBulkSMS(rawMsg, "ALL", elev_ft);
-                rawAlertTriggered = true;
-            } else if (dist >= genbox) {
-                rawAlertTriggered = false;
-            }
-
             bool isWeird = (dist > 0 && dist < 9.0) ||
             (dist > SENSOR_HEIGHT_CM + 10.0) || (elev_ft < 0);
 
@@ -817,6 +804,15 @@ void loop() {
 
             if (validated == true) {
                 consecutive_validation_fails = 0;
+                if (elev_ft < 16 && elev_ft > genbox && !rawAlertTriggered) {
+                Serial.println("⚠️ GENBOX ALERT: Water reached the Generator Box!");
+                String rawMsg = "GENBOX ALERT: Water reached the Generator Box!\nWater at " + String(elev_ft, 1) + " ft.\nPlease pull the sliding frame up.";
+                Serial.println(rawMsg);
+                sendBulkSMS(rawMsg, "ALL", elev_ft);
+                rawAlertTriggered = true;
+                } else if (elev_ft >= genbox) {
+                    rawAlertTriggered = false;
+                }
                 if (lastPublish == 0 || millis() - lastPublish >= publish_interval_ms) {
 
                     DateTime now = rtc.now();
@@ -857,14 +853,12 @@ void loop() {
                     if (range != lastAlertRange && range != "SAFE") {
                         String alertMsg = "";
                         if (range == "CRITICAL") {
-                            alertMsg = "RIVER ALERT\n"
-                                       "The Hulo River level is critical.\n"
+                            alertMsg = "ALERT\n"
                                        "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n"
                                        "Water Level: " + String(elev_ft, 2) + " FT\n"
                                        "Alert Interpretation: CRITICAL";
                         } else if (range == "WARNING") {
-                            alertMsg = "RIVER ALERT`\n"
-                                       "The Hulo River level is rising.\n"
+                            alertMsg = "ALERT`\n"
                                        "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n"
                                        "Water Level: " + String(elev_ft, 2) + " FT\n"
                                        "Alert Interpretation: WARNING";
