@@ -4,7 +4,7 @@ import Popup from "./Popup.jsx";
 const currentIP = window.location.hostname || 'rivermonitoring.local';
 const API_BASE = `http://${currentIP}:5000/api`;
 const POLL_INTERVAL = 2000;
-const usonic_genbox_dist = 3.1;
+const usonic_genbox_dist = 10;
 
 // 1. Export the context so SystemTab can use it
 export const GlobalContext = createContext();
