@@ -119,6 +119,21 @@
   border-right: 1.5px solid #ccc;
 }
 
+/* Styling for fixed threshold ranges to match number inputs */
+.threshold-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: #333;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 0.85rem;
+  min-width: 150px; 
+}
+
 .content-group h3 {
   font-size: 0.9rem;
   font-weight: 800;
@@ -142,7 +157,7 @@
 }
 
 .value-box {
-  font-family: monospace;
+  font-family: sans-serif;
   font-weight: bold;
   color: #333;
 }

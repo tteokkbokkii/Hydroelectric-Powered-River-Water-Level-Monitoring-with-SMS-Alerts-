@@ -23,21 +23,21 @@ const currentIP = window.location.hostname || 'rivermonitoring.local';
 const API_BASE = `http://${currentIP}:5000/api`;
 
 const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
-  const minLevel = 5;
-  const maxLevel = 26
+  const minLevel = 0;
+  const maxLevel = 11;
 
   const displayLevel = currentLevel || 0;
   const displayPredicted = predictedHour || predictedLevel || 0;
 
-  const [thresholds, setThresholds] = useState({ attention: 10.0, critical: 11.0 });
+  const [thresholds, setThresholds] = useState({ attention: 4.01, critical: 7.06 });
 
   useEffect(() => {
     fetch(`${API_BASE}/settings`)
       .then(res => res.json())
       .then(data => {
         setThresholds({
-          attention: parseFloat(data.threshold_attention) || 10.0,
-          critical: parseFloat(data.threshold_critical) || 11.0
+          attention: parseFloat(data.threshold_attention) || 4.01,
+          critical: parseFloat(data.threshold_critical) || 7.06
         });
       })
       .catch(err => console.error('Error fetching thresholds:', err));
@@ -64,10 +64,10 @@ const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
   }];
 
   const getVisualY = (val) => {
-    const chartHeight = 100;
-    const marginOffset = 5.00; 
-    return ((26 - val) / (21)) * (chartHeight - (marginOffset * 2)) + marginOffset;
-  };
+      const chartHeight = 100;
+      const marginOffset = 5.00;
+      return ((maxLevel - val) / (maxLevel - minLevel)) * (chartHeight - (marginOffset * 2)) + marginOffset;
+    };
 
   return (
     <div className="card-container" id="riverlevel">
@@ -123,7 +123,7 @@ const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
               />
               <YAxis
                 hide
-                domain={[5, 26]}
+                domain={[0, 11]}
               />
 
               <Bar
@@ -162,12 +162,12 @@ const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
             zIndex: 10,
           }}
         >
-          {/* //5 */}
+{/* //5 */}
           <line
             x1="50%"
             y1={`${getVisualY(calibrate(displayLevel))}%`}
             x2="50%"
-            y2={`${getVisualY(5)}%`} 
+            y2={`${getVisualY(minLevel)}%`} 
             stroke="white"
             strokeOpacity="0.5"
             strokeWidth="2"
@@ -175,7 +175,7 @@ const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
           />
           <line
             x1="50%"
-            y1={`${getVisualY(26)}%`} 
+            y1={`${getVisualY(maxLevel)}%`} 
             x2="50%"
             y2={`${getVisualY(calibrate(displayLevel))}%`}
             stroke="black"
@@ -183,30 +183,43 @@ const RiverLevel = ({ currentLevel, predictedLevel, predictedHour }) => {
             strokeLinecap="butt"
           />
 
-          {/* //4 SVG GAUGE OVERLAY */}
-          {Array.from({ length: (maxLevel - minLevel) + 1 }).map((_, i) => {
-            const val = maxLevel - i; // Step by 1.0 (removes the 0.5 congestion)
+{/* //4 SVG GAUGE OVERLAY */}
+          {/* Multiply length by 2 to create steps of 0.5 instead of 1.0 */}
+          {Array.from({ length: (maxLevel - minLevel) * 2 + 1 }).map((_, i) => {
+            const val = maxLevel - (i * 0.5); // Step by 0.5
             const yPos = `${getVisualY(val)}%`;
             
+            const isWhole = val % 1 === 0;
             const isEven = val % 2 === 0;
 
             const isSubmerged = displayLevel >= val;
             const activeColor = isSubmerged ? "white" : "black";
             const shadowColor = isSubmerged ? 'rgba(0,45,90,0.8)' : 'rgba(255,255,255,0.8)';
 
+            // Determine tick width and length based on value type
+            let x1 = "48.5%"; // Default for half-marks (shortest)
+            let x2 = "51.5%";
+            let strokeWidth = "1.5"; // Thinner for half-marks
+
+            if (isWhole) {
+              x1 = isEven ? "44%" : "47%"; // Longest for evens, medium for odds
+              x2 = isEven ? "56%" : "53%";
+              strokeWidth = "2.5"; // Thicker for whole numbers
+            }
+
             return (
               <g key={val}>
                 <line
-                  x1={isEven ? "44%" : "47%"}
+                  x1={x1}
                   y1={yPos}
-                  x2={isEven ? "56%" : "53%"}
+                  x2={x2}
                   y2={yPos}
                   stroke={activeColor}
-                  strokeWidth="2.5"
+                  strokeWidth={strokeWidth}
                   strokeLinecap="round"
                 />
                 
-                {/* Label only the Even Numbers */}
+                {/* Label only the Even Whole Numbers */}
                 {isEven && (
                   <text
                     x="59%"

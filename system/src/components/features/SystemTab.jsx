@@ -74,8 +74,8 @@ const API_BASE = `http://${currentIP}:5000/api`;
 const MQTT_BROKER = `ws://${currentIP}:9001`;
 
 const SEASON_CONFIG = {
-  DRY: { normal: 8.0, attention: 9.0, critical: 10.0, normalMax: 8.99, attentionMax: 9.99 },
-  WET: { normal: 8.0, attention: 10.0, critical: 12.0, normalMax: 9.99, attentionMax: 11.99 }
+  DRY: { normal: 0.00, attention: 4.01, critical: 7.06, normalMax: 4.00, attentionMax: 10.05 },
+  WET: { normal: 0.00, attention: 4.01, critical: 7.06, normalMax: 4.00, attentionMax: 10.05 }
 };
 
 const SystemTab = () => {
@@ -97,7 +97,7 @@ const SystemTab = () => {
   });
 
   // Settings state (To DO: MUST BE MANUALLY CHECKED LATER)
-  const [thresholds, setThresholds] = useState({ normal: 8.0, attention: 10.0, critical: 12.0 });
+  const [thresholds, setThresholds] = useState({ normal: 0.00, attention: 4.01, critical: 7.06});
   const [intervals, setIntervals] = useState({ reading: 5, predicting: 60 });
   const { popupSettings, setPopupSettings } = useContext(GlobalContext);
   
@@ -112,9 +112,9 @@ const SystemTab = () => {
       .then(res => res.json())
       .then(data => {
         setThresholds({
-          normal: parseFloat(data.threshold_normal) || 8.0,
-          attention: parseFloat(data.threshold_attention) || 10.0,
-          critical: parseFloat(data.threshold_critical) || 12.0
+          normal: parseFloat(data.threshold_normal) || 4.00,
+          attention: parseFloat(data.threshold_attention) || 4.01,
+          critical: parseFloat(data.threshold_critical) || 7.06
         });
         setIntervals({
           reading: data.reading_interval,
@@ -328,9 +328,10 @@ const SystemTab = () => {
           {activeTab === 'SETTINGS' && (
             <div className="settings-grid">
               <div className="settings-column border-right">
-                <div className="content-group">
-                  <h3 className="SysTab-title">SENSOR THRESHOLDS</h3>
+                  <div className="content-group">
+                    <h3 className="SysTab-title">SENSOR THRESHOLDS</h3>
                     <hr style={{ marginBottom: '20px', opacity: '0.2' }} />
+                  {/*
                   <div className="settings-row">
                     <span>Normal Thresholds :</span>
                     <NumberInput 
@@ -363,6 +364,19 @@ const SystemTab = () => {
                       max={26} 
                       unit="ft." 
                     />
+                  </div>
+                  */}
+                  <div className="settings-row">
+                    <span>Normal Threshold :</span>
+                    <span className="threshold-box">{"0.00 FT. - 4.00 FT."}</span>
+                  </div>
+                  <div className="settings-row">
+                    <span>Warning Threshold :</span>
+                    <span className="threshold-box">{"4.01 FT. - 7.05 FT."}</span>
+                  </div>
+                  <div className="settings-row">
+                    <span>Critical Threshold :</span>
+                    <span className="threshold-box">{"7.06 FT. - 10.05 FT."}</span>
                   </div>
                 </div>
                 <div className="content-group mt-20">
@@ -401,6 +415,7 @@ const SystemTab = () => {
                     </div>
                   </div>
                 </div>
+                  {/*
                   <div className="content-group mt-20">
                   <h3 className="SysTab-title">SEASONAL MODE</h3>
                   <div className="custom-radio-group">
@@ -424,6 +439,7 @@ const SystemTab = () => {
                     </label>
                   </div>
                   </div>
+                  */}
                 <div className="settings-actions">
                   <button className="action-button save-btn" onClick={saveChanges} disabled={isLoading}>{isLoading ? 'SAVING...' : 'SAVE CHANGES'}</button>
                   <button className="action-button reset-btn" onClick={resetToDefault}>RESET TO DEFAULT</button>

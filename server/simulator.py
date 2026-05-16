@@ -23,14 +23,14 @@ def run_simulation():
     global latest_reading, history_data
     
     # Starting level
-    current_val = 10.0 
+    current_val = 1
     
     while True:
         # Determine Range based on your new 26ft scale logic
         status_range = "SAFE"
-        if current_val >= 11.0: 
+        if current_val >= 7.06: 
             status_range = "CRITICAL"
-        elif current_val >= 10.0: 
+        elif current_val >= 4.01: 
             status_range = "WARNING"
 
         # Create a timestamp
@@ -71,12 +71,11 @@ def run_simulation():
 
 @app.route('/api/settings', methods=['GET'])
 def get_settings():
-    # This is what Dashboard.jsx calls to set the chart's time offset
     return jsonify({
-        "threshold_normal": 9.0,
-        "threshold_attention": 10.0,
-        "threshold_critical": 11.0,
-        "reading_interval": CURRENT_INTERVAL  # <--- React reads this!
+        "threshold_normal": 0.0,
+        "threshold_attention": 4.01,
+        "threshold_critical": 7.06,
+        "reading_interval": CURRENT_INTERVAL  
     })
 
 @app.route('/api/data', methods=['GET']) 

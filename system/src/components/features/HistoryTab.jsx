@@ -23,7 +23,7 @@ const HistoryTab = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [settings, setSettings] = useState({
-    normal: 8.0, attention: 10.0, critical: 12.0, predicting_interval: 60
+    normal: 0.00, attention: 4.01, critical: 7.06, predicting_interval: 60
   });
   
   const actualChartRef = useRef(null);
@@ -362,22 +362,30 @@ const HistoryTab = () => {
                 label={{ value: 'time (t)', position: 'insideBottom', offset: 0 }}
               />
               <YAxis
-                width={45}                  
-                domain={[minY, maxY]} 
-                ticks={dynamicTicks}        
-                tick={{ fontSize: 10 }}
-                tickFormatter={(v) => `${v} ft.`}
+                type="number"
+                width={60}                  
+                domain={[0, 11]} 
+                ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]} 
+                interval={0} 
+                tick={{ fontSize: 11, fill: '#666' }}
+                tickMargin={15}
+                axisLine={{ stroke: '#ccc' }}
+                tickFormatter={(value) => {
+                  if (value % 2 !== 0) {
+                    return ''; 
+                  }
+                  return `${value} ft.`;
+                }}
                 allowDataOverflow={true} 
-                label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip />
-              {settings.normal > 0 && (
+              {settings.normal !== undefined && settings.normal >= 0 && (
                 <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
               )}
-              {settings.attention > 0 && (
+              {settings.attention !== undefined && settings.attention > 0 && (
                 <ReferenceLine y={settings.attention} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
               )}
-              {settings.critical > 0 && (
+              {settings.critical !== undefined && settings.critical > 0 && (
                 <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
               )}
               <Line type="monotone" dataKey="displayValue" stroke="#ff8f00" strokeWidth={2} dot={false} />
@@ -398,23 +406,33 @@ const HistoryTab = () => {
                 height={50}
                 label={{ value: 'time (t)', position: 'insideBottom', offset: 0 }}
               />
-              <YAxis
-                width={45}                  
-                domain={[minY, maxY]} // <--- Changed '27' to 'maxY'      
-                ticks={dynamicTicks}        
-                tick={{ fontSize: 10 }}
-                tickFormatter={(v) => `${v} ft.`}
-                allowDataOverflow={true} // <--- Added this to force zoom
+<YAxis
+                type="number"
+                width={60}                  
+                domain={[0, 11]} 
+                ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]} 
+                interval={0} 
+                tick={{ fontSize: 11, fill: '#666' }}
+                tickMargin={15}
+                axisLine={{ stroke: '#ccc' }}
+                tickFormatter={(value) => {
+                  if (value % 2 !== 0) {
+                    return ''; 
+                  }
+                  return `${value} ft.`;
+                }}
+                allowDataOverflow={true} 
                 label={{ value: 'water level (ft.)', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip />
-              {settings.normal > 0 && (
+              {/* NOTE THE >= 0 HERE INSTEAD OF > 0 */}
+              {settings.normal !== undefined && settings.normal >= 0 && (
                 <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
               )}
-              {settings.attention > 0 && (
+              {settings.attention !== undefined && settings.attention > 0 && (
                 <ReferenceLine y={settings.attention} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
               )}
-              {settings.critical > 0 && (
+              {settings.critical !== undefined && settings.critical > 0 && (
                 <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
               )}
               <Line type="monotone" dataKey="displayValue" stroke="#002D5A" strokeWidth={2} dot={false} />

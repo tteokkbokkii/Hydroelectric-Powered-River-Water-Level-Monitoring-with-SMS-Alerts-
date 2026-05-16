@@ -11,7 +11,7 @@ function RiverTrend({ history, readingInterval }) {
   const [chartData, setChartData] = useState([]);
   
   const [settings, setSettings] = useState({
-    normal: 8.0, attention: 10.0, critical: 12.0
+    normal: 0.00, attention: 4.01, critical: 7.06
   });
 
   useEffect(() => {
@@ -140,13 +140,20 @@ function RiverTrend({ history, readingInterval }) {
                 axisLine={{ stroke: '#ccc' }}
               />
               <YAxis
+                type="number"
                 width={60}                  
-                domain={[minY, maxY]}       
-                ticks={dynamicTicks}        
+                domain={[0, 11]} 
+                ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]} 
+                interval={0} 
                 tick={{ fontSize: 11, fill: '#666' }}
                 tickMargin={15}
                 axisLine={{ stroke: '#ccc' }}
-                tickFormatter={(value) => `${value} ft.`}
+                tickFormatter={(value) => {
+                  if (value % 2 !== 0){
+                    return '';
+                  }
+                  return `${value} ft.`;
+                }}
                 allowDataOverflow={true} 
               />
               

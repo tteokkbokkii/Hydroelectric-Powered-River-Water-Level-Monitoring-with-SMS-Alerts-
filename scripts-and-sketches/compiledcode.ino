@@ -1,3 +1,16 @@
+
+#define MQTT_MAX_PACKET_SIZE 512
+#define ULTRASONIC_TRIG     13
+#define ULTRASONIC_ECHO     14
+#define FLOATER_LOW         27
+#define FLOATER_MID         26
+#define FLOATER_HIGH        25
+#define MODEM_TX            17
+#define MODEM_RX            16
+#define MODEM_PWRKEY        4
+#define SENSOR_HEIGHT_CM 386.0
+#define SENSOR_HEIGHT_INCHES (SENSOR_HEIGHT_CM / 2.54)
+
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <PubSubClient.h>
@@ -8,20 +21,6 @@
 #include <Preferences.h>
 #include <esp_task_wdt.h>
 #include <NewPing.h>
-
-#define ULTRASONIC_TRIG     13
-#define ULTRASONIC_ECHO     14
-#define FLOATER_LOW         27
-#define FLOATER_MID         26
-#define FLOATER_HIGH        25
-#define MODEM_TX            17
-#define MODEM_RX            16
-#define MODEM_PWRKEY        4
-
-#define genbox 10
-#define shallow_pontoon_diff 6.7
-#define SENSOR_HEIGHT_CM 386.0
-#define SENSOR_HEIGHT_INCHES (SENSOR_HEIGHT_CM / 2.54)
 
 // --- PHYSICAL CONSTANTS (For Validation Only) ---
 const float DIST_TO_HIGH_FLOAT = 75.0; // Distance down to CRITICAL float (cm)
@@ -52,9 +51,11 @@ float smaBuffer[5];
 int smaIndex = 0;
 
 float dist = SENSOR_HEIGHT_CM;
+/*
 float temp_threshold_normal_ft = threshold_normal_ft;
 float temp_threshold_attention_ft = threshold_attention_ft;
 float temp_threshold_critical_ft = threshold_critical_ft;
+*/
 int temp_reading_interval_min = reading_interval_min;
 
 bool settingsReceived = false, contactsReceived = false, gsmReady = false;
@@ -245,8 +246,12 @@ void sendBulkSMS(String text, String targetLevel, float current_water_level) {
                     serializeJson(logDoc, logBuffer);
 
                     if (client.connected()) {
-                        client.publish(sms_log_topic, logBuffer);
-                        Serial.println("📤 Published SMS Log to MQTT");
+                        if (client.publish(sms_log_topic, logBuffer)){
+                            Serial.println("📤 Published SMS Log to MQTT");
+                        }
+                        else{
+                            Serial.println("⚠️ Failed to publish SMS Log to MQTT");
+                        };
                     }
                     isSent = true;
                 } else {
@@ -396,12 +401,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
 
     if (String(topic) == settings_topic) {
-        temp_threshold_normal_ft = doc["threshold_normal"] |
-        temp_threshold_normal_ft;
+        /*
+        temp_threshold_normal_ft = doc["threshold_normal"] | temp_threshold_normal_ft;
         temp_threshold_attention_ft = doc["threshold_attention"] | temp_threshold_attention_ft;
         temp_threshold_critical_ft = doc["threshold_critical"] | temp_threshold_critical_ft;
         temp_reading_interval_min = doc["reading_interval"] | temp_reading_interval_min;
-
+        */
         pending_settings_msg = msg;
         settingsReceived = true;
         newSettingsAvailable = true;
@@ -475,18 +480,21 @@ void setup() {
     esp_task_wdt_add(NULL); 
 
     preferences.begin("hulo_settings", false);
-    threshold_normal_ft = preferences.getFloat("norm", 8.0);
-    threshold_attention_ft = preferences.getFloat("attn", 10.0);
-    threshold_critical_ft = preferences.getFloat("crit", 12.0);
-    reading_interval_min = preferences.getInt("interval", 5);
-
+    
+    threshold_normal_ft = 1.3;//preferences.getFloat("norm", 8.0);
+    threshold_attention_ft = 4.0;//preferences.getFloat("attn", 10.0);
+    threshold_critical_ft = 7.04;//preferences.getFloat("crit", 12.0);
+    float above_crit = 10.04;
+    /*
     temp_threshold_normal_ft = threshold_normal_ft;
     temp_threshold_attention_ft = threshold_attention_ft;
     temp_threshold_critical_ft = threshold_critical_ft;
+    */
+    reading_interval_min = preferences.getInt("interval", 5);
     temp_reading_interval_min = reading_interval_min;
 
     Serial.println("\n--- Loaded Settings from Flash Memory ---");
-    Serial.println("Normal: " + String(threshold_normal_ft) + " | Attn: " + String(threshold_attention_ft) + " | Crit: " + String(threshold_critical_ft));
+    //Serial.println("Normal: " + String(threshold_normal_ft) + " | Attn: " + String(threshold_attention_ft) + " | Crit: " + String(threshold_critical_ft));
     String savedContacts = preferences.getString("contacts", "");
     if (savedContacts != "") {
         JsonDocument doc;
@@ -516,8 +524,7 @@ void setup() {
     if (!rtc.begin()) Serial.println("RTC Failed!");
 
     initGSM();
-    connectToPriorityNetwork(false); // Pass false directly instead of using a global variable
-
+    connectToPriorityNetwork(false); 
     Serial.println("\n--- Locating Raspberry Pi (rivermonitoring.local) ---");
     MDNS.begin("esp32-node");
     bool found = false;
@@ -531,7 +538,6 @@ void setup() {
         delay(1000);
         Serial.print("?");
     }
-
     if (!found) {
         mqttIP = WiFi.gatewayIP();
         Serial.println("\n⚠️ mDNS failed. Defaulting to Gateway: " + mqttIP.toString());
@@ -545,9 +551,6 @@ void setup() {
     float duration = 0;
     int attempts = 0;
     while (duration == 0 && attempts < 5) {
-        // ping_median(5) takes 5 rapid readings, discards the highest and lowest spikes, 
-        // and averages the rest.
-        // It returns the time in microseconds.
         duration = sonar.ping_median(5); 
         
         if (duration == 0) delay(50);
@@ -555,7 +558,7 @@ void setup() {
     }
 
     float dist = (duration * 0.034 / 2);
-    float elev_ft = ((fabs(SENSOR_HEIGHT_CM - dist)/2.54) / 12.0) + shallow_pontoon_diff;
+    float elev_ft = ((fabs(SENSOR_HEIGHT_CM - dist)/2.54) / 12.0);
     bool isWeird = (dist > 0 && dist < 9.0) ||
                    (dist > SENSOR_HEIGHT_CM + 10.0); // || (elev_ft < 2.0);
     if (duration == 0 || isWeird) {
@@ -602,30 +605,23 @@ void setup() {
 }
 
 void triggerAnomalyAlert(String reason) {
-    // 1. Format the alert message
     String alertMsg = "SYSTEM NOTIFICATION:\n" + reason + "\nPlease check the sensor.";
-    
-    // 2. Pass it to your existing dynamic SMS function!
-    // "ALL" ensures it texts all designated admins, and lastValidElev provides the water level.
     sendBulkSMS(alertMsg, "ALL", lastValidElev); 
 }
 
 void loop() {
     esp_task_wdt_reset();
-    
     if (WiFi.status() != WL_CONNECTED) {
         Serial.println("⚠️ WiFi Disconnected! prioritizing reconnection...");
         if (!anomaly_wifi_notified) {
             triggerAnomalyAlert("WiFi Connection Lost");
             anomaly_wifi_notified = true;
         }
-
         while (WiFi.status() != WL_CONNECTED) {
             esp_task_wdt_reset();
             
             Serial.println("🔄 Attempting to reconnect to WiFi...");
-            connectToPriorityNetwork(true); // Pass true directly instead of using a global variable
-            
+            connectToPriorityNetwork(true); 
             if (WiFi.status() == WL_CONNECTED) {
                 break;
             }
@@ -636,7 +632,6 @@ void loop() {
                 esp_task_wdt_reset();
             }
         }
-
         Serial.println("✅ WiFi Restored! Resuming normal operations.");
         anomaly_wifi_notified = false;
     } 
@@ -719,15 +714,16 @@ void loop() {
                 if (pending_settings_msg != last_applied_settings_msg) {
                     Serial.println("📥 Applied New Message [" + String(settings_topic) + "] Payload: " + pending_settings_msg);
                     last_applied_settings_msg = pending_settings_msg;
-
+                    /*
                     threshold_normal_ft = temp_threshold_normal_ft;
                     threshold_attention_ft = temp_threshold_attention_ft;
                     threshold_critical_ft = temp_threshold_critical_ft;
-                    reading_interval_min = temp_reading_interval_min;
-                    publish_interval_ms = reading_interval_min * 60000UL;
                     preferences.putFloat("norm", threshold_normal_ft);
                     preferences.putFloat("attn", threshold_attention_ft);
                     preferences.putFloat("crit", threshold_critical_ft);
+                    */
+                    reading_interval_min = temp_reading_interval_min;
+                    publish_interval_ms = reading_interval_min * 60000UL;
                     preferences.putInt("interval", reading_interval_min);
                 }
                 newSettingsAvailable = false;
@@ -761,7 +757,7 @@ void loop() {
 
             float dist = (duration * 0.034 / 2);
             float shallow_ft = ((fabs(SENSOR_HEIGHT_CM - dist))/2.54 / 12.0);
-            float elev_ft = shallow_ft + shallow_pontoon_diff;
+            float elev_ft = shallow_ft;
 
             bool isWeird = (dist > 0 && dist < 9.0) ||
             (dist > SENSOR_HEIGHT_CM + 10.0) || (elev_ft < 0);
@@ -804,15 +800,6 @@ void loop() {
 
             if (validated == true) {
                 consecutive_validation_fails = 0;
-                if (elev_ft < 16 && elev_ft > genbox && !rawAlertTriggered) {
-                Serial.println("⚠️ GENBOX ALERT: Water reached the Generator Box!");
-                String rawMsg = "GENBOX ALERT: Water reached the Generator Box!\nWater at " + String(elev_ft, 1) + " ft.\nPlease pull the sliding frame up.";
-                Serial.println(rawMsg);
-                sendBulkSMS(rawMsg, "ALL", elev_ft);
-                rawAlertTriggered = true;
-                } else if (elev_ft >= genbox) {
-                    rawAlertTriggered = false;
-                }
                 if (lastPublish == 0 || millis() - lastPublish >= publish_interval_ms) {
 
                     DateTime now = rtc.now();
@@ -835,7 +822,7 @@ void loop() {
                     
                     JsonDocument doc;
                     doc["elevation"] = rounded_elev;
-                    doc["distance"]  = rounded_elev; // Reverted: Now back to outputting rounded_elev
+                    doc["distance"]  = rounded_elev;
                     doc["range"] = range;
                     doc["predicted"] = rounded_pred;
                     doc["predicted_hour"] = rounded_pred_hour;
@@ -846,23 +833,33 @@ void loop() {
                     char buffer[256];
                     serializeJson(doc, buffer);
                     Serial.print("📡 Sending Sensor Reading: ");
-                    client.publish(mqtt_topic, buffer);
+                    
+                    if (client.publish(mqtt_topic, buffer)){
+                        Serial.println("📤 Published SMS Log to MQTT");
+                    }
+                    else{
+                        Serial.println("⚠️ Failed to publish SMS Log to MQTT");
+                    };
                     Serial.println(buffer);
                     Serial.println(dist);
-
                     if (range != lastAlertRange && range != "SAFE") {
-                        String alertMsg = "";
+                        char alertBuf[256];
                         if (range == "CRITICAL") {
-                            alertMsg = "ALERT\n"
-                                       "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n"
-                                       "Water Level: " + String(elev_ft, 2) + " FT\n"
-                                       "Alert Interpretation: CRITICAL";
+                            snprintf(alertBuf, sizeof(alertBuf), 
+                                     "ALERT\r\n"
+                                     "Data at %02d:%02d:\r\n"
+                                     "Water Level: %.2f FT\r\n"
+                                     "Alert Interpretation: CRITICAL", 
+                                     now.hour(), now.minute(), elev_ft);
                         } else if (range == "WARNING") {
-                            alertMsg = "ALERT`\n"
-                                       "Data at " + String(now.hour()) + ":" + String(now.minute()) + ":\n"
-                                       "Water Level: " + String(elev_ft, 2) + " FT\n"
-                                       "Alert Interpretation: WARNING";
+                            snprintf(alertBuf, sizeof(alertBuf), 
+                                     "ALERT\r\n"
+                                     "Data at %02d:%02d:\r\n"
+                                     "Water Level: %.2f FT\r\n"
+                                     "Alert Interpretation: WARNING", 
+                                     now.hour(), now.minute(), elev_ft);
                         }
+                        String alertMsg = String(alertBuf);
                         sendBulkSMS(alertMsg, range, elev_ft);
                         lastAlertRange = range;
                     } else if (range == "SAFE") {
@@ -870,7 +867,6 @@ void loop() {
                     } else {
                         Serial.println("range unchanged, no message sent.");
                     }
-
                     if (lastPublish == 0) {
                         lastPublish = millis();
                     } else {
@@ -878,7 +874,6 @@ void loop() {
                             lastPublish += publish_interval_ms;
                         }
                     }
-
                     Serial.println("✅ Data published. Rigid Schedule Updated.");
                 }
             } else {

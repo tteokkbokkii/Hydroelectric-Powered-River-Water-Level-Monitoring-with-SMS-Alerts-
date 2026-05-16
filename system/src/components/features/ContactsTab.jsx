@@ -537,16 +537,9 @@ const ContactsTab = () => {
                     smsLogs.map((log, idx) => (
                       <tr key={log.id || idx} className={`log-row ${log.log_type === 'ALERT' ? 'alrt' : 'maint'}`}>
                         <td className="l-time">{log.timestamp || "--:--"}</td>
-                        
-                        <td className="l-tag">
-                          {log.log_type === 'ALERT' ? 'ALERT' : log.log_type === 'GENBOX' ? 'GENBOX' : 'TEST'}
-                        </td>
-
                         <td className="l-sender"> {log.recipient_name} </td>
-
                         <td className="l-msg">
-                          { log.log_type === 'ALERT' ? 'RIVER LEVEL ALERT' : 
-                            log.log_type === 'GENBOX' ? 'GENBOX ALERT' : log.message }
+                          { log.log_type === 'ALERT' ? 'RIVER LEVEL ALERT' : log.message }
                         </td>
                       </tr>
                     ))
