@@ -326,9 +326,9 @@ const HistoryTab = () => {
                       labelFormatter={(value) => `time: ${value}`}
                       formatter={(value) => [ `${(Number(value) || 0).toFixed(2)} ft.`, 'level' ]}
                     />
-                    {settings.normal > 0 && (
+                    {/* {settings.normal !== undefined && settings.normal >= 0 && (
                       <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
-                    )}
+                    )} */}
                     {settings.attention > 0 && (
                       <ReferenceLine y={settings.attention} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
                     )}
@@ -379,9 +379,9 @@ const HistoryTab = () => {
                 allowDataOverflow={true} 
               />
               <Tooltip />
-              {settings.normal !== undefined && settings.normal >= 0 && (
+              {/* {settings.normal !== undefined && settings.normal >= 0 && (
                 <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
-              )}
+              )} */}
               {settings.attention !== undefined && settings.attention > 0 && (
                 <ReferenceLine y={settings.attention} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
               )}
