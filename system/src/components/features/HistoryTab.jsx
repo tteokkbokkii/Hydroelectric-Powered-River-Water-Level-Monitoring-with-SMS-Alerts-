@@ -329,12 +329,8 @@ const HistoryTab = () => {
                     {/* {settings.normal !== undefined && settings.normal >= 0 && (
                       <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
                     )} */}
-                    {settings.attention > 0 && (
-                      <ReferenceLine y={settings.attention} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
-                    )}
-                    {settings.critical > 0 && (
-                      <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
-                    )}
+                    <ReferenceLine y={4.01} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
+                    <ReferenceLine y={7.06} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
                     <Line type="monotone" dataKey="displayValue" stroke={activeTab === 'ACTUAL' ? '#ff8f00' : '#002D5A'} strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -382,12 +378,9 @@ const HistoryTab = () => {
               {/* {settings.normal !== undefined && settings.normal >= 0 && (
                 <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
               )} */}
-              {settings.attention !== undefined && settings.attention > 0 && (
-                <ReferenceLine y={settings.attention} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
-              )}
-              {settings.critical !== undefined && settings.critical > 0 && (
-                <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
-              )}
+              <ReferenceLine y={4.01} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
+              <ReferenceLine y={7.06} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
+
               <Line type="monotone" dataKey="displayValue" stroke="#ff8f00" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
@@ -426,15 +419,11 @@ const HistoryTab = () => {
               />
               <Tooltip />
               {/* NOTE THE >= 0 HERE INSTEAD OF > 0 */}
-              {settings.normal !== undefined && settings.normal >= 0 && (
-                <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
-              )}
-              {settings.attention !== undefined && settings.attention > 0 && (
-                <ReferenceLine y={settings.attention} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
-              )}
-              {settings.critical !== undefined && settings.critical > 0 && (
-                <ReferenceLine y={settings.critical} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
-              )}
+              {/*}
+              <ReferenceLine y={settings.normal} stroke="#28a745" strokeDasharray="3 3" label={{ position: 'top', value: 'Normal', fontSize: 10, fill: '#28a745' }} />
+              */}
+              <ReferenceLine y={4.01} stroke="#ffc107" strokeDasharray="3 3" label={{ position: 'top', value: 'Attention', fontSize: 10, fill: '#ffc107' }} />
+              <ReferenceLine y={7.06} stroke="#dc3545" strokeDasharray="3 3" label={{ position: 'top', value: 'Critical', fontSize: 10, fill: '#dc3545' }} />
               <Line type="monotone" dataKey="displayValue" stroke="#002D5A" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
