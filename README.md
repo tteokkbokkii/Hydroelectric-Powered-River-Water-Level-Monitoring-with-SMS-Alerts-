@@ -8,7 +8,7 @@ Rising water levels in the Pasig River ecosystem often cause delayed announcemen
 ## 🎥 Project Demonstration
 | Prototype | Web Application |
 | :---: | :---: |
-| [![Hardware Setup](system/public/Prototype.png)](https://www.youtube.com/) | [![Live Dashboard](system/public/Dashboard.png)](https://www.youtube.com/)<br><br>[![Second Page](system/public/History.png)](https://youtu.be/YOUR_VIDEO_LINK) |
+| [![Hardware Setup](system/public/Prototype.png)](https://www.youtube.com/) | [![Live Dashboard](system/public/Dashboard.png)](https://www.youtube.com/)<br><br>[![Second Page](system/public/History.png)](https://www.youtube.com/) |
 
 *Click the image above to watch the system in action!* 
 
