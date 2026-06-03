@@ -8,7 +8,7 @@ Rising water levels in the Pasig River ecosystem often cause delayed announcemen
 ## 🎥 Project Demonstration
 | Prototype | Web Application |
 | :---: | :---: |
-| [![Hardware Setup](system/public/Prototype.png)](https://www.youtube.com/) | [![Live Dashboard](system/public/Dashboard.png)](https://www.youtube.com/)<br><br>[![Second Page](system/public/History.png)](https://www.youtube.com/) |
+| [![Hardware Setup](system/public/Prototype.png)](https://youtu.be/92RCWRpQbF0) | [![Live Dashboard](system/public/Dashboard.png)](https://youtu.be/mGvgaIjC0Sk)<br><br>[![Second Page](system/public/History.png)](https://youtu.be/mGvgaIjC0Sk) |
 
 *Click the image above to watch the system in action!* 
 
@@ -46,8 +46,8 @@ Developed as a Bachelor of Science in Computer Engineering Capstone Project at *
 * [Armada](https://github.com/jannaarmada)
 * [Barrosa](https://github.com/JuanitoBRosa)
 * [Dela Cruz](https://github.com/youmademydawn)
-* Lorenzo
-* Tagbo
+* [Lorenzo](https://github.com/artoria911) 
+* [Tagbo](https://github.com/winderuuu)
 
 ---
 *Note: The system underwent evaluation based on ISO 25010:2023 standards and received "Strongly Satisfied" ratings across Functional Suitability, Performance Efficiency, Reliability, Interaction Capability, Maintainability, and Flexibility by Hulo Ferry Admin and Staff, Barangay Hulo Officials, and Technical Experts.*
