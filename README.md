@@ -6,6 +6,10 @@
 Rising water levels in the Pasig River ecosystem often cause delayed announcements for ferry operations, affecting the safety and reliability of local transit. This project introduces a monitoring and prediction system to help ferry personnel and local officials make proactive safety decisions. By integrating a robust sensor array, the station continuously tracks river conditions, calculates water-level predictions, and dispatches automated SMS alerts when critical thresholds are breached.
 
 ## 🎥 Project Demonstration
+| Prototype | Web Application |
+| :---: | :---: |
+| [![Hardware Setup](system/public/Prototype.png)](https://www.youtube.com/) | [![Live Dashboard](system/public/Dashboard.png)](https://www.youtube.com/)<br><br>[![Second Page](system/public/History.png)](https://youtu.be/YOUR_VIDEO_LINK) |
+
 *Click the image above to watch the system in action!* 
 
 ## ✨ Key Features
