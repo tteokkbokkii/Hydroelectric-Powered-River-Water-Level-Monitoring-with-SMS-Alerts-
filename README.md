@@ -45,7 +45,7 @@ Developed as a Bachelor of Science in Computer Engineering Capstone Project at *
 * [Aguilar](https://github.com/lompiromperu)
 * [Armada](https://github.com/jannaarmada)
 * [Barrosa](https://github.com/JuanitoBRosa)
-* [Dela Cruz](https://github.com/youmademydawn)
+* [Dela Cruz](https://github.com/tteokkbokkii)
 * [Lorenzo](https://github.com/artoria911) 
 * [Tagbo](https://github.com/winderuuu)
 
